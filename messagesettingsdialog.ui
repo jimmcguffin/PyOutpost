@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MessageSettingsDialogClass</class>
+ <widget class="QDialog" name="MessageSettingsDialogClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>490</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MessageSettingsDialog</string>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>5</y>
+     <width>480</width>
+     <height>380</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>1</number>
+   </property>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>New Msgs</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Setting Up a New Message</string>
+     </property>
+     <widget class="QRadioButton" name="cNewDefaultPrivate">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>220</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Set defatul to PRIVATE</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cNewDefaultBulletin">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>55</y>
+        <width>220</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Set default to BULLETIN</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cNewdefaultNts">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>220</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Set default to NTS</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cSendNtsAsPrivate">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>125</y>
+        <width>335</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Create and send NTS messagees as private messages</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cUseDefaultDestintation">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>150</y>
+        <width>145</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Default destination</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cDefaultDestintation">
+      <property name="geometry">
+       <rect>
+        <x>165</x>
+        <y>150</y>
+        <width>210</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
+     <string>Msg Numbering</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>245</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Outbound Message Identification</string>
+     </property>
+     <widget class="QCheckBox" name="cAddMessageNumber">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>385</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Add message number to the subject line for outbound messages</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cAddCharacter">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>135</y>
+        <width>285</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Add a character as a message number suffix</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cAddMessageNumberSeparator">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>160</y>
+        <width>385</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Add a message number separator</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cWithoutHyphenation">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>55</y>
+        <width>400</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Without hyphenation</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cWithHyphenation">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>80</y>
+        <width>400</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>With hyphenation</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cWithDateTimeFormat">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>105</y>
+        <width>400</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>With date/time format</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCharacterToAdd">
+      <property name="geometry">
+       <rect>
+        <x>295</x>
+        <y>135</y>
+        <width>30</width>
+        <height>22</height>
+       </rect>
+      </property>
+      <property name="maxLength">
+       <number>1</number>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="cNextMessageId">
+      <property name="geometry">
+       <rect>
+        <x>190</x>
+        <y>195</y>
+        <width>121</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>2147483647</number>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>200</y>
+        <width>180</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Next message ID (temporary)</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_8">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>270</y>
+       <width>450</width>
+       <height>80</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Inbound Message Identification (Load ID)</string>
+     </property>
+     <widget class="QCheckBox" name="cAddMessageNumberToInbound">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>385</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Adding a local message number to inbound messages</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Replies/Fwds</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Replies and Forwards</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>Receipts</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tracking Messages</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_5">
+    <attribute name="title">
+     <string>Misc</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Deleting Messages</string>
+     </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_7">
+     <property name="geometry">
+      <rect>
+       <x>15</x>
+       <y>140</y>
+       <width>450</width>
+       <height>111</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Substitution Masks</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_6">
+    <attribute name="title">
+     <string>Adv</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Enhanced Message Service Settings</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="cOK">
+   <property name="geometry">
+    <rect>
+     <x>335</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cCancel">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>cOK</sender>
+   <signal>clicked()</signal>
+   <receiver>MessageSettingsDialogClass</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>368</x>
+     <y>412</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>282</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>MessageSettingsDialogClass</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>430</x>
+     <y>407</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>409</x>
+     <y>434</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

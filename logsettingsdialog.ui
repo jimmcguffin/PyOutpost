@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LogSettingsDialogClass</class>
+ <widget class="QDialog" name="LogSettingsDialogClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>490</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>LogSettingsDialog</string>
+  </property>
+  <widget class="QPushButton" name="cOK">
+   <property name="geometry">
+    <rect>
+     <x>335</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cCancel">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="groupBox">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>476</width>
+     <height>156</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Options</string>
+   </property>
+   <widget class="QCheckBox" name="cL1">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>25</y>
+      <width>400</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>L1: Send/Receive session window logging</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cL2">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>55</y>
+      <width>400</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>L2: Send/Receive interface data trace</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cL3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>85</y>
+      <width>400</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>L3: Send/Receive diagnostic trace</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cL4">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>110</y>
+      <width>400</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>L4: Main program diagnostics reace (restart Outpost to apply)</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>cOK</sender>
+   <signal>clicked()</signal>
+   <receiver>LogSettingsDialogClass</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>375</x>
+     <y>409</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>311</x>
+     <y>397</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>LogSettingsDialogClass</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>444</x>
+     <y>413</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>421</x>
+     <y>425</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

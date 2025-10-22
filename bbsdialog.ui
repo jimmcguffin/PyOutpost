@@ -1,0 +1,747 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BbsDialogClass</class>
+ <widget class="QDialog" name="BbsDialogClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>490</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>BbsDialog</string>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>5</y>
+     <width>480</width>
+     <height>380</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>Name</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>375</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>BBS Name</string>
+     </property>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>90</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>BBS name</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>70</y>
+        <width>90</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Connect name</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="cBbsName">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>25</y>
+        <width>141</width>
+        <height>24</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cConnectName">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>65</y>
+        <width>146</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="cDescription">
+      <property name="geometry">
+       <rect>
+        <x>105</x>
+        <y>105</y>
+        <width>250</width>
+        <height>64</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_20">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>105</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Description</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QPushButton" name="cNew">
+     <property name="geometry">
+      <rect>
+       <x>395</x>
+       <y>95</y>
+       <width>75</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>New</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cCopy">
+     <property name="geometry">
+      <rect>
+       <x>395</x>
+       <y>125</y>
+       <width>75</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Copy</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="cDelete">
+     <property name="geometry">
+      <rect>
+       <x>395</x>
+       <y>155</y>
+       <width>75</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Delete</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
+     <string>Prompts</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Commands</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Commands</string>
+     </property>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandSend">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>25</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>55</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send bulletin</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandSendBulletin">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>50</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_6">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send NTS</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandSendNTS">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>75</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>105</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>List mine</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandListMine">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>100</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_8">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>130</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>List bulletin</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandListBulletin">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>125</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>155</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>List NTS</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandListNts">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>150</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_10">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>180</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>List filtered</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandListFiltered">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>175</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_11">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>205</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Read</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandRead">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>200</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_12">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>230</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Delete</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandDelete">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>225</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cCommandBye">
+      <property name="geometry">
+       <rect>
+        <x>110</x>
+        <y>250</y>
+        <width>113</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_13">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>255</y>
+        <width>100</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Bye / log off</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>Init Commands</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>296</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Initialization Commands</string>
+     </property>
+     <widget class="QRadioButton" name="cNeverSendInitCommands">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>25</y>
+        <width>450</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Never send BBS initalization commands</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cAlwaysSendInitCommands">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>50</y>
+        <width>450</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send BBS initialization commands for every Send/Recevive (S/R) session</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_18">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>85</y>
+        <width>150</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Cmds to send before S/R</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_19">
+      <property name="geometry">
+       <rect>
+        <x>230</x>
+        <y>85</y>
+        <width>150</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Cmds to send after S/R</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="cCommandsBefore">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>110</y>
+        <width>150</width>
+        <height>170</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="cCommandsAfter">
+      <property name="geometry">
+       <rect>
+        <x>235</x>
+        <y>110</y>
+        <width>150</width>
+        <height>170</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_5">
+    <attribute name="title">
+     <string>Retrieving</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Retrieve These Messages</string>
+     </property>
+     <widget class="QCheckBox" name="cRetrievePrivateMessages">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>30</y>
+        <width>210</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Retrieve private messages</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cRetrieveNtsMessages">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>60</y>
+        <width>210</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Retrieve NTS messages</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cRetrieveBulletins">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>90</y>
+        <width>210</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Retrieve bulletins</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cSkipNtsMessagesThatISend">
+      <property name="geometry">
+       <rect>
+        <x>225</x>
+        <y>30</y>
+        <width>210</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Skip NTS messages that I send</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cSkipBulletinsThatISend">
+      <property name="geometry">
+       <rect>
+        <x>225</x>
+        <y>60</y>
+        <width>210</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Skip bulletins that I send</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cKeepMessagesOnBBS">
+      <property name="geometry">
+       <rect>
+        <x>225</x>
+        <y>90</y>
+        <width>210</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Keep messages on BBS</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cAllNewBulletins">
+      <property name="geometry">
+       <rect>
+        <x>35</x>
+        <y>115</y>
+        <width>140</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>All new bulletins</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cSelectedBulletins">
+      <property name="geometry">
+       <rect>
+        <x>35</x>
+        <y>145</y>
+        <width>140</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Selected bulletins</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cCustomRetrieval">
+      <property name="geometry">
+       <rect>
+        <x>35</x>
+        <y>210</y>
+        <width>140</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Custom retrieveal</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="plainTextEdit">
+      <property name="geometry">
+       <rect>
+        <x>195</x>
+        <y>140</y>
+        <width>180</width>
+        <height>64</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="plainTextEdit_2">
+      <property name="geometry">
+       <rect>
+        <x>195</x>
+        <y>205</y>
+        <width>180</width>
+        <height>95</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_6">
+    <attribute name="title">
+     <string>Path</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="cOK">
+   <property name="geometry">
+    <rect>
+     <x>335</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cCancel">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>cOK</sender>
+   <signal>clicked()</signal>
+   <receiver>BbsDialogClass</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>369</x>
+     <y>408</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>289</x>
+     <y>406</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>BbsDialogClass</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>445</x>
+     <y>404</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>404</x>
+     <y>431</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

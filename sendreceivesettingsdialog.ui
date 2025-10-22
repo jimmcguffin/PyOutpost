@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SendReceiveSettingsDialogClass</class>
+ <widget class="QDialog" name="SendReceiveSettingsDialogClass">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>490</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SendReceiveSettingsDialog</string>
+  </property>
+  <widget class="QTabWidget" name="tabWidget">
+   <property name="geometry">
+    <rect>
+     <x>5</x>
+     <y>5</y>
+     <width>480</width>
+     <height>380</height>
+    </rect>
+   </property>
+   <property name="currentIndex">
+    <number>0</number>
+   </property>
+   <widget class="QWidget" name="tab">
+    <attribute name="title">
+     <string>Automation</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_5">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>200</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Automation</string>
+     </property>
+     <widget class="QRadioButton" name="cManual">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>30</y>
+        <width>320</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Manual - initiate each send/receive session manually</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cEveryN">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>55</y>
+        <width>195</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Schedule a send/receive every</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cEveryX">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>80</y>
+        <width>320</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Schedule a send/receive at &quot;X&quot; minutes past the hour</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cEveryXList">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>105</y>
+        <width>236</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_4">
+      <property name="geometry">
+       <rect>
+        <x>295</x>
+        <y>55</y>
+        <width>55</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>minutes</string>
+      </property>
+     </widget>
+     <widget class="QSpinBox" name="cEveryNTime">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>55</y>
+        <width>88</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>999</number>
+      </property>
+      <property name="value">
+       <number>15</number>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cSendImmediate">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>140</y>
+        <width>321</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send a message immediately when it is complete</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_6">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>220</y>
+       <width>450</width>
+       <height>125</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Send/Receive Button Setup</string>
+     </property>
+     <widget class="QRadioButton" name="cSendReceive">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>30</y>
+        <width>92</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send/Receive</string>
+      </property>
+      <property name="checked">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cSendOnly">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>55</y>
+        <width>92</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Send only</string>
+      </property>
+     </widget>
+     <widget class="QRadioButton" name="cReceiveOnly">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>80</y>
+        <width>92</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Receive only</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_2">
+    <attribute name="title">
+     <string>Receiving</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_3">
+    <attribute name="title">
+     <string>Printing</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_4">
+    <attribute name="title">
+     <string>Notifications</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="tab_5">
+    <attribute name="title">
+     <string>Other</string>
+    </attribute>
+    <widget class="QGroupBox" name="groupBox_7">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>450</width>
+       <height>330</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>GroupBox</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="cOK">
+   <property name="geometry">
+    <rect>
+     <x>335</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>OK</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="cCancel">
+   <property name="geometry">
+    <rect>
+     <x>410</x>
+     <y>395</y>
+     <width>75</width>
+     <height>30</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Cancel</string>
+   </property>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>cOK</sender>
+   <signal>clicked()</signal>
+   <receiver>SendReceiveSettingsDialogClass</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>366</x>
+     <y>412</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>284</x>
+     <y>404</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>SendReceiveSettingsDialogClass</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>459</x>
+     <y>411</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>468</x>
+     <y>426</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
