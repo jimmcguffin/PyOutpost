@@ -7,6 +7,8 @@ from persistentdata import PersistentData
 import bbsdialog
 import interfacedialog
 import stationiddialog
+import sendreceivesettingsdialog
+import messagesettingsdialog
 
 
 class MainWindow(QMainWindow):
@@ -21,6 +23,8 @@ class MainWindow(QMainWindow):
         self.actionBBS.triggered.connect(self.OnBbsSetup)
         self.actionInterface.triggered.connect(self.OnInterfaceSetup)
         self.actionStation_ID.triggered.connect(self.OnStationId)
+        self.actionSend_Receive_Settings.triggered.connect(self.onSendReceiveSettings)
+        self.actionMessage_Settings.triggered.connect(self.onMessageSettings)
         self.cProfile.currentTextChanged.connect(self.onProfileChanged)
         self.actionNewProfile.triggered.connect(self.onNewProfile)
         self.cStatusLeft = QLabel()
@@ -87,6 +91,13 @@ class MainWindow(QMainWindow):
         self.cProfile.setCurrentText(ap)
         self.cProfile.blockSignals(False)
         self.settings.setActiveProfile(ap)
+    def onSendReceiveSettings(self):
+        srsd = sendreceivesettingsdialog.SendReceiveSettingsDialog(self.settings,self)
+        srsd.exec()
+    def onMessageSettings(self):
+        msd = messagesettingsdialog.MessageSettingsDialog(self.settings,self)
+        msd.exec()
+
 
 if __name__ == "__main__": 
     app = QApplication(sys.argv)

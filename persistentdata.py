@@ -22,7 +22,7 @@ class PersistentData():
         self.activeProfile = name
         self.setProfile("ActiveUserCallSign",ucs)
         self.setProfile("ActiveTacticalCallSign",tcs)
-        self.setProfile("ActiveUBBS",bbs)
+        self.setProfile("ActiveBBS",bbs)
         self.setProfile("ActiveInterface",interface)
         self.setActiveProfile(name)
     def getProfiles(self):
@@ -52,8 +52,8 @@ class PersistentData():
             l = self.getInterfaces()
             if l: self.setActiveInterface(l[0])
             else: self.setActiveInterface("TEMP")
-    def getProfile(self,s): return self.settings.value(f"Profiles/{self.activeProfile}/{s}")
-    def getProfileBool(self,s): return True if self.settings.value(f"Profiles/{self.activeProfile}/{s}") == "true" else False
+    def getProfile(self,s,default=""): return self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
+    def getProfileBool(self,s,default=False): return True if self.settings.value(f"Profiles/{self.activeProfile}/{s}",default) == "true" else False
     def setProfile(self,s,value): self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
 
     # call signs

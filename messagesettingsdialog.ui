@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -93,7 +93,7 @@
        <string>Create and send NTS messagees as private messages</string>
       </property>
      </widget>
-     <widget class="QCheckBox" name="cUseDefaultDestintation">
+     <widget class="QCheckBox" name="cUseDefaultDestination">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -106,7 +106,7 @@
        <string>Default destination</string>
       </property>
      </widget>
-     <widget class="QLineEdit" name="cDefaultDestintation">
+     <widget class="QLineEdit" name="cDefaultDestination">
       <property name="geometry">
        <rect>
         <x>165</x>
@@ -259,7 +259,7 @@
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>270</y>
+       <y>265</y>
        <width>450</width>
        <height>80</height>
       </rect>
