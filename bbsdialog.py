@@ -10,7 +10,7 @@ class BbsDialog(QDialog):
         self.pd = pd
         load_ui.loadUi("bbsdialog.ui",self)
         self.tabWidget.setCurrentIndex(0)
-        self.need_save = False;
+        self.need_save = False
         self.loadBBSs()
         self.load()
         self.cBbsName.currentTextChanged.connect(self.onBbsNameChanged)
@@ -30,20 +30,20 @@ class BbsDialog(QDialog):
     def load(self):
         self.need_save = True
         # page 1
-        self.cConnectName.setText(self.pd.getBBS("ConnectName"));
-        self.cDescription.setPlainText(self.pd.getBBS("Description"));
+        self.cConnectName.setText(self.pd.getBBS("ConnectName"))
+        self.cDescription.setPlainText(self.pd.getBBS("Description"))
         # page 2
         # page 3
-        self.cCommandSend.setText(self.pd.getBBS("CommandSend"));
-        self.cCommandSendBulletin.setText(self.pd.getBBS("CommandSendBulletin"));
-        self.cCommandSendNTS.setText(self.pd.getBBS("CommandSendNTS"));
-        self.cCommandListMine.setText(self.pd.getBBS("CommandListMine"));
-        self.cCommandListBulletin.setText(self.pd.getBBS("CommandListBulletin"));
-        self.cCommandListNts.setText(self.pd.getBBS("CommandListNts"));
-        self.cCommandListFiltered.setText(self.pd.getBBS("CommandListFiltered"));
-        self.cCommandRead.setText(self.pd.getBBS("CommandRead"));
-        self.cCommandDelete.setText(self.pd.getBBS("CommandDelete"));
-        self.cCommandBye.setText(self.pd.getBBS("CommandBye"));
+        self.cCommandSend.setText(self.pd.getBBS("CommandSend"))
+        self.cCommandSendBulletin.setText(self.pd.getBBS("CommandSendBulletin"))
+        self.cCommandSendNTS.setText(self.pd.getBBS("CommandSendNTS"))
+        self.cCommandListMine.setText(self.pd.getBBS("CommandListMine"))
+        self.cCommandListBulletin.setText(self.pd.getBBS("CommandListBulletin"))
+        self.cCommandListNts.setText(self.pd.getBBS("CommandListNts"))
+        self.cCommandListFiltered.setText(self.pd.getBBS("CommandListFiltered"))
+        self.cCommandRead.setText(self.pd.getBBS("CommandRead"))
+        self.cCommandDelete.setText(self.pd.getBBS("CommandDelete"))
+        self.cCommandBye.setText(self.pd.getBBS("CommandBye"))
         # page 4
         if self.pd.getBBSBool("AlwaysSendInitCommands"):
             self.cAlwaysSendInitCommands.setChecked(True)
@@ -80,6 +80,7 @@ class BbsDialog(QDialog):
     def save(self):
         if not self.need_save: return
         # page 1
+        print(f"current bbs is {self.pd.getActiveBBS()} Writing {self.cDescription.toPlainText()} to file")
         self.pd.setBBS("ConnectName",self.cConnectName.text())
         self.pd.setBBS("Description",self.cDescription.toPlainText())
         # page 2
