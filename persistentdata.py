@@ -55,6 +55,12 @@ class PersistentData():
     def getProfile(self,s,default=""): return self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
     def getProfileBool(self,s,default=False): return True if self.settings.value(f"Profiles/{self.activeProfile}/{s}",default) == "true" else False
     def setProfile(self,s,value): self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
+    def getAndIncrementNextMessageNumber(self):
+        n = self.settings.value("NextMessageNumber",0)
+        r = n + 1
+        if r < n: r = 0 # r has overflowed
+        self.settings.setValue("NextMessageNumber",r)
+        return r
 
     # call signs
     def addUserCallSign(self,callsign,name,messageprefix):

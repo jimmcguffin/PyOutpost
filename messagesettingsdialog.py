@@ -12,8 +12,6 @@ class MessageSettingsDialog(QDialog):
         self.tabWidget.setCurrentIndex(0)
         self.need_save = False
         self.load()
-        #self.cX.currentTextChanged.connect(self.onXChanged)
-        #self.cNewX.clicked.connect(self.onNewXClicked)
 
     def accept(self):
         self.save()
@@ -79,16 +77,3 @@ class MessageSettingsDialog(QDialog):
         # page 6
         self.need_save = False
     
-#   def onXChanged(self,str):
-#       self.save()
-#       self.pd.setX(str)
-#       self.load()
-#
-#   def onNewXClicked(self):
-#       text, ok = QInputDialog.getText(self,"New User Call Sign","New call sign")
-#       if ok and text:
-#           prefix = text[-3:] if len(text) >= 3 else text
-#           self.pd.addUserCallSign(text,"",prefix)
-#           self.loadUserCallSigns()
-#           self.cUserCallSign.setCurrentText(text)
-#
