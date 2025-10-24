@@ -7,10 +7,15 @@ from persistentdata import PersistentData
 
 class NewPacketMessage(QMainWindow):
     signalNewMessage = pyqtSignal(str,str,str)
-    def __init__(self,pd,outgoing,parent=None):
+    def __init__(self,pd,parent=None):
         super(NewPacketMessage,self).__init__(parent)
         self.pd = pd
         load_ui.loadUi("newpacketmessage.ui",self)
+        t = self.pd.getProfile("MessageSettings/DefaultNewMessageType","P")
+        if t == "P": self.cMessageTypePrivate.setChecked(True)
+        elif t == "B": self.cMessageTypeBulletin.setChecked(True)
+        elif t == "N": self.cMessageTypeNts.setChecked(True)
+        else: self.cNewDefaultPrivate.setChecked(True)
         self.actionSend.triggered.connect(self.onSend)
         self.cSend.clicked.connect(self.onSend)
         self.cBBS.setText(self.pd.getBBS("ConnectName"))
@@ -33,4 +38,7 @@ class NewPacketMessage(QMainWindow):
         self.cSubject.setText(subject)
 
     def onSend(self):
-        self.signalNewMessage.emit("test1","test2","test3") 
+        message = self.cMessage.toPlainText()
+        message.replace("\r\n","\n")
+        message.replace("\n","\r")
+        self.signalNewMessage.emit(self.cTo.text(),self.cSubject.text(),message)

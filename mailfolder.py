@@ -1,3 +1,6 @@
+from urllib.parse import quote_plus,unquote_plus
+
+
 # struct MailBoxHeader
 # 	{
 # //	bool FromString(const QByteArray &s);
@@ -39,6 +42,8 @@
 # headers (items in same order as display)
 # */U/Type/From/To/BBS/LocalId/Subject/Date/Size
 
+
+
 class MailFolder:
     def __init__(self):
         super(MailFolder,self).__init__()
@@ -49,14 +54,19 @@ class MailFolder:
         self.filename = fn
         with open(self.filename,"r") as file:
             while l := file.readline():
-                l.rstrip()
+                l = l.rstrip()
                 if len(l) > 10 and l[0] == '*' and l[1] == '/':
                     f = l.split("/")
-                    if len(f) >= 10:
+                    if len(f) >= 11:
+                        for index in range(1,9):
+                            f[index]= unquote_plus(f[index])
+                        # change the first string (always "*") to the index
+                        f[0] = len(self.mail)
                         offset = file.tell()
                         # change the last string (size of mail) to a number
                         msize = int(f[10])
                         f[10] = msize
+                        # and then add a new element with the location of the message wihin the file
                         f.append(offset)
                         self.mail.append(f)
                         file.seek(offset+msize)
@@ -69,10 +79,13 @@ class MailFolder:
         with open(self.filename,"r") as file:
             file.seek(offset)
             return self.mail[n],file.read(msize)
-                             
     def getHeaders(self): return self.mail
-
-
+    def toFileHeader(self,h):
+        r = "*"
+        for i in range(1,9):
+            r += "/"+quote_plus(h[1],'/')
+        r += "/"+str(h[10])
+        return r;
 
         
 			

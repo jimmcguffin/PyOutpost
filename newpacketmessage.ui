@@ -184,7 +184,7 @@
      <string>Urgent</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_8">
+   <widget class="QPushButton" name="cMessageTypePrivate">
     <property name="geometry">
      <rect>
       <x>485</x>
@@ -206,7 +206,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_9">
+   <widget class="QPushButton" name="cMessageTypeBulletin">
     <property name="geometry">
      <rect>
       <x>540</x>
@@ -225,7 +225,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_10">
+   <widget class="QPushButton" name="cMessageTypeNts">
     <property name="geometry">
      <rect>
       <x>595</x>
