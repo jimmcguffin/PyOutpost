@@ -1,9 +1,9 @@
 import sys
 from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView
+from PyQt6.QtCore import Qt, QIODeviceBase
+from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox
 from PyQt6.uic import load_ui
-from PyQt6.QtSerialPort import QSerialPortInfo
+from PyQt6.QtSerialPort import QSerialPortInfo, QSerialPort
 from persistentdata import PersistentData
 import bbsdialog
 import interfacedialog
@@ -14,6 +14,9 @@ import newpacketmessage
 import readmessagedialog
 from mailfolder import MailFolder
 from operator import itemgetter
+from tncparser import KantronicsKPC3Plus
+from enum import Enum
+from serialstream import SerialStream
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -34,6 +37,8 @@ class MainWindow(QMainWindow):
         self.actionNewProfile.triggered.connect(self.onNewProfile)
         self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
+        self.actionSend_Receive.triggered.connect(self.onSendReceive)
+        self.cSendReceive.clicked.connect(self.onSendReceive)
         self.cStatusLeft = QLabel()
         self.cStatusLeft.setFrameShape(QFrame.Shape.Panel)
         self.cStatusLeft.setFrameShadow(QFrame.Shadow.Sunken)
@@ -167,6 +172,59 @@ class MainWindow(QMainWindow):
         tmp.setData(h,m)
         tmp.show()
         tmp.raise_()
+    def openSerialPort(self):
+        # get all relevant settings - remember that at this point they are all strings
+        port = self.settings.getInterface("ComPort")
+        baud = self.settings.getInterface("Baud")
+        parity = self.settings.getInterface("Parity")
+        databits = self.settings.getInterface("DataBits")
+        stopbits =self.settings.getInterface("StopBits")
+        flowcontrol = self.settings.getInterface("FlowControl")
+        flowcontrolflag = True
+        self.serialport = QSerialPort()
+        self.serialport.setPortName(port)
+        self.serialport.setBaudRate(int(baud))
+        if not parity: parity = "N"
+        match parity.upper()[0]:
+            case 'E': self.serialport.setParity(QSerialPort.Parity.EvenParity)
+            case 'O': self.serialport.setParity(QSerialPort.Parity.OddParity)
+            case 'M': self.serialport.setParity(QSerialPort.Parity.MarkParity)
+            case 'S': self.serialport.setParity(QSerialPort.Parity.SpaceParity)
+            case _:   self.serialport.setParity(QSerialPort.Parity.NoParity)
+        match databits:
+            case '5': self.serialport.setDataBits(QSerialPort.DataBits.Data5)
+            case '6': self.serialport.setDataBits(QSerialPort.DataBits.Data6)
+            case '7': self.serialport.setDataBits(QSerialPort.DataBits.Data7)
+            case _:   self.serialport.setDataBits(QSerialPort.DataBits.Data8)
+        match stopbits:
+            case "1":   self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
+            case "1.5": self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
+            case "2":   self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
+            case _:     self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
+        if not flowcontrol: flowcontrol = "R"
+        flowcontrolflag = flowcontrol.upper()[0]
+        match flowcontrolflag:
+            case 'N': self.serialport.setFlowControl(QSerialPort.FlowControl.NoFlowControl)
+            case _:   self.serialport.setFlowControl(QSerialPort.FlowControl.HardwareControl)
+        f = self.serialport.open(QIODeviceBase.OpenModeFlag.ReadWrite)
+        if not f:
+            print(f"open serial port {self.serialport.portName()} failed, returned {self.serialport.errorString()}")
+            return False
+        print(f"open serial port {self.serialport.portName()} succeeded {self.serialport.baudRate()} {self.serialport.parity()} {self.serialport.dataBits()} {self.serialport.stopBits()} {self.serialport.flowControl()}")
+        if flowcontrolflag != 'R':
+            self.serialport.setDataTerminalReady(True)
+            self.serialport.setRequestToSend(True)
+        return True
+    def onSendReceive(self):
+        f = self.openSerialPort()
+        if not f:
+            QMessageBox.critical(self,"Error",f"Error {self.serialport.errorString()} opening serial port");
+            return
+        self.sdata = bytearray()
+        self.tncParser = KantronicsKPC3Plus(self.settings,self)
+        #self.bbsParser = Nos2Parser(self.settings,self)
+        self.serialStream = SerialStream(self.serialport)
+        self.tncParser.startSession(self.serialStream)
 
 if __name__ == "__main__": 
     app = QApplication(sys.argv)
