@@ -9,7 +9,7 @@ class TncDevice(QObject):
     signalConnected = pyqtSignal()
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
-    signalNewMail = pyqtSignal(MailBoxHeader,str)
+    signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     def __init__(self,pd,parent=None):
         super(TncDevice,self).__init__(parent)
         self.pd = pd
@@ -30,7 +30,7 @@ class KantronicsKPC3Plus(TncDevice):
 
     def startSession(self,ss):
         super().startSession(ss)
-        self.serialStream.lineEnd = "cmd:"
+        self.serialStream.lineEnd = b"cmd:"
         mycall = f"{self.pd.getInterface("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
         connectstr = f"{self.pd.getInterface("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
         # these are internally generated
@@ -70,14 +70,17 @@ class KantronicsKPC3Plus(TncDevice):
         # give control over to BBS parser
         self.bbsParser = Jnos2Parser(self.pd,self)
         self.bbsParser.signalDisconnected.connect(self.onDisconnected)
-        self.bbsParser.signalNewMail.connect(self.onNewMail)
+        self.bbsParser.Incoming.connect(self.onNewIncomingMessage)
         self.bbsParser.startSession(self.serialStream)
-    def onNewMail(self,mbh,m):
-        self.signalNewMail.emit(mbh,m)
+
+    def onNewIncomingMessage(self,mbh,m):
+        self.signalNewIncomingMessage.emit(mbh,m)
 
     def onDisconnected(self):
         print("Disconnected!")
         self.bbsParser.signalDisconnected.disconnect()
-        self.bbsParser.signalNewMail.disconnect()
+        self.bbsParser.signalNewIncomingMessage.disconnect()
         self.serialStream.signalLineRead.connect(self.onResponse) # point this back to us
-        self.serialStream.lineEnd = "cmd:" # and reset this
+        self.serialStream.lineEnd = b"cmd:" # and reset this
+        # self.signalDisconnected.emit() # todo: do final closing bits then emit this
+

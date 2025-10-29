@@ -1,5 +1,7 @@
 from urllib.parse import quote_plus,unquote_plus
+import tempfile
 import datetime
+import os
 
 # struct MailBoxHeader
 # 	{
@@ -77,6 +79,12 @@ class MailBoxHeader:
                 pass
         else:
             pass
+    
+    def __eq__(self, other):
+        if isinstance(other, MailBoxHeader):
+            return self.mFrom == other.mFrom and self.mTo == other.mTo and self.mSubject == other.mSubject and self.mDateSent == other.mDateSent and self.mSize == other.mSize
+        return False
+    
     def toString(self):
         r = f"*/{quote_plus(self.mU)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n";
         return r
@@ -112,6 +120,7 @@ class MailBoxHeader:
         # here is what the current BBS sends: Thu, 09 Oct 2025 09:58:36 PDT, which is known as RFC 2822
         # here is another format, used by ctime(): Mon Oct 11 17:10:55 2021
         # since these is the only examples I have at the moment, it only supports those two
+        # todo: use more of the built-in datetime methods
 
         # if d is None, return current date/time
         if not d:
@@ -173,7 +182,7 @@ class MailFolder:
         self.mail.clear()
         self.filename = fn
         try:
-            with open(self.filename,"rb") as file:
+            with open(self.filename+".mail","rb") as file:
                 while l := file.readline().decode():
                     if len(l) > 10 and l[0:2] == "*/":
                         mbh = MailBoxHeader(l,file.tell())
@@ -183,24 +192,66 @@ class MailFolder:
                             file.seek(mbh.mOffset+mbh.mSize)
         except FileNotFoundError:
             pass
-    def addMail(self,mbh,message): # mbh is a MailBoxHeader
-        # before adding, look of we already have this one
-        for m in self.mail:
-            if m == mbh:
-                return
-        with open(self.filename,"ab") as file:
-            mbh.mSize = len(message)
-            mbh.mOffset = file.tell()
-            file.write(mbh.toString().encode())
-            file.write(message.encode())
-        mbh.mIndex = len(self.mail)
-        self.mail.append(mbh)
+
+    def addMail(self,mbh,message,folder): # mbh is a MailBoxHeader
+        if folder == self.filename:
+            # before adding, look of we already have this one
+            for m in self.mail:
+                if m == mbh:
+                    return
+            with open(self.filename+".mail","ab") as file:
+                mbh.mSize = len(message)
+                mbh.mOffset = file.tell()
+                file.write(mbh.toString().encode())
+                file.write(message.encode())
+            mbh.mIndex = len(self.mail)
+            self.mail.append(mbh)
+        else:
+            target = MailFolder()
+            target.load(folder)
+            # before adding, look of we already have this one
+            for m in target.mail:
+                if m == mbh:
+                    return
+            with open(target.filename+".mail","ab") as file:
+                mbh.mSize = len(message)
+                mbh.mOffset = file.tell()
+                file.write(mbh.toString().encode())
+                file.write(message.encode())
+
+    def copyMail(self,indexlist,tomailbox): # to move mail, call copyMail followed by deleteMail with same indexlist
+        # open input and output files
+        outfile = open(tomailbox+".mail","ab")
+        for index in indexlist:
+            if 0 <= index < len(self.mail):
+                mbh,m = self.getMessage(index)
+                outfile.write(mbh.toString().encode())
+                outfile.write(m.encode())
+        outfile.close()
+
+    def deleteMail(self,indexlist):
+        # first, copy all the mail that will not be deleted
+        # file = tempfile.TemporaryFile()
+        file = open(self.filename+".tmp","wb")
+        for index in range (len(self.mail)):
+            if not index in indexlist:
+                mbh,m = self.getMessage(index)
+                file.write(mbh.toString().encode())
+                file.write(m.encode())
+        file.close()
+        os.remove(self.filename+".mail")
+        os.rename(self.filename+".tmp",self.filename+".mail")
+        self.load(self.filename)
+
     def getMessage(self,n):
-        if n < 0 or n >= len(self.mail): return [],""
+        if not 0 <= n < len(self.mail): return [],""
         m = ""
         offset = int(self.mail[n].mOffset)
         msize = int(self.mail[n].mSize)
-        with open(self.filename,"rb") as file:
-            file.seek(offset)
-            return self.mail[n],file.read(msize).decode()
+        try:
+            with open(self.filename+".mail","rb") as file:
+                file.seek(offset)
+                return self.mail[n],file.read(msize).decode()
+        except FileNotFoundError:
+            return [],""
     def getHeaders(self): return self.mail

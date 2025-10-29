@@ -26,19 +26,37 @@ class MainWindow(QMainWindow):
         if self.settings.getProfileBool("ShowStationIdAtStartup"):
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
-        self.cNew.clicked.connect(self.onNewMessage)
         self.actionNew_Message.triggered.connect(self.onNewMessage)
         self.actionBBS.triggered.connect(self.OnBbsSetup)
         self.actionInterface.triggered.connect(self.OnInterfaceSetup)
         self.actionStation_ID.triggered.connect(self.OnStationId)
         self.actionSend_Receive_Settings.triggered.connect(self.onSendReceiveSettings)
         self.actionMessage_Settings.triggered.connect(self.onMessageSettings)
+        self.actionDelete.triggered.connect(self.onDeleteMessages)
         self.cProfile.currentTextChanged.connect(self.onProfileChanged)
         self.actionNewProfile.triggered.connect(self.onNewProfile)
         self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
         self.actionSend_Receive.triggered.connect(self.onSendReceive)
+
+        self.cNew.clicked.connect(self.onNewMessage)
+        #self.cOpen.clicked.connect(self.onNewMessage)
+        self.cArchive.clicked.connect(self.onArchiveMessages)
+        self.cDelete.clicked.connect(self.onDeleteMessages)
+        #self.cPrint.clicked.connect(self.onDeleteMessages)
         self.cSendReceive.clicked.connect(self.onSendReceive)
+
+        self.cInTray.clicked.connect(lambda: self.onSelectFolder("InTray"))
+        self.cOutTray.clicked.connect(lambda: self.onSelectFolder("OutTray"))
+        self.cSentMessages.clicked.connect(lambda: self.onSelectFolder("Sent"))
+        self.cArchived.clicked.connect(lambda: self.onSelectFolder("Archived"))
+        self.cDrafMessages.clicked.connect(lambda: self.onSelectFolder("Draft"))
+        self.cDeleted.clicked.connect(lambda: self.onSelectFolder("Deleted"))
+        self.cFolder1.clicked.connect(lambda: self.onSelectFolder("Folder1"))
+        self.cFolder2.clicked.connect(lambda: self.onSelectFolder("Folder2"))
+        self.cFolder3.clicked.connect(lambda: self.onSelectFolder("Folder3"))
+        self.cFolder4.clicked.connect(lambda: self.onSelectFolder("Folder4"))
+        self.cFolder5.clicked.connect(lambda: self.onSelectFolder("Folder5"))
         self.cStatusLeft = QLabel()
         self.cStatusLeft.setFrameShape(QFrame.Shape.Panel)
         self.cStatusLeft.setFrameShadow(QFrame.Shadow.Sunken)
@@ -63,9 +81,73 @@ class MainWindow(QMainWindow):
         self.mailSortBackwards = False
         self.mailIndex = []
         self.mailfolder = MailFolder()
-        self.mailfolder.load("Inbox.mail")
+        self.currentFolder = "InTray"
+        self.mailfolder.load(self.currentFolder)
         self.updateMailList()
-
+        # need to add the folder list in several places
+        # the first two (in/out) are already there
+        self.menuMove_to_Folder.addAction("Sent Messages")
+        self.menuMove_to_Folder.addAction("Archive")
+        self.menuMove_to_Folder.addAction("Draft Messages")
+        self.menuMove_to_Folder.addAction("Deleted")
+        self.menuMove_to_Folder.addAction("Folder 1")
+        self.menuMove_to_Folder.addAction("Folder 2")
+        self.menuMove_to_Folder.addAction("Folder 3")
+        self.menuMove_to_Folder.addAction("Folder 4")
+        self.menuMove_to_Folder.addAction("Folder 5")
+        tmp = self.menuMove_to_Folder.actions()
+        tmp[0].triggered.connect(lambda: self.onMoveToFolder("InTray"))
+        tmp[1].triggered.connect(lambda: self.onMoveToFolder("OutTray"))
+        tmp[2].triggered.connect(lambda: self.onMoveToFolder("Sent"))
+        tmp[3].triggered.connect(lambda: self.onMoveToFolder("Archived"))
+        tmp[4].triggered.connect(lambda: self.onMoveToFolder("Draft"))
+        tmp[5].triggered.connect(lambda: self.onMoveToFolder("Deleted"))
+        tmp[6].triggered.connect(lambda: self.onMoveToFolder("Folder1"))
+        tmp[7].triggered.connect(lambda: self.onMoveToFolder("Folder2"))
+        tmp[8].triggered.connect(lambda: self.onMoveToFolder("Folder3"))
+        tmp[9].triggered.connect(lambda: self.onMoveToFolder("Folder4"))
+        tmp[10].triggered.connect(lambda: self.onMoveToFolder("Folder5"))
+        self.menuCopy_to_Folder.addAction("Sent Messages")
+        self.menuCopy_to_Folder.addAction("Archive")
+        self.menuCopy_to_Folder.addAction("Draft Messages")
+        self.menuCopy_to_Folder.addAction("Deleted")
+        self.menuCopy_to_Folder.addAction("Folder 1")
+        self.menuCopy_to_Folder.addAction("Folder 2")
+        self.menuCopy_to_Folder.addAction("Folder 3")
+        self.menuCopy_to_Folder.addAction("Folder 4")
+        self.menuCopy_to_Folder.addAction("Folder 5")
+        tmp = self.menuCopy_to_Folder.actions()
+        tmp[0].triggered.connect(lambda: self.onCopyToFolder("InTray"))
+        tmp[1].triggered.connect(lambda: self.onCopyToFolder("OutTray"))
+        tmp[2].triggered.connect(lambda: self.onCopyToFolder("Sent"))
+        tmp[3].triggered.connect(lambda: self.onCopyToFolder("Archived"))
+        tmp[4].triggered.connect(lambda: self.onCopyToFolder("Draft"))
+        tmp[5].triggered.connect(lambda: self.onCopyToFolder("Deleted"))
+        tmp[6].triggered.connect(lambda: self.onCopyToFolder("Folder1"))
+        tmp[7].triggered.connect(lambda: self.onCopyToFolder("Folder2"))
+        tmp[8].triggered.connect(lambda: self.onCopyToFolder("Folder3"))
+        tmp[9].triggered.connect(lambda: self.onCopyToFolder("Folder4"))
+        tmp[10].triggered.connect(lambda: self.onCopyToFolder("Folder5"))
+        pass
+    def onSelectFolder(self,s):
+        self.currentFolder = s
+        self.mailfolder.load(self.currentFolder)
+        self.updateMailList()
+    def onMoveToFolder(self,s):
+        indexlist = []
+        for item in self.cMailList.selectedItems():
+            if item.column() == 0:
+                indexlist.append(item.row())
+        self.mailfolder.copyMail(indexlist,s)
+        self.mailfolder.deleteMail(indexlist)
+        self.updateMailList()
+    def onCopyToFolder(self,s):
+        indexlist = []
+        for item in self.cMailList.selectedItems():
+            if item.column() == 0:
+                indexlist.append(item.row())
+        self.mailfolder.copyMail(indexlist,s)
+        self.updateMailList()
     def onProfileChanged(self,p):
         self.settings.setActiveProfile(p)
         self.updateStatusBar()
@@ -162,11 +244,12 @@ class MainWindow(QMainWindow):
     def onNewMessage(self):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewMessage.connect(self.onHandleNewMessage)
+        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.show()
         tmp.raise_()
-    def onHandleNewMessage(self,s1,s2,s3):
-        self.outGoingMessages.append({s1,s2,s3})
+    def onHandleNewOutgoingMessage(self,mbh,m):
+        self.mailfolder.addMail(mbh,m,"OutTray")
+        self.updateMailList()
     def onReadMessage(self,row,col):
         tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -228,10 +311,26 @@ class MainWindow(QMainWindow):
         self.tncParser = KantronicsKPC3Plus(self.settings,self)
         #self.bbsParser = Nos2Parser(self.settings,self)
         self.serialStream = SerialStream(self.serialport)
-        self.tncParser.signalNewMail.connect(self.onNewMail)
+        self.tncParser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
         self.tncParser.startSession(self.serialStream)
-    def onNewMail(self,mbh,m):
-        self.mailfolder.addMail(mbh,m)
+    def onNewIncomingMessage(self,mbh,m):
+        self.mailfolder.addMail(mbh,m,"InTray")
+        self.updateMailList()
+    def onDeleteMessages(self):
+        indexlist = []
+        for item in self.cMailList.selectedItems():
+            if item.column() == 0:
+                indexlist.append(item.row())
+        self.mailfolder.copyMail(indexlist,"Deleted")
+        self.mailfolder.deleteMail(indexlist)
+        self.updateMailList()
+    def onArchiveMessages(self):
+        indexlist = []
+        for item in self.cMailList.selectedItems():
+            if item.column() == 0:
+                indexlist.append(item.row())
+        self.mailfolder.copyMail(indexlist,"Archived")
+        self.mailfolder.deleteMail(indexlist)
         self.updateMailList()
 
 if __name__ == "__main__": 

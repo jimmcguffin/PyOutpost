@@ -14,11 +14,11 @@ class SerialStream(QObject):
         self.readfromfile = False
         if not self.readfromfile:
             self.serialPort = serialport
-        self.sdata = ""
-        self.lineEnd = "cmd:"
-        self.asyncConnected = "*** CONNECTED"
-        self.asyncDisonnected = "*** DISCONNECTED"
-        self.asyncError = "" #"*** retry count exceeded"
+        self.sdata = bytearray()
+        self.lineEnd = b"cmd:"
+        self.asyncConnected = b"*** CONNECTED"
+        self.asyncDisonnected = b"*** DISCONNECTED"
+        self.asyncError = b"" #b"*** retry count exceeded"
         if self.readfromfile:
             self.logFile = open("s.log","rb")
             self.timer = QTimer(self)
@@ -45,14 +45,14 @@ class SerialStream(QObject):
                     self.logFile.flush()
     def onTimer(self): # only used when reading from file
         sdata = self.logFile.read(1)
-        self.sdata += sdata.decode()
+        self.sdata += sdata
         return self.findLines()
     def onSerialPortReady(self): # normal path, uses serial port
         sdata = bytearray(self.serialPort.readAll())
         if self.logFile: 
              self.logFile.write(sdata)
              self.logFile.flush()
-        self.sdata += sdata.decode()
+        self.sdata += sdata
         return self.findLines()
     def findLines(self):
         start = 0
@@ -61,9 +61,9 @@ class SerialStream(QObject):
         i = 0
         while i < len(self.sdata):
             bytesleft = len(self.sdata)-i
-            if bytesleft >= elen and self.sdata [i:i+elen] ==  self.lineEnd:
+            if bytesleft >= elen and self.sdata [i:i+elen] == self.lineEnd:
                     end = i+elen
-                    self.signalLineRead.emit(self.sdata[start:end])
+                    self.signalLineRead.emit(self.sdata[start:end].decode())
                     start = end
                     i = start
             elif self.asyncConnected  and bytesleft >= len(self.asyncConnected) and self.sdata [i:i+len(self.asyncConnected)] == self.asyncConnected:
@@ -88,6 +88,6 @@ class SerialStream(QObject):
         # we got to the end, remove any bytes that have been processed
         if start:
              if start >= len(self.sdata):
-                   self.sdata = ""
+                   self.sdata.clear()
              else: 
-                self.sdata = self.sdata[start]
+                del self.data[0:start] #self.sdata = self.sdata[start:]

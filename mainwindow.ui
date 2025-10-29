@@ -168,7 +168,7 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="cSendMessages">
+    <widget class="QPushButton" name="cSentMessages">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -187,7 +187,7 @@
       <bool>true</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="cArchive2">
+    <widget class="QPushButton" name="cArchived">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -350,7 +350,7 @@
      </rect>
     </property>
     <property name="selectionMode">
-     <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+     <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
     </property>
     <property name="selectionBehavior">
      <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
@@ -424,6 +424,20 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuMove_to_Folder">
+     <property name="title">
+      <string>Move to Folder</string>
+     </property>
+     <addaction name="actionIn_Tray"/>
+     <addaction name="actionOut_Tray"/>
+    </widget>
+    <widget class="QMenu" name="menuCopy_to_Folder">
+     <property name="title">
+      <string>Copy to Folder</string>
+     </property>
+     <addaction name="actionIn_Tray_2"/>
+     <addaction name="actionOut_Tray_2"/>
+    </widget>
     <addaction name="actionNew_Message"/>
     <addaction name="actionSave_As"/>
     <addaction name="actionSave_As_No_Headers"/>
@@ -431,8 +445,8 @@
     <addaction name="separator"/>
     <addaction name="actionExport"/>
     <addaction name="actionImport"/>
-    <addaction name="actionMove_to_Folder"/>
-    <addaction name="actionCopy_to_Folder"/>
+    <addaction name="menuMove_to_Folder"/>
+    <addaction name="menuCopy_to_Folder"/>
     <addaction name="separator"/>
     <addaction name="actionDelete_All_Messages"/>
     <addaction name="separator"/>
@@ -452,7 +466,7 @@
     <addaction name="actionPaste"/>
     <addaction name="actionSelectAll"/>
     <addaction name="separator"/>
-    <addaction name="actionDeleteProfile"/>
+    <addaction name="actionDelete"/>
    </widget>
    <widget class="QMenu" name="menuSetup">
     <property name="title">
@@ -601,7 +615,7 @@
     <string>Save</string>
    </property>
   </action>
-  <action name="actionDelete">
+  <action name="actionDeleteProfile">
    <property name="text">
     <string>Delete...</string>
    </property>
@@ -634,16 +648,6 @@
   <action name="actionImport">
    <property name="text">
     <string>Import</string>
-   </property>
-  </action>
-  <action name="actionMove_to_Folder">
-   <property name="text">
-    <string>Move to Folder...</string>
-   </property>
-  </action>
-  <action name="actionCopy_to_Folder">
-   <property name="text">
-    <string>Copy to Folder...</string>
    </property>
   </action>
   <action name="actionDelete_All_Messages">
@@ -691,7 +695,7 @@
     <string>SelectAll</string>
    </property>
   </action>
-  <action name="actionDeleteProfile">
+  <action name="actionDelete">
    <property name="text">
     <string>Delete</string>
    </property>
@@ -874,6 +878,26 @@
   <action name="actionReset_all_to_SCC_standard">
    <property name="text">
     <string>Reset all to SCC standard</string>
+   </property>
+  </action>
+  <action name="actionIn_Tray">
+   <property name="text">
+    <string>In Tray</string>
+   </property>
+  </action>
+  <action name="actionOut_Tray">
+   <property name="text">
+    <string>Out Tray</string>
+   </property>
+  </action>
+  <action name="actionIn_Tray_2">
+   <property name="text">
+    <string>In Tray</string>
+   </property>
+  </action>
+  <action name="actionOut_Tray_2">
+   <property name="text">
+    <string>Out Tray</string>
    </property>
   </action>
  </widget>

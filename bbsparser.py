@@ -13,14 +13,14 @@ class BbsMessage():
 class BbsParser(QObject):
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
-    signalNewMail = pyqtSignal(MailBoxHeader,str)
+    signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     def __init__(self,pd,parent=None):
         super(BbsParser,self).__init__(parent)
         self.pd = pd
         self.stuffToSend = list()
     def startSession(self,ss):
         self.serialStream = ss
-        self.serialStream.lineEnd = ">\r\n"
+        self.serialStream.lineEnd = b">\r\n"
         self.serialStream.signalLineRead.disconnect()
         self.serialStream.signalLineRead.connect(self.onResponse)        
         self.serialStream.signalDisconnected.connect(self.onDisconnected)
@@ -126,4 +126,4 @@ class Jnos2Parser(BbsParser):
         mbh.mDateReceived = MailBoxHeader.normalizedDate()
         mbh.mSize = len(messagebody)
         #while (mbh.m_DateReceived.length() < 19) mbh.m_DateReceived += " "; // just to make sure
-        self.signalNewMail.emit(mbh,messagebody)
+        self.signalNewIncomingMessage.emit(mbh,messagebody)
