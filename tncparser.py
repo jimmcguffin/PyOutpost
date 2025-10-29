@@ -2,11 +2,14 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from persistentdata import PersistentData
 from serialstream import SerialStream
 from bbsparser import Jnos2Parser
+from mailfolder import MailBoxHeader
+
 
 class TncDevice(QObject):
     signalConnected = pyqtSignal()
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
+    signalNewMail = pyqtSignal(MailBoxHeader,str)
     def __init__(self,pd,parent=None):
         super(TncDevice,self).__init__(parent)
         self.pd = pd
@@ -20,14 +23,6 @@ class TncDevice(QObject):
 
     def send(self,b):
         self.messageQueue.append(b)
-
-#		int Process(const char *pstart, const char *pend); // returns # of bytes consumed, possibly OR'd with KEEP_PROCESSING
-#	protected:
-#		PersistentData *m_pPersistentData = nullptr;
-#		QSerialPort *m_pSerialPort = nullptr;
-#		std::deque<std::string> m_StuffToSend;
-#	};
-
 
 class KantronicsKPC3Plus(TncDevice):
     def __init__(self,pd,parent=None):
@@ -62,7 +57,7 @@ class KantronicsKPC3Plus(TncDevice):
         query = self.messageQueue[0]
         # ignore any ctrl-c's
         if query[0] == '\03': query = query[1:]
-        print(f"<<{query.replace("\r","|")}>> returned <<{r.replace("\r","|")}>>")
+        print(f"<<{query.replace("\r","|")}>> returned <<{r.replace("\r","|").replace("\n","|")}>>")
         if r.startswith(query):
             del self.messageQueue[0:1]
             if self.messageQueue:
@@ -75,60 +70,14 @@ class KantronicsKPC3Plus(TncDevice):
         # give control over to BBS parser
         self.bbsParser = Jnos2Parser(self.pd,self)
         self.bbsParser.signalDisconnected.connect(self.onDisconnected)
+        self.bbsParser.signalNewMail.connect(self.onNewMail)
         self.bbsParser.startSession(self.serialStream)
+    def onNewMail(self,mbh,m):
+        self.signalNewMail.emit(mbh,m)
 
     def onDisconnected(self):
         print("Disconnected!")
         self.bbsParser.signalDisconnected.disconnect()
+        self.bbsParser.signalNewMail.disconnect()
         self.serialStream.signalLineRead.connect(self.onResponse) # point this back to us
         self.serialStream.lineEnd = "cmd:" # and reset this
-
-
-#     def process(self,data):
-#         cmd = b"cmd:"
-#         cs = b"*** CONNECTED"
-#         ds = b"*** DISCONNECTED"
-#         bytesconsumed = 0
-#         for i in range(len(data)):
-#             bytesleft = len(data)-i
-# #            if i == 0 or data[i-1] == b'\r' and bytesleft >= 4:
-# #            if bytesleft >= 4 and data[i] == b"c" and data[i+1] == b"m" and data[i+2] == b"d" and data[i+3] == b":":
-#             if bytesleft >= len(cmd) and data[i:i+len(cmd)] == cmd:
-#                     # could emit a signal here but for now I ignore responses
-#                     bytesconsumed = i+4
-#                     # sometimes there are spurious prompts
-#                     if i == 0:  return bytesconsumed, True
-#                     if self.messageQueue:
-#                         response = data[0:bytesconsumed]
-#                         #if response.startswith(b"cmd"):
-#                         #    print("response")
-#                         # this is probably the reponse to the front element
-#                         #print(f"<<{self.messageQueue[0].decode().replace("\r","|")}>> returned <<{response.decode().replace("\r","|")}>>")
-#                         if response.startswith(self.messageQueue[0]):
-#                             del self.messageQueue[0:1]
-#                             if self.messageQueue:
-#                                 self.serialPort.write(self.messageQueue[0])
-#                     # return bytesconsumed, True
-#             elif bytesleft >= len(cs) and data[i:i+len(cs)] == cs:
-#                 self.signalConnected.emit()
-#                 return bytesconsumed+len(cs), True
-#             elif bytesleft >= len(ds) and data[i:i+len(ds)] == ds:
-#                 return bytesconsumed+len(ds), True
-#         return bytesconsumed, False
-              
-
-
-
-#                     # sometimes there are spurious prompts
-#                     if i == 0:  return bytesconsumed, True
-#                     if self.messageQueue:
-#                         response = self.sdata [0:bytesconsumed]
-#                         #if response.startswith(b"cmd"):
-#                         #    print("response")
-#                         # this is probably the reponse to the front element
-#                         #print(f"<<{self.messageQueue[0].decode().replace("\r","|")}>> returned <<{response.decode().replace("\r","|")}>>")
-#                         if response.startswith(self.messageQueue[0]):
-#                             del self.messageQueue[0:1]
-#                             if self.messageQueue:
-#                                 self.serialPort.write(self.messageQueue[0])
-#                     # return bytesconsumed, True

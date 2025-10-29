@@ -12,8 +12,8 @@ import sendreceivesettingsdialog
 import messagesettingsdialog
 import newpacketmessage
 import readmessagedialog
-from mailfolder import MailFolder
-from operator import itemgetter
+from mailfolder import MailFolder, MailBoxHeader
+from operator import attrgetter
 from tncparser import KantronicsKPC3Plus
 from enum import Enum
 from serialstream import SerialStream
@@ -117,9 +117,13 @@ class MainWindow(QMainWindow):
         print(f"sort {self.mailSortIndex} {self.mailSortBackwards}")
         self.updateMailList()
     def updateMailList(self):
-        tmpindex = self.mailSortIndex+1 # now 1 to 10 but we don't use 9
-        if tmpindex == 9: tmpindex = 10
-        headers = sorted(self.mailfolder.getHeaders(),key=itemgetter(tmpindex), reverse=self.mailSortBackwards)
+        tmpindex = self.mailSortIndex+1 # now 1 to 9
+        #if tmpindex == 9: tmpindex = 10
+        if 1 <= tmpindex <= 9:
+            keyname = ["mU","mType","mFrom","mTo","mBbs","mLocalId","mSubject","mDateSent","mSize"][tmpindex-1]
+            headers = sorted(self.mailfolder.getHeaders(),key=attrgetter(keyname), reverse=self.mailSortBackwards)
+        else:
+            headers = self.mailfolder.getHeaders()
         self.mailIndex.clear()
         self.cMailList.clearContents()
         self.cMailList.setColumnWidth(0,40)
@@ -134,18 +138,18 @@ class MainWindow(QMainWindow):
         n = len(headers)
         self.cMailList.setRowCount(n)
         for i in range(n):
-            self.mailIndex.append(headers[i][0])
-            self.cMailList.setItem(i,0,QTableWidgetItem(headers[i][1]))
-            self.cMailList.setItem(i,1,QTableWidgetItem(headers[i][2]))
-            self.cMailList.setItem(i,2,QTableWidgetItem(headers[i][3]))
-            self.cMailList.setItem(i,3,QTableWidgetItem(headers[i][4]))
-            self.cMailList.setItem(i,4,QTableWidgetItem(headers[i][5]))
-            self.cMailList.setItem(i,5,QTableWidgetItem(headers[i][6]))
-            self.cMailList.setItem(i,6,QTableWidgetItem(headers[i][7]))
-            self.cMailList.setItem(i,7,QTableWidgetItem(headers[i][8]))
+            self.mailIndex.append(headers[i].mIndex)
+            self.cMailList.setItem(i,0,QTableWidgetItem(headers[i].mU))
+            self.cMailList.setItem(i,1,QTableWidgetItem(headers[i].mType))
+            self.cMailList.setItem(i,2,QTableWidgetItem(headers[i].mFrom))
+            self.cMailList.setItem(i,3,QTableWidgetItem(headers[i].mTo))
+            self.cMailList.setItem(i,4,QTableWidgetItem(headers[i].mBbs))
+            self.cMailList.setItem(i,5,QTableWidgetItem(headers[i].mLocalId))
+            self.cMailList.setItem(i,6,QTableWidgetItem(headers[i].mSubject))
+            self.cMailList.setItem(i,7,QTableWidgetItem(MailBoxHeader.toOutpostDate(headers[i].mDateSent)))
             # this version does not show the date received
             self.cMailList.item(i,7).setTextAlignment(Qt.AlignmentFlag.AlignRight) # // to match the original
-            self.cMailList.setItem(i,8,QTableWidgetItem(str(headers[i][10])))
+            self.cMailList.setItem(i,8,QTableWidgetItem(str(headers[i].mSize)))
             self.cMailList.item(i,8).setTextAlignment(Qt.AlignmentFlag.AlignRight)
         self.cMailList.resizeRowsToContents()
 
@@ -224,7 +228,11 @@ class MainWindow(QMainWindow):
         self.tncParser = KantronicsKPC3Plus(self.settings,self)
         #self.bbsParser = Nos2Parser(self.settings,self)
         self.serialStream = SerialStream(self.serialport)
+        self.tncParser.signalNewMail.connect(self.onNewMail)
         self.tncParser.startSession(self.serialStream)
+    def onNewMail(self,mbh,m):
+        self.mailfolder.addMail(mbh,m)
+        self.updateMailList()
 
 if __name__ == "__main__": 
     app = QApplication(sys.argv)

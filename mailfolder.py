@@ -23,7 +23,7 @@ import datetime
 # 	std::string m_Date; // in ISO-8601 format
 # 	qint64 m_Size = 0;
 # 	qint64 m_Offset = 0; // offset to start of header
-# 	static std::string NormalizeDate(std::string d); // converts various formats into ISO-8601
+# 	static std::string NormalizedDate(std::string d); // converts various formats into ISO-8601
 # 	std::string ToOutpostDate(void) const
 # 		{
 # 		// the display date used by Outpost has a different format
@@ -44,6 +44,7 @@ import datetime
 
 class MailBoxHeader:
     def __init__(self,s="",o=0):
+        self.mIndex = 0
         self.mU = ""
         self.mType = ""
         self.mFrom = ""
@@ -54,9 +55,9 @@ class MailBoxHeader:
         self.mDateSent = "" # in ISO-8601 format
         self.mDateReceived = "" # in ISO-8601 format
         self.mSize = 0 # size of the actual mail that follows
-        self.mOffset = 0 # offset in file to start of this header
+        self.mOffset = 0 # offset in file to start of the message body
         s = s.rstrip()
-        if s and len(tmp) > 2 and s[0] == '*' and s[1] == '/':
+        if s and len(s) > 2 and s[0:2] == "*/":
             tmp = s.split("/")
             if len(tmp) >= 11:
                 for index in range(1,9):
@@ -70,33 +71,53 @@ class MailBoxHeader:
                 self.mSubject = tmp[7]
                 self.mDateSent = tmp[8]
                 self.mDateReceived = tmp[9]
-                self.mSize = tmp[10]
+                self.mSize = int(tmp[10])
                 self.mOffset = o
+            else:
+                pass
+        else:
+            pass
     def toString(self):
-        r = f"*/{quote_plus(self.mU)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.m_Subject)}/{self.m_DateSent}/{self.mDateReceived}/{self.mSize}\n";
+        r = f"*/{quote_plus(self.mU)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n";
         return r
     @staticmethod
+    def toOutpostDate(s):
+		# the display date used by Outpost has a different format
+#        d,s,t = self.mDateSent.partition('T')
+#        if not s:
+#            d,s,t = self.mDateSent.partition(' ') # is some cases the T is not there
+#        d = d.split('-')
+#        t = t.split(':')
+#        dt = datetime.datetime(int(d[0]),int(d[1]),int(d[2]),int(t[0]),int(t[1]),int(t[2]))
+        dt = datetime.datetime.fromisoformat(s)
+        return "{:%m/%d/%Y %H:%M}".format(dt)
+    @staticmethod
     def monthToInt(s):
-        if s == "Jan": M = 1
-        elif s == "Feb": M = 2
-        elif s == "Mar": M = 3
-        elif s == "Apr": M = 4
-        elif s == "May": M = 5
-        elif s == "Jun": M = 6
-        elif s == "Jul": M = 7
-        elif s == "Aug": M = 8
-        elif s == "Sep": M = 9
-        elif s == "Oct": M = 10
-        elif s == "Nov": M = 11
-        elif s == "Dec": M = 12
+        if s == "Jan": return 1
+        elif s == "Feb": return 2
+        elif s == "Mar": return 3
+        elif s == "Apr": return 4
+        elif s == "May": return 5
+        elif s == "Jun": return 6
+        elif s == "Jul": return 7
+        elif s == "Aug": return 8
+        elif s == "Sep": return 9
+        elif s == "Oct": return 10
+        elif s == "Nov": return 11
+        elif s == "Dec": return 12
         else: return 0
     @staticmethod
-    def normalizeDate(d):
+    def normalizedDate(d=""):
         # try to make sense out of any date format, return a string in ISO-8601 format
         # here is what the current BBS sends: Thu, 09 Oct 2025 09:58:36 PDT, which is known as RFC 2822
         # here is another format, used by ctime(): Mon Oct 11 17:10:55 2021
         # since these is the only examples I have at the moment, it only supports those two
 
+        # if d is None, return current date/time
+        if not d:
+            d = datetime.datetime.now()
+            return "{:%Y-%m-%dT%H:%M:%S}".format(d)
+            
         yy = 0
         mm = 0
         dd = 0
@@ -118,7 +139,7 @@ class MailBoxHeader:
                 yy = int(i[2])
                 mm = MailBoxHeader.monthToInt(i[1])
                 dd = int(i[0])
-                j = i[3].split(i[3],':')
+                j = i[3].split(':')
                 if len(j) >= 2:
                     h = int(j[0])
                     m = int(j[1])
@@ -141,7 +162,8 @@ class MailBoxHeader:
         if yy < 100: yy += 2000;
         if mm >= 1 and mm <= 12 and dd >= 1 and dd <= 31 and h >= 0 and h < 24 and m >= 0 and m < 60 and s >=0  and s < 60:
             d = datetime.datetime(yy,mm,dd,h,m,s)
-            return "{:%Y-%m-%d %H:%M:%S}".format(d)
+            return "{:%Y-%m-%dT%H:%M:%S}".format(d)
+
 class MailFolder:
     def __init__(self):
         super(MailFolder,self).__init__()
@@ -151,13 +173,14 @@ class MailFolder:
         self.mail.clear()
         self.filename = fn
         try:
-            with open(self.filename,"r") as file:
-                while l := file.readline():
-                    if len(l) > 10 and l[0] == '*' and l[1] == '/':
-                        m = MailBoxHeader(l,file.tell())
-                        if (m):
-                            self.mail.append(m)
-                            file.seek(m.mOffset+m.mSize)
+            with open(self.filename,"rb") as file:
+                while l := file.readline().decode():
+                    if len(l) > 10 and l[0:2] == "*/":
+                        mbh = MailBoxHeader(l,file.tell())
+                        if (mbh):
+                            mbh.mIndex = len(self.mail)
+                            self.mail.append(mbh)
+                            file.seek(mbh.mOffset+mbh.mSize)
         except FileNotFoundError:
             pass
     def addMail(self,mbh,message): # mbh is a MailBoxHeader
@@ -165,25 +188,19 @@ class MailFolder:
         for m in self.mail:
             if m == mbh:
                 return
-        with open(self.filename,"a") as file:
+        with open(self.filename,"ab") as file:
             mbh.mSize = len(message)
             mbh.mOffset = file.tell()
-            file.write(mbh.toString())
-            file.write(message)
+            file.write(mbh.toString().encode())
+            file.write(message.encode())
+        mbh.mIndex = len(self.mail)
         self.mail.append(mbh)
     def getMessage(self,n):
         if n < 0 or n >= len(self.mail): return [],""
         m = ""
-        offset = int(self.mail[n].offset)
-        msize = int(self.mail[n][10])
-        with open(self.filename,"r") as file:
+        offset = int(self.mail[n].mOffset)
+        msize = int(self.mail[n].mSize)
+        with open(self.filename,"rb") as file:
             file.seek(offset)
-            return self.mail[n],file.read(msize)
+            return self.mail[n],file.read(msize).decode()
     def getHeaders(self): return self.mail
-    def toFileHeader(self,h):
-        r = "*"
-        for i in range(1,9):
-            r += "/"+quote_plus(h[1],'/')
-        r += "/"+str(h[10])
-        return r;
-

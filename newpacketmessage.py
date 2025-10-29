@@ -39,6 +39,4 @@ class NewPacketMessage(QMainWindow):
 
     def onSend(self):
         message = self.cMessage.toPlainText()
-        message.replace("\r\n","\n")
-        message.replace("\n","\r")
         self.signalNewMessage.emit(self.cTo.text(),self.cSubject.text(),message)
