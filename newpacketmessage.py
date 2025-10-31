@@ -41,8 +41,10 @@ class NewPacketMessage(QMainWindow):
     def onSend(self):
         message = self.cMessage.toPlainText()
         mbh = MailBoxHeader()
-        #mbh.mU = ""
-        #mbh.mType = ""
+        mbh.mUrgent = "Y" if self.cUrgent.isChecked() else "N"
+        if self.cMesssageTypeBulletin.isChecked(): mbh.mType = "B"
+        elif self.cMessageTypeNts.isChecked(): mbh.mType = "N"
+        else: mbh.mType = "P"
         mbh.mFrom = self.cFrom.text()
         mbh.mTo = self.cTo.text()
         mbh.mBbs = self.cBBS.text()

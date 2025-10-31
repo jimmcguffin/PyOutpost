@@ -123,7 +123,9 @@ class Jnos2Parser(BbsParser):
             else:
                 messagebody += lines[i] + "\r\n"
         if not messagebody: return
+        mbh.mIsNew = "Y"
+        # todo: figure out the "urgent" flag and the message type
+        mbh.mBbs = self.pd.getBBS("ConnectName")
         mbh.mDateReceived = MailBoxHeader.normalizedDate()
         mbh.mSize = len(messagebody)
-        #while (mbh.m_DateReceived.length() < 19) mbh.m_DateReceived += " "; // just to make sure
         self.signalNewIncomingMessage.emit(mbh,messagebody)

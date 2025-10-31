@@ -1,7 +1,8 @@
 import sys
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt, QIODeviceBase
-from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox
+from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
 from PyQt6.uic import load_ui
 from PyQt6.QtSerialPort import QSerialPortInfo, QSerialPort
 from persistentdata import PersistentData
@@ -10,8 +11,10 @@ import interfacedialog
 import stationiddialog
 import sendreceivesettingsdialog
 import messagesettingsdialog
+import generalsettingsdialog
 import newpacketmessage
 import readmessagedialog
+import formdialog
 from mailfolder import MailFolder, MailBoxHeader
 from operator import attrgetter
 from tncparser import KantronicsKPC3Plus
@@ -27,15 +30,18 @@ class MainWindow(QMainWindow):
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
         self.actionNew_Message.triggered.connect(self.onNewMessage)
+        self.actionXSC_ICS_213_Message.triggered.connect(lambda: self.onNewForm("ICS-213_Message_Form_v20220119-1"))
         self.actionBBS.triggered.connect(self.OnBbsSetup)
         self.actionInterface.triggered.connect(self.OnInterfaceSetup)
         self.actionStation_ID.triggered.connect(self.OnStationId)
         self.actionSend_Receive_Settings.triggered.connect(self.onSendReceiveSettings)
         self.actionMessage_Settings.triggered.connect(self.onMessageSettings)
+        self.actionGeneral_Settings.triggered.connect(self.onGeneralSettings)
         self.actionDelete.triggered.connect(self.onDeleteMessages)
         self.cProfile.currentTextChanged.connect(self.onProfileChanged)
         self.actionNewProfile.triggered.connect(self.onNewProfile)
         self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
+        self.cMailList.customContextMenuRequested.connect(self.onMailListRightClick)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
         self.actionSend_Receive.triggered.connect(self.onSendReceive)
 
@@ -85,16 +91,21 @@ class MainWindow(QMainWindow):
         self.mailfolder.load(self.currentFolder)
         self.updateMailList()
         # need to add the folder list in several places
+        self.cFolder1.setText(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
+        self.cFolder2.setText(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
+        self.cFolder3.setText(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
+        self.cFolder4.setText(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
+        self.cFolder5.setText(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
         # the first two (in/out) are already there
         self.menuMove_to_Folder.addAction("Sent Messages")
         self.menuMove_to_Folder.addAction("Archive")
         self.menuMove_to_Folder.addAction("Draft Messages")
         self.menuMove_to_Folder.addAction("Deleted")
-        self.menuMove_to_Folder.addAction("Folder 1")
-        self.menuMove_to_Folder.addAction("Folder 2")
-        self.menuMove_to_Folder.addAction("Folder 3")
-        self.menuMove_to_Folder.addAction("Folder 4")
-        self.menuMove_to_Folder.addAction("Folder 5")
+        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
+        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
+        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
+        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
+        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
         tmp = self.menuMove_to_Folder.actions()
         tmp[0].triggered.connect(lambda: self.onMoveToFolder("InTray"))
         tmp[1].triggered.connect(lambda: self.onMoveToFolder("OutTray"))
@@ -111,11 +122,11 @@ class MainWindow(QMainWindow):
         self.menuCopy_to_Folder.addAction("Archive")
         self.menuCopy_to_Folder.addAction("Draft Messages")
         self.menuCopy_to_Folder.addAction("Deleted")
-        self.menuCopy_to_Folder.addAction("Folder 1")
-        self.menuCopy_to_Folder.addAction("Folder 2")
-        self.menuCopy_to_Folder.addAction("Folder 3")
-        self.menuCopy_to_Folder.addAction("Folder 4")
-        self.menuCopy_to_Folder.addAction("Folder 5")
+        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
+        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
+        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
+        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
+        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
         tmp = self.menuCopy_to_Folder.actions()
         tmp[0].triggered.connect(lambda: self.onCopyToFolder("InTray"))
         tmp[1].triggered.connect(lambda: self.onCopyToFolder("OutTray"))
@@ -199,10 +210,10 @@ class MainWindow(QMainWindow):
         print(f"sort {self.mailSortIndex} {self.mailSortBackwards}")
         self.updateMailList()
     def updateMailList(self):
-        tmpindex = self.mailSortIndex+1 # now 1 to 9
+        tmpindex = self.mailSortIndex+2 # now 2 to 10
         #if tmpindex == 9: tmpindex = 10
-        if 1 <= tmpindex <= 9:
-            keyname = ["mU","mType","mFrom","mTo","mBbs","mLocalId","mSubject","mDateSent","mSize"][tmpindex-1]
+        if 2 <= tmpindex <= 10:
+            keyname = ["mUrgent","mType","mFrom","mTo","mBbs","mLocalId","mSubject","mDateSent","mSize"][tmpindex-2]
             headers = sorted(self.mailfolder.getHeaders(),key=attrgetter(keyname), reverse=self.mailSortBackwards)
         else:
             headers = self.mailfolder.getHeaders()
@@ -221,7 +232,7 @@ class MainWindow(QMainWindow):
         self.cMailList.setRowCount(n)
         for i in range(n):
             self.mailIndex.append(headers[i].mIndex)
-            self.cMailList.setItem(i,0,QTableWidgetItem(headers[i].mU))
+            self.cMailList.setItem(i,0,QTableWidgetItem(headers[i].mUrgent))
             self.cMailList.setItem(i,1,QTableWidgetItem(headers[i].mType))
             self.cMailList.setItem(i,2,QTableWidgetItem(headers[i].mFrom))
             self.cMailList.setItem(i,3,QTableWidgetItem(headers[i].mTo))
@@ -233,6 +244,11 @@ class MainWindow(QMainWindow):
             self.cMailList.item(i,7).setTextAlignment(Qt.AlignmentFlag.AlignRight) # // to match the original
             self.cMailList.setItem(i,8,QTableWidgetItem(str(headers[i].mSize)))
             self.cMailList.item(i,8).setTextAlignment(Qt.AlignmentFlag.AlignRight)
+            if headers[i].mIsNew == "Y":
+                font =  self.cMailList.item(i,0).font()
+                font.setBold(True)
+                for j in range(9):
+                    self.cMailList.item(i,j).setFont(font)
         self.cMailList.resizeRowsToContents()
 
     def onSendReceiveSettings(self):
@@ -241,10 +257,24 @@ class MainWindow(QMainWindow):
     def onMessageSettings(self):
         msd = messagesettingsdialog.MessageSettingsDialog(self.settings,self)
         msd.exec()
+    def onGeneralSettings(self):
+        msd = generalsettingsdialog.GeneralSettingsDialog(self.settings,self)
+        msd.exec()
+        # redraw the folder names in case they have changed
+        self.cFolder1.setText(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
+        self.cFolder2.setText(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
+        self.cFolder3.setText(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
+        self.cFolder4.setText(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
+        self.cFolder5.setText(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
     def onNewMessage(self):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
+        tmp.show()
+        tmp.raise_()
+    def onNewForm(self,form):
+        tmp = formdialog.FormDialog(self.settings,form,self)
+        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.show()
         tmp.raise_()
     def onHandleNewOutgoingMessage(self,mbh,m):
@@ -259,6 +289,8 @@ class MainWindow(QMainWindow):
         tmp.setData(h,m)
         tmp.show()
         tmp.raise_()
+        if self.mailfolder.markAsNew(self.mailIndex[row],False):
+            self.updateMailList()
     def openSerialPort(self):
         # get all relevant settings - remember that at this point they are all strings
         port = self.settings.getInterface("ComPort")
@@ -332,6 +364,57 @@ class MainWindow(QMainWindow):
         self.mailfolder.copyMail(indexlist,"Archived")
         self.mailfolder.deleteMail(indexlist)
         self.updateMailList()
+    def onMailListRightClick(self,pos):
+        item = self.cMailList.itemAt(pos)
+        if not item: return
+        row = item.row();
+        if row < 0: return
+        mailindex = self.mailIndex[row]
+        m = QMenu(self)
+        a1 = QAction("Open",self)
+        m.addAction(a1)
+        mm = QMenu("Open Enhanced",self)
+        a2 = QAction("as Text",self)
+        mm.addAction(a2)
+        a3 = QAction("in Client",self)
+        mm.addAction(a3)
+        m.addMenu(mm)
+        a4 = QAction("Print",self)
+        m.addAction(a4)
+        a5 = QAction("Save As...",self)
+        m.addAction(a5)
+        a6 = QAction("Save As. No Headers...",self)
+        m.addAction(a6)
+        a7 = QAction("Mark as Unread",self)
+        m.addAction(a7)
+        a8 = QAction("Mark as Read",self)
+        m.addAction(a8)
+        m.addSeparator()
+        a9 = QAction("Archive",self)
+        m.addAction(a9)
+#         a1 = m.addAction("Open",self)
+#         mm = m.addMenu("Open Enhanced",self)
+#         a2 = mm.addAction("as Text",self)
+#         a3 = mm.addAction("in Client",self)
+#         a4 = m.addAction("Print",self)
+#         a5 = m.addAction("Save As...",self)
+#         a6 = m.addAction("Save As. No Headers...",self)
+#         a7 = m.addAction("Mark as Unread",self)
+#         a8 = m.addAction("Mark as Read",self)
+#         m.addSeparator(self)
+#         a9 = m.addAction("Archive",self)
+# #        mm = m.addMenu("Archive")
+#         a10 = m.addAction("Print",self)
+        r = m.exec(self.cMailList.mapToGlobal(pos))
+        if r == a1:
+            self.onReadMessage(row,0)
+        elif r == a7:
+            if self.mailfolder.markAsNew(mailindex,True):
+                self.updateMailList()
+        elif r == a8:
+            if self.mailfolder.markAsNew(mailindex,False):
+                self.updateMailList()
+        pass
 
 if __name__ == "__main__": 
     app = QApplication(sys.argv)

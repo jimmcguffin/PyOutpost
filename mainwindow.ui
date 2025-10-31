@@ -349,6 +349,9 @@
       <height>481</height>
      </rect>
     </property>
+    <property name="contextMenuPolicy">
+     <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+    </property>
     <property name="selectionMode">
      <enum>QAbstractItemView::SelectionMode::ExtendedSelection</enum>
     </property>
@@ -530,6 +533,7 @@
     <property name="title">
      <string>Forms</string>
     </property>
+    <addaction name="actionXSC_ICS_213_Message"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -898,6 +902,11 @@
   <action name="actionOut_Tray_2">
    <property name="text">
     <string>Out Tray</string>
+   </property>
+  </action>
+  <action name="actionXSC_ICS_213_Message">
+   <property name="text">
+    <string>XSC ICS-213 Message</string>
    </property>
   </action>
  </widget>

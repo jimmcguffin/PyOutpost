@@ -45,9 +45,10 @@ import os
 # */U/Type/From/To/BBS/LocalId/Subject/Date/Size
 
 class MailBoxHeader:
-    def __init__(self,s="",o=0):
+    def __init__(self,s="",oh=0,om=0):
         self.mIndex = 0
-        self.mU = ""
+        self.mIsNew = "N" # "Y"=new/unread, "N"=read
+        self.mUrgent = ""
         self.mType = ""
         self.mFrom = ""
         self.mTo = ""
@@ -57,24 +58,27 @@ class MailBoxHeader:
         self.mDateSent = "" # in ISO-8601 format
         self.mDateReceived = "" # in ISO-8601 format
         self.mSize = 0 # size of the actual mail that follows
-        self.mOffset = 0 # offset in file to start of the message body
+        self.mOffsetToHeader = 0 # offset in file to start of this header
+        self.mOffsetToMessageBody = 0 # offset in file to start of the message body
         s = s.rstrip()
         if s and len(s) > 2 and s[0:2] == "*/":
             tmp = s.split("/")
-            if len(tmp) >= 11:
-                for index in range(1,9):
+            if len(tmp) >= 12:
+                for index in range(2,10):
                     tmp[index]= unquote_plus(tmp[index])
-                self.mU = tmp[1]
-                self.mType = tmp[2]
-                self.mFrom = tmp[3]
-                self.mTo = tmp[4]
-                self.mBbs = tmp[5]
-                self.mLocalId = tmp[6]
-                self.mSubject = tmp[7]
-                self.mDateSent = tmp[8]
-                self.mDateReceived = tmp[9]
-                self.mSize = int(tmp[10])
-                self.mOffset = o
+                self.mIsNew = tmp[1]
+                self.mUrgent = tmp[2]
+                self.mType = tmp[3]
+                self.mFrom = tmp[4]
+                self.mTo = tmp[5]
+                self.mBbs = tmp[6]
+                self.mLocalId = tmp[7]
+                self.mSubject = tmp[8]
+                self.mDateSent = tmp[9]
+                self.mDateReceived = tmp[10]
+                self.mSize = int(tmp[11])
+                self.mOffsetToHeader = oh
+                self.mOffsetToMessageBody = om
             else:
                 pass
         else:
@@ -86,17 +90,11 @@ class MailBoxHeader:
         return False
     
     def toString(self):
-        r = f"*/{quote_plus(self.mU)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n";
+        r = f"*/{self.mIsRead}/{quote_plus(self.mUrgent)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n";
         return r
     @staticmethod
     def toOutpostDate(s):
 		# the display date used by Outpost has a different format
-#        d,s,t = self.mDateSent.partition('T')
-#        if not s:
-#            d,s,t = self.mDateSent.partition(' ') # is some cases the T is not there
-#        d = d.split('-')
-#        t = t.split(':')
-#        dt = datetime.datetime(int(d[0]),int(d[1]),int(d[2]),int(t[0]),int(t[1]),int(t[2]))
         dt = datetime.datetime.fromisoformat(s)
         return "{:%m/%d/%Y %H:%M}".format(dt)
     @staticmethod
@@ -183,13 +181,17 @@ class MailFolder:
         self.filename = fn
         try:
             with open(self.filename+".mail","rb") as file:
-                while l := file.readline().decode():
+                while (True):
+                    oh = file.tell()
+                    l = file.readline().decode()
+                    if not l: break
                     if len(l) > 10 and l[0:2] == "*/":
-                        mbh = MailBoxHeader(l,file.tell())
+                        om = file.tell()
+                        mbh = MailBoxHeader(l,oh,om)
                         if (mbh):
                             mbh.mIndex = len(self.mail)
                             self.mail.append(mbh)
-                            file.seek(mbh.mOffset+mbh.mSize)
+                            file.seek(om+mbh.mSize)
         except FileNotFoundError:
             pass
 
@@ -201,8 +203,9 @@ class MailFolder:
                     return
             with open(self.filename+".mail","ab") as file:
                 mbh.mSize = len(message)
-                mbh.mOffset = file.tell()
+                mbh.mOffsetToHeader = file.tell()
                 file.write(mbh.toString().encode())
+                mbh.mOffsetToMessageBody = file.tell()
                 file.write(message.encode())
             mbh.mIndex = len(self.mail)
             self.mail.append(mbh)
@@ -215,8 +218,9 @@ class MailFolder:
                     return
             with open(target.filename+".mail","ab") as file:
                 mbh.mSize = len(message)
-                mbh.mOffset = file.tell()
+                mbh.mOffsetToHeader = file.tell()
                 file.write(mbh.toString().encode())
+                mbh.mOffsetToMessageBody = file.tell()
                 file.write(message.encode())
 
     def copyMail(self,indexlist,tomailbox): # to move mail, call copyMail followed by deleteMail with same indexlist
@@ -245,13 +249,35 @@ class MailFolder:
 
     def getMessage(self,n):
         if not 0 <= n < len(self.mail): return [],""
-        m = ""
-        offset = int(self.mail[n].mOffset)
-        msize = int(self.mail[n].mSize)
+        offset = self.mail[n].mOffsetToMessageBody
+        msize = self.mail[n].mSize
         try:
             with open(self.filename+".mail","rb") as file:
                 file.seek(offset)
                 return self.mail[n],file.read(msize).decode()
         except FileNotFoundError:
             return [],""
+
+    def markAsNew(self,n,mark=True): # mark as read is markAsNew(n,False), returns True if changed
+        if not 0 <= n < len(self.mail): return False
+        m = "Y" if mark else "N"
+        expectedh = b"*/N" if mark else b"*/Y" 
+        newh = b"*/Y" if mark else b"*/N" 
+        # if already new/notnew, return
+        if self.mail[n].mIsNew == m: return False
+        self.mail[n].mIsNew = m
+        # this is a delicate operation, need to read the header and then update it in-place
+        offset = self.mail[n].mOffsetToHeader
+        try:
+            with open(self.filename+".mail","rb+") as file:
+                file.seek(offset)
+                # read the next 3 bytes just to see if we are in the right spot
+                h = file.read(3)
+                if len(h) == 3 and h == expectedh:
+                    file.seek(offset)
+                    file.write(newh)
+        except FileNotFoundError:
+            pass
+        return True
+
     def getHeaders(self): return self.mail
