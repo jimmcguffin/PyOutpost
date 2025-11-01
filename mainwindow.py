@@ -176,7 +176,7 @@ class MainWindow(QMainWindow):
         l = []
         for sp in sps:
              print(f"port {sp.portName()} {sp.description()}")
-             l.append(sp.portName())
+             l.append(f"{sp.portName()}/{sp.description()}") #sp.portName())
         id = interfacedialog.InterfaceDialog(self.settings,self)
         id.setComPortList(l)
         id.exec()
@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         l1 = self.settings.getActiveCallSign(True)
         l2 = self.settings.getActiveBBS()
         l3 = self.settings.getActiveInterface()
-        l4 = self.settings.getInterface("ComPort")
+        l4 = self.settings.getInterface("ComPort").partition("/")[0]
         self.cStatusCenter.setText(f"{l1} -- {l2} -- {l3} ({l4})")
     def updateProfileList(self):
         ap = self.settings.getActiveProfile()
@@ -275,11 +275,19 @@ class MainWindow(QMainWindow):
     def onNewForm(self,form):
         tmp = formdialog.FormDialog(self.settings,form,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
         tmp.show()
         tmp.raise_()
     def onHandleNewOutgoingMessage(self,mbh,m):
         self.mailfolder.addMail(mbh,m,"OutTray")
         self.updateMailList()
+    def onHandleNewOutgoingFormMessage(self,subject,m,urgent):
+        tmp = newpacketmessage.NewPacketMessage(self.settings,self)
+        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
+        tmp.setInitalData(subject,m,urgent)
+        tmp.show()
+        tmp.raise_()
     def onReadMessage(self,row,col):
         tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -293,7 +301,7 @@ class MainWindow(QMainWindow):
             self.updateMailList()
     def openSerialPort(self):
         # get all relevant settings - remember that at this point they are all strings
-        port = self.settings.getInterface("ComPort")
+        port = self.settings.getInterface("ComPort").partition('/')[0]
         baud = self.settings.getInterface("Baud")
         parity = self.settings.getInterface("Parity")
         databits = self.settings.getInterface("DataBits")

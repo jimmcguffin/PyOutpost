@@ -25,11 +25,11 @@ class NewPacketMessage(QMainWindow):
         if self.pd.getProfileBool("MessageSettings/AddMessageNumber"):
             subject += self.pd.getUserCallSign("MessagePrefix")
         f = self.pd.getProfile("MessageSettings/Hyphenation_flag")
-        if f == 0:
+        if f == "0":
             subject += str(self.pd.getAndIncrementNextMessageNumber())
-        elif f == 1:
+        elif f == "1":
             subject += "-"+str(self.pd.getAndIncrementNextMessageNumber())
-        elif f == 2:
+        elif f == "2":
             dt = QDateTime.currentDateTime()
             subject += dt.toString("yyMMddHHmmss")
         if self.pd.getProfileBool("MessageSettings/AddCharacter"):
@@ -37,12 +37,20 @@ class NewPacketMessage(QMainWindow):
         if self.pd.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
             subject += ":"
         self.cSubject.setText(subject)
-
+    def setInitalData(self,subject,message,urgent=False):
+        self.cSubject.setText(subject)
+        self.cMessage.setPlainText(message)
+        self.cUrgent.setChecked(urgent)
     def onSend(self):
         message = self.cMessage.toPlainText()
+        if not message:
+            message = '\n'
+        else:
+            if message[-1] != '\n':
+                message += '\n'
         mbh = MailBoxHeader()
         mbh.mUrgent = "Y" if self.cUrgent.isChecked() else "N"
-        if self.cMesssageTypeBulletin.isChecked(): mbh.mType = "B"
+        if self.cMessageTypeBulletin.isChecked(): mbh.mType = "B"
         elif self.cMessageTypeNts.isChecked(): mbh.mType = "N"
         else: mbh.mType = "P"
         mbh.mFrom = self.cFrom.text()
