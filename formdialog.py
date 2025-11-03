@@ -67,13 +67,13 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
         self.values = []
         for i in range (nb):
             j = i*5+7
-            tmpwidget = QRadioButton(parent)
+            tmpwidget = QRadioButton("                ",parent)
             x0 = int(f[j+1])
             y0 = int(f[j+2])
             x1 = int(f[j+3])
             y1 = int(f[j+4])
-            if x1 == 0: x1 = x0 +14
-            if y1 == 0: y1 = y0 +14
+            if x1 == 0: x1 = x0 + 64
+            if y1 == 0: y1 = y0 + 14
             tmpwidget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
             self.widget.addButton(tmpwidget,i)
             palette = tmpwidget.palette()
@@ -92,21 +92,21 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
 class FormItemCheckBox(FormItem):
     def __init__(self,parent,f):
         super().__init__(parent,f)
-        self.widget = QCheckBox("",parent) # or f[1]
+        self.widget = QCheckBox("                ",parent) # or f[1]
         x0 = int(f[3])
         y0 = int(f[4])
         x1 = int(f[5])
         y1 = int(f[6])
-        if x1 == 0: x1 = x0 +14
-        if y1 == 0: y1 = y0 +14
+        if x1 == 0: x1 = x0 + 64
+        if y1 == 0: y1 = y0 + 14
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         palette = self.widget.palette()
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
         self.widget.setPalette(palette)
     def getValue(self):
-        return self.widget.text()
+        return self.widget.isChecked()
     def setValue(self,value):
-        return self.widget.setText(value)
+        return self.widget.setChecked(value)
 
 class FormItemDropDown(FormItem):
     def __init__(self,parent,f):
@@ -215,13 +215,21 @@ class FormDialog(QMainWindow):
             subject += ":"
         self.setFieldByName("MessageNumber",subject)
         #self.setFieldByName("Handling","PRIORITY") #test
-        d = datetime.datetime.now()
-        self.setFieldByName("Date","{:%m/%d/%Y}".format(d))
-        self.setFieldByName("Time","{:%H:%M}".format(d))
-        self.setFieldByName("OpDate","{:%m/%d/%Y}".format(d))
-        self.setFieldByName("OpTime","{:%H:%M}".format(d))
-        self.setFieldByName("OpName",self.pd.getActiveCallSignName())
-        self.setFieldByName("OpCall",self.pd.getActiveCallSign())
+        # special handing for this non-conforming form
+        if self.formid == "CheckInCheckOut":
+            self.setFieldByName("UserCall",self.pd.getActiveUserCallSign())
+            self.setFieldByName("UserName",self.pd.getUserCallSign("Name"))
+            self.setFieldByName("TacticalCall",self.pd.getActiveTacticalCallSign())
+            self.setFieldByName("TacticalName",self.pd.getTacticalCallSign("Name"))
+            self.setFieldByName("UseTacticalCall",self.pd.getProfileBool("UseTacticalCallSign"));
+        else:
+            d = datetime.datetime.now()
+            self.setFieldByName("Date","{:%m/%d/%Y}".format(d))
+            self.setFieldByName("Time","{:%H:%M}".format(d))
+            self.setFieldByName("OpDate","{:%m/%d/%Y}".format(d))
+            self.setFieldByName("OpTime","{:%H:%M}".format(d))
+            self.setFieldByName("OpName",self.pd.getActiveCallSignName())
+            self.setFieldByName("OpCall",self.pd.getActiveCallSign())
 
         self.cSend.clicked.connect(self.onSend)
     
@@ -254,21 +262,37 @@ class FormDialog(QMainWindow):
 
         
     def onSend(self):
-        message = ""
-        for h in self.headers:
-            message += h + "\n"
-        for f in self.fields:
-            v = f.getValue()
-            if v:
-                message += f"{f.label}: [{v}]\n"
-        for f in self.footers:
-            message += f + "\n"
-        handling = self.getFieldByName("Handling")
-        if not handling: handling = "?"
-        # subject comes from different places sometimes
-        subjectfieldname = "Subject"
-        if self.formid == "DmgAsmt": subjectfieldname = "Address"
-        subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.getFieldByName(subjectfieldname) 
+        # checkincheckout is comepletely different than any otjer
+        if self.formid == "CheckInCheckOut":
+            handling = "R"
+            line1 = self.getFieldByName("Type") + " "
+            line2 = ""
+            usetactical = True if self.getFieldByName("UseTacticalCall") else False
+            if usetactical:
+                line1 += self.getFieldByName("TacticalCall") + ",  " + self.getFieldByName("TacticalName")
+                line2 = self.getFieldByName("UserCall") + " , " + self.getFieldByName("UserName")
+                message = line1 + "\n" + line2 + "\n"
+            else:
+                line1 += self.getFieldByName("UserCall") + " , " + self.getFieldByName("UserName")
+                message = line1 + "\n"
+
+            subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + line1
+        else:
+            message = ""
+            for h in self.headers:
+                message += h + "\n"
+            for f in self.fields:
+                v = f.getValue()
+                if v:
+                    message += f"{f.label}: [{v}]\n"
+            for f in self.footers:
+                message += f + "\n"
+            handling = self.getFieldByName("Handling")
+            if not handling: handling = "?"
+            # subject comes from different places sometimes
+            subjectfieldname = "Subject"
+            if self.formid == "DmgAsmt": subjectfieldname = "Address"
+            subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.getFieldByName(subjectfieldname) 
         self.signalNewOutgoingMessage.emit(subject,message,handling[0] == 'I')
         self.close()
 

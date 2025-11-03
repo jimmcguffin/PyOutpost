@@ -533,6 +533,7 @@
     <property name="title">
      <string>Forms</string>
     </property>
+    <addaction name="actionXSC_Check_In_Out_Message"/>
     <addaction name="actionXSC_ICS_213_Message"/>
     <addaction name="actionXSC_Damage_Assessment"/>
    </widget>
@@ -913,6 +914,11 @@
   <action name="actionXSC_Damage_Assessment">
    <property name="text">
     <string>XSC Damage Assessment</string>
+   </property>
+  </action>
+  <action name="actionXSC_Check_In_Out_Message">
+   <property name="text">
+    <string>XSC Check-In/Out Message</string>
    </property>
   </action>
  </widget>

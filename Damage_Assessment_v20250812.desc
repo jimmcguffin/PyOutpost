@@ -39,20 +39,20 @@ MsgNo,MessageNumber,str,289,80,396,101
 22.,Address,str,109,343,390,359
 //23.,Unit,str
 24.,TypeOfStructure,rb,0,0,0,0,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
-//25..NumberOfStories,str
-//26..OwnRent,rb
+//25.:NumberOfStories,str
+//26.:OwnRent,rb
 27a.,Flooding,cb,198,456,0,0
 27b.,Roof,cb,198,476,0,0
 27c.,Structural,cb,433,456,0,0
 27d.,Other,cb,433,476,0,0
-//28..BasementType,rb
-//29..DamageClassification,rb,0,0,0,0,Destroyed,Minor,No Visible Damage,Major,Affected
-//30..Tag,rb,0,0,0,0,Green,Yellow,Red
-//31..Insuranve,rb,0,0,0,0,Yes,No
-//32..EstimatedDamage,str
-//33..Comment,str
-//34..ContactName,str
-//35..ContextPhone,str
+//28.:BasementType,rb
+//29.:DamageClassification,rb,0,0,0,0,Destroyed,Minor,No Visible Damage,Major,Affected
+//30.:Tag,rb,0,0,0,0,Green,Yellow,Red
+//31.:Insuranve,rb,0,0,0,0,Yes,No
+//32.:EstimatedDamage,str
+//33.:Comment,str
+//34.:ContactName,str
+//35.:ContextPhone,str
 OpName,OpName,str,95,828,308,846
 OpCall,OpCall,str,374,828,477,846
 OpDate,OpDate,str,522,828,584,846

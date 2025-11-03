@@ -30,6 +30,7 @@ class MainWindow(QMainWindow):
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
         self.actionNew_Message.triggered.connect(self.onNewMessage)
+        self.actionXSC_Check_In_Out_Message.triggered.connect(lambda: self.onNewForm("CheckInCheckOut","CheckInCheckOut"))
         self.actionXSC_ICS_213_Message.triggered.connect(lambda: self.onNewForm("ICS-213_Message_Form_v20220119-1","ICS213"))
         self.actionXSC_Damage_Assessment.triggered.connect(lambda: self.onNewForm("Damage_Assessment_v20250812","DmgAsmt"))
         self.actionBBS.triggered.connect(self.OnBbsSetup)
@@ -295,7 +296,21 @@ class MainWindow(QMainWindow):
         # is this a regular text message or a form?
         # for now, decide based on subject, but would be better to use message body
         s = h.mSubject.split("_")
-        if len(s) >= 4 and s[2] == "ICS213":
+        if len(s) >= 3 and s[2].startsWith("CheckIn"):
+            tmp = formdialog.FormDialog(self.settings,"CheckInCheckOut","CheckInCheckOut",self)
+            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            tmp.setData(h,m)
+            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+            tmp.show()
+            tmp.raise_()
+        elif len(s) >= 3 and s[2].startsWith("CheckOut"):
+            tmp = formdialog.FormDialog(self.settings,"CheckInCheckOut","CheckInCheckOut",self)
+            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            tmp.setData(h,m)
+            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+            tmp.show()
+            tmp.raise_()
+        elif len(s) >= 4 and s[2] == "ICS213":
             tmp = formdialog.FormDialog(self.settings,"ICS-213_Message_Form_v20220119-1","ICS213",self)
             tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
             tmp.setData(h,m)
