@@ -9,8 +9,8 @@
 !/ADDON!
 
 [Fields]
-// Message tag as it appears ib outgoing message (followed by a ": "
-// FieldName, does not appear anywhere, currently if it contains "Date" or "Time" trigger a validity check (or it will soon)
+// FieldId as it appears in outgoing message (followed by a ": ")
+// FieldName, does not appear anywhere, currently if it contains "Date" or "Time" triggers a validity check (or it will soon)
 // Type, can be "str" for string, "mstr" for multiline string, "rb" for a set of radio buttons, "cb" for a checkbox
 // 4 numbers for the location on screen, assumes 850x1100 image (100dpi), upper left and lower right, both inclusive, for radio buttons is a box that encloses all of them
 
@@ -19,14 +19,14 @@
 // Then 4 numbers for the location on screen, same details as for the main location
 
 // Soon there will be a "required" flag, probably just before the type
-// I may decide to allow custom validity check functions, it so, they may be after "required" flag, and this is end the automatic validity checks for date/timee
+// I may decide to allow custom validity check functions, it so, they may be after "required" flag, and this will end the automatic validity checks for date/timee
 
 MsgNo,MessageNumber,str,446,49,539,73
 1a.,Date,str,65,160,147,186
 1b.,Time,str,196,159,259,185
-5.,Handling,rb,IMMEDIATE,415,109,430,125,PRIORITY,564,108,579,123,ROUTINE,699,108,715,123
-6a.,TakeAction,rb,Yes,577,165,591,178,No,718,165,732,178
-6b.,Reply,rb,Yes,577,193,591,207,No,718,193,732,207
+5.,Handling,rb,0,0,0,0,IMMEDIATE,415,109,430,125,PRIORITY,564,108,579,123,ROUTINE,699,108,715,123
+6a.,TakeAction,rb,0,0,0,0,Yes,577,165,591,178,No,718,165,732,178
+6b.,Reply,rb,0,0,0,0,Yes,577,193,591,207,No,718,193,732,207
 6d.,ReplyBy,str,641,191,702,208
 7.,ToIcsPosition,str,83,233,395,258
 8.,FromIcsPosition,str,469,233,788,258

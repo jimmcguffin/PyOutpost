@@ -534,6 +534,7 @@
      <string>Forms</string>
     </property>
     <addaction name="actionXSC_ICS_213_Message"/>
+    <addaction name="actionXSC_Damage_Assessment"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -580,7 +581,7 @@
    <addaction name="menuActions"/>
    <addaction name="menuHelp"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="cStatusBar"/>
   <action name="actionBBS">
    <property name="text">
     <string>BBS...</string>
@@ -907,6 +908,11 @@
   <action name="actionXSC_ICS_213_Message">
    <property name="text">
     <string>XSC ICS-213 Message</string>
+   </property>
+  </action>
+  <action name="actionXSC_Damage_Assessment">
+   <property name="text">
+    <string>XSC Damage Assessment</string>
    </property>
   </action>
  </widget>

@@ -73,7 +73,7 @@ class PersistentData():
         # we need at least one - make a fake one if needed
         if len(r) == 0:
             self.addUserCallSign("TEMP","Temporary call sign","TMP")
-            r.push_back("TEMP")
+            r.append("TEMP")
         return r
     # special version of call sign getter that returns the user or the tactical, whichever is appropriate
     def getActiveCallSign(self,forstatusbar=False):
@@ -107,7 +107,7 @@ class PersistentData():
         # we need at least one - make a fake one if needed
         if len(r) == 0:
             self.addTacticalCallSign("TEMP","Temporary call sign","TMP")
-            r.push_back("TEMP")
+            r.append("TEMP")
         return r
     def getActiveTacticalCallSign(self): return self.activeTacticalCallSign
     def setActiveTacticalCallSign(self,s): 

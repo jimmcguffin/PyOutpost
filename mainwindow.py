@@ -30,7 +30,8 @@ class MainWindow(QMainWindow):
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
         self.actionNew_Message.triggered.connect(self.onNewMessage)
-        self.actionXSC_ICS_213_Message.triggered.connect(lambda: self.onNewForm("ICS-213_Message_Form_v20220119-1"))
+        self.actionXSC_ICS_213_Message.triggered.connect(lambda: self.onNewForm("ICS-213_Message_Form_v20220119-1","ICS213"))
+        self.actionXSC_Damage_Assessment.triggered.connect(lambda: self.onNewForm("Damage_Assessment_v20250812","DmgAsmt"))
         self.actionBBS.triggered.connect(self.OnBbsSetup)
         self.actionInterface.triggered.connect(self.OnInterfaceSetup)
         self.actionStation_ID.triggered.connect(self.OnStationId)
@@ -75,12 +76,12 @@ class MainWindow(QMainWindow):
         self.cStatusRight2 = QLabel("R2")
         self.cStatusRight2.setFrameShape(QFrame.Shape.Panel)
         self.cStatusRight2.setFrameShadow(QFrame.Shadow.Sunken)
-        self.cStatusBar = QStatusBar()
+        #self.cStatusBar = QStatusBar()
         self.cStatusBar.addWidget(self.cStatusLeft,100)
         self.cStatusBar.addWidget(self.cStatusCenter,800)
         self.cStatusBar.addPermanentWidget(self.cStatusRight1,100)
         self.cStatusBar.addPermanentWidget(self.cStatusRight2,100)
-        self.setStatusBar(self.cStatusBar)
+        #self.setStatusBar(self.cStatusBar)
         self.updateProfileList()
         self.updateStatusBar()
         self.mailSortIndex = 0
@@ -175,8 +176,7 @@ class MainWindow(QMainWindow):
         sps = QSerialPortInfo.availablePorts()
         l = []
         for sp in sps:
-             print(f"port {sp.portName()} {sp.description()}")
-             l.append(f"{sp.portName()}/{sp.description()}") #sp.portName())
+            l.append(f"{sp.portName()} / {sp.description()}") #sp.portName())
         id = interfacedialog.InterfaceDialog(self.settings,self)
         id.setComPortList(l)
         id.exec()
@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         l1 = self.settings.getActiveCallSign(True)
         l2 = self.settings.getActiveBBS()
         l3 = self.settings.getActiveInterface()
-        l4 = self.settings.getInterface("ComPort").partition("/")[0]
+        l4 = self.settings.getInterface("ComPort").partition("/")[0].rstrip()
         self.cStatusCenter.setText(f"{l1} -- {l2} -- {l3} ({l4})")
     def updateProfileList(self):
         ap = self.settings.getActiveProfile()
@@ -272,8 +272,8 @@ class MainWindow(QMainWindow):
         tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.show()
         tmp.raise_()
-    def onNewForm(self,form):
-        tmp = formdialog.FormDialog(self.settings,form,self)
+    def onNewForm(self,form,formid):
+        tmp = formdialog.FormDialog(self.settings,form,formid,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
         tmp.show()
@@ -289,19 +289,37 @@ class MainWindow(QMainWindow):
         tmp.show()
         tmp.raise_()
     def onReadMessage(self,row,col):
-        tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
-        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         if row < 0 or row >= len(self.mailIndex): return
         h,m = self.mailfolder.getMessage(self.mailIndex[row])
         if not h: return
-        tmp.setData(h,m)
-        tmp.show()
-        tmp.raise_()
+        # is this a regular text message or a form?
+        # for now, decide based on subject, but would be better to use message body
+        s = h.mSubject.split("_")
+        if len(s) >= 4 and s[2] == "ICS213":
+            tmp = formdialog.FormDialog(self.settings,"ICS-213_Message_Form_v20220119-1","ICS213",self)
+            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            tmp.setData(h,m)
+            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+            tmp.show()
+            tmp.raise_()
+        elif len(s) >= 4 and s[2] == "DmgAsmt":
+            tmp = formdialog.FormDialog(self.settings,"Damage_Assessment_v20250812","DmgAsmt",self)
+            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            tmp.setData(h,m)
+            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+            tmp.show()
+            tmp.raise_()
+        else:
+            tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
+            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+            tmp.setData(h,m)
+            tmp.show()
+            tmp.raise_()
         if self.mailfolder.markAsNew(self.mailIndex[row],False):
             self.updateMailList()
     def openSerialPort(self):
         # get all relevant settings - remember that at this point they are all strings
-        port = self.settings.getInterface("ComPort").partition('/')[0]
+        port = self.settings.getInterface("ComPort").partition('/')[0].rstrip()
         baud = self.settings.getInterface("Baud")
         parity = self.settings.getInterface("Parity")
         databits = self.settings.getInterface("DataBits")

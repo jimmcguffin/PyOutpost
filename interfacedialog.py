@@ -9,6 +9,7 @@ class InterfaceDialog(QDialog):
         super(InterfaceDialog,self).__init__(parent)
         self.pd = pd
         load_ui.loadUi("interfacedialog.ui",self)
+        self.tabWidget.setCurrentIndex(0)
         self.need_save = False
         self.loadInterfaces()
         self.load()

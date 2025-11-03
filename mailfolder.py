@@ -95,6 +95,7 @@ class MailBoxHeader:
     @staticmethod
     def toOutpostDate(s):
 		# the display date used by Outpost has a different format
+        if not s: return ""
         dt = datetime.datetime.fromisoformat(s)
         return "{:%m/%d/%Y %H:%M}".format(dt)
     @staticmethod
