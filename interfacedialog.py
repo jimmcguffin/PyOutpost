@@ -113,4 +113,10 @@ class InterfaceDialog(QDialog):
     def setComPortList(self,ports):
         self.cComPort.clear()
         self.cComPort.addItems(ports)
-        self.cComPort.setCurrentText(self.pd.getInterface("ComPort"))
+        # select the one that matches best
+        tmp = self.pd.getInterface("ComPort")
+        if tmp:
+            for i in range(len(ports)):
+                if ports[i].startswith(tmp):
+                    self.cComPort.setCurrentIndex(i)
+        #self.cComPort.setCurrentText()

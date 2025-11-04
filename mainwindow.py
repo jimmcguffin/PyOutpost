@@ -1,7 +1,7 @@
 import sys
 from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt, QIODeviceBase
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
 from PyQt6.uic import load_ui
 from PyQt6.QtSerialPort import QSerialPortInfo, QSerialPort
@@ -25,8 +25,20 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow,self).__init__()
         self.settings = PersistentData()
+        # self.settings.clear()
+        # special things that have to be done the first time
+        firsttime = False
+        if not self.settings.getUserCallSigns():
+            text, ok = QInputDialog.getText(self,"First Time User","Enter your FCC call sign")
+            if ok and text:
+                firsttime = True
+                self.resetAllToSccStandard(firsttime,text)
+            else:
+                return
+
+        self.settings.start()
         self.settings.setActiveProfile("Outpost") # todo: 
-        if self.settings.getProfileBool("ShowStationIdAtStartup"):
+        if self.settings.getProfileBool("ShowStationIdAtStartup") or not self.settings.getActiveUserCallSign() or firsttime:
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
         self.actionNew_Message.triggered.connect(self.onNewMessage)
@@ -46,7 +58,7 @@ class MainWindow(QMainWindow):
         self.cMailList.customContextMenuRequested.connect(self.onMailListRightClick)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
         self.actionSend_Receive.triggered.connect(self.onSendReceive)
-
+        self.actionReset_all_to_SCC_standard.triggered.connect(self.resetAllToSccStandard)
         self.cNew.clicked.connect(self.onNewMessage)
         #self.cOpen.clicked.connect(self.onNewMessage)
         self.cArchive.clicked.connect(self.onArchiveMessages)
@@ -167,7 +179,7 @@ class MainWindow(QMainWindow):
     def onNewProfile(self):
         text, ok = QInputDialog.getText(self,"New Profile","New profile name")
         if ok and text:
-            self.settings.addProfile(text)
+            self.settings.copyProfile(text)
             self.updateProfileList()
     def OnBbsSetup(self):
         bd = bbsdialog.BbsDialog(self.settings,self)
@@ -187,10 +199,13 @@ class MainWindow(QMainWindow):
         sid.exec()
         self.updateStatusBar()
     def updateStatusBar(self):
+        if not hasattr(self,'cStatusCenter'): return
         l1 = self.settings.getActiveCallSign(True)
         l2 = self.settings.getActiveBBS()
         l3 = self.settings.getActiveInterface()
-        l4 = self.settings.getInterface("ComPort").partition("/")[0].rstrip()
+        l4 = ""
+        cp = self.settings.getInterface("ComPort")
+        if (cp): l4 = cp.partition("/")[0].rstrip()
         self.cStatusCenter.setText(f"{l1} -- {l2} -- {l3} ({l4})")
     def updateProfileList(self):
         ap = self.settings.getActiveProfile()
@@ -334,7 +349,10 @@ class MainWindow(QMainWindow):
             self.updateMailList()
     def openSerialPort(self):
         # get all relevant settings - remember that at this point they are all strings
-        port = self.settings.getInterface("ComPort").partition('/')[0].rstrip()
+        port = self.settings.getInterface("ComPort")
+        if not port:
+            return False
+        port = port.partition('/')[0].rstrip()
         baud = self.settings.getInterface("Baud")
         parity = self.settings.getInterface("Parity")
         databits = self.settings.getInterface("DataBits")
@@ -376,6 +394,12 @@ class MainWindow(QMainWindow):
             self.serialport.setRequestToSend(True)
         return True
     def onSendReceive(self):
+        port = self.settings.getInterface("ComPort")
+        if not port:
+            QMessageBox.critical(self,"Error",f"Error serial port has not been configuired, go to Setup/Interface")
+            return
+        # port = port.partition('/')[0].rstrip()
+
         f = self.openSerialPort()
         if not f:
             QMessageBox.critical(self,"Error",f"Error {self.serialport.errorString()} opening serial port");
@@ -457,9 +481,90 @@ class MainWindow(QMainWindow):
                 self.updateMailList()
         pass
 
+    def resetAllToSccStandard(self,firsttime=False,callsign="",name="",prefix=""): # if callsign is blank, will ask
+        if not callsign:
+            callsign, ok = QInputDialog.getText(self,"Call Sign","Your FCC call sign")
+            if ok and callsign:
+                prefix = callsign[-3:] if len(callsign) >= 3 else callsign
+            else:
+                return
+        # clear out all settings!
+        self.settings.clear()
+        self.settings.save()
+        self.settings.addProfile("Outpost")
+        self.settings.addBBS("XSC_W1XSC-1","W1XSC-1","Santa Clara County ARES/RACES Packet System.  Located in San Jose.  JNOS.")
+        self.settings.setActiveBBS(self.settings.getBBSs()[0])
+        self.settings.addBBS("XSC_W2XSC-1","W2XSC-1","Santa Clara County ARES/RACES Packet System.  Located on Crystal Peak (South County).  JNOS.")
+        self.settings.addBBS("XSC_W3XSC-1","W3XSC-1","Santa Clara County ARES/RACES Packet System.  Located in Palo Alto.  JNOS.")
+        self.settings.addBBS("XSC_W4XSC-1","W4XSC-1","Santa Clara County ARES/RACES Packet System.  Located on Frazier Peak (above Milpitas).  JNOS.")
+        self.settings.addBBS("XSC_W5XSC-1","W5XSC-1","Santa Clara County ARES/RACES Packet System.  Used for training, back-up, etc.  JNOS.")
+        self.settings.addBBS("XSC_W6XSC-1","W6XSC-1","Santa Clara County ARES/RACES Packet System.  Used for testing, etc.  JNOS.")
+        self.settings.addInterface("XSC_Kantronics_KPC3-Plus","KPC3+ TNC for use with Santa Clara County's BBS System. Verify the COM port setting for your system.")
+        self.settings.setActiveInterface(self.settings.getInterfaces()[0])
+        for p in KantronicsKPC3Plus.getDefaultPrompts():
+            self.settings.setInterface(p[0],p[1])
+        self.settings.setInterface("AlwaysSendInitCommands",True)
+        self.settings.setInterface("IncludeCommandPrefix",False)
+        for p in KantronicsKPC3Plus.getDefaultCommands():
+            self.settings.setInterface(p[0],p[1])
+        self.settings.setInterface("CommandPrefix","")
+        self.settings.setInterface("CommandsBefore",KantronicsKPC3Plus.getDefaultBeforeInitCommands())
+        self.settings.setInterface("CommandsAfter",KantronicsKPC3Plus.getDefaultAfterInitCommands())
+        self.settings.setInterface("Baud","9600")
+        self.settings.setInterface("Parity","None")
+        self.settings.setInterface("DataBits","8")
+        self.settings.setInterface("StopBits","1")
+        self.settings.setInterface("FlowControl","RTS/DTS")
+        self.settings.addInterface("XSC_Kantronics_KPC3","KPC3 (NOT the 3+ version) TNC for use with Santa Clara County's BBS System. Verify the COM port setting for your system.")
+        # more interfaces go here
+        self.settings.addUserCallSign(callsign,name,prefix)
+        # ?? is this needed? self.settings.setActiveProfile("Outpost") # the default profile
+        self.settings.setActiveUserCallSign(self.settings.getUserCallSigns()[0])
+
+        self.settings.setProfile("MessageSettings/DefaultNewMessageType","P")
+        self.settings.setProfile("MessageSettings/AddMessageNumber",True)
+        self.settings.setProfile("MessageSettings/Hyphenation_flag","1")
+        self.settings.setProfile("MessageSettings/AddCharacter",True)
+        self.settings.setProfile("MessageSettings/CharacterToAdd","P")
+        self.settings.setProfile("MessageSettings/AddMessageNumberToInbound",True)
+
+        if not firsttime:
+            self.updateStatusBar()
+            self.on_actionStation_ID_triggered() # if firsttime, will happen a little later
+
+
+
+
 if __name__ == "__main__": 
     app = QApplication(sys.argv)
     app.setStyle(QStyleFactory.create("Fusion"))
+    darkmode = False
+    i = 1
+    while i < len(sys.argv):
+        if sys.argv[i] == "-dark":
+            darkmode = True
+        # elif sys.argv[i] == "-x":
+        #     i += 1
+        #     z = int(sys.argv[i])
+        i += 1
+        
+    if darkmode:
+        p = QPalette()
+        p.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+        p.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
+        p.setColor(QPalette.ColorRole.Base, QColor(42, 42, 42)) # the color of QTableWidgets
+        p.setColor(QPalette.ColorRole.AlternateBase, QColor(66, 66, 66))
+        p.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
+        p.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
+        p.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
+        p.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+        p.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
+        p.setColor(QPalette.ColorRole.BrightText, Qt.GlobalColor.red)
+        p.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+        p.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+        p.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
+        app.setPalette(p)
+
     mainwindow = MainWindow()
     mainwindow.show()
     sys.exit(app.exec())

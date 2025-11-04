@@ -10,6 +10,7 @@ class StationIdDialog(QDialog):
         self.pd = pd
         load_ui.loadUi("stationiddialog.ui",self)
         self.tabWidget.setCurrentIndex(0)
+        self.cCurrentProfile.setText(self.pd.getActiveProfile())
         self.loadUserCallSigns()
         self.need_save1 = False
         self.load1()
@@ -87,6 +88,9 @@ class StationIdDialog(QDialog):
             self.pd.addUserCallSign(text,"",prefix)
             self.loadUserCallSigns()
             self.cUserCallSign.setCurrentText(text)
+            self.cUserMessageIdPrefix.setText(prefix)
+            if self.cTacticalCallSign.count() == 0:
+                self.pd.setActiveUserCallSign(str)
 
     def onNewTacticalClicked(self):
         text, ok = QInputDialog.getText(self,"New Tactical Call Sign","New call sign")
@@ -95,4 +99,7 @@ class StationIdDialog(QDialog):
             self.pd.addTacticalCallSign(text,"",prefix)
             self.loadTacticalCallSigns()
             self.cTacticalCallSign.setCurrentText(text)
+            self.cTacticalMessageIdPrefix.setText(prefix)
+            if self.cTacticalCallSign.count() == 0:
+                self.pd.setActiveTacticalCallSign(text)
 

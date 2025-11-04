@@ -28,7 +28,7 @@ class MessageSettingsDialog(QDialog):
         self.cUseDefaultDestination.setChecked(self.pd.getProfileBool("MessageSettings/UseDefaultDestination"))
         self.cDefaultDestination.setText(self.pd.getProfile("MessageSettings/DefaultDestination"))
         # page 2
-        self.cAddMessageNumber.setChecked(self.pd.getProfileBool("MessageSettings/AddMessageNumber","0"))
+        self.cAddMessageNumber.setChecked(self.pd.getProfileBool("MessageSettings/AddMessageNumber",False))
         f = int(self.pd.getProfile("MessageSettings/Hyphenation_flag"))
         self.cWithoutHyphenation.setChecked(f == 0)
         self.cWithHyphenation.setChecked(f == 1)

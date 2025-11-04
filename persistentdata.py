@@ -3,6 +3,8 @@ from PyQt6.QtCore import QSettings
 class PersistentData():
     def __init__(self):
         self.settings = QSettings("OpenOutpost","OpenOutpost")
+
+    def start(self): # this gets called once we know things are "normal"
         ap = self.settings.value("ActiveProfile","Outpost") # "Outpost" is the default profile
         self.activeProfile = ap
         self.activeUserCallSign = self.getProfile("ActiveUserCallSign")
@@ -10,18 +12,23 @@ class PersistentData():
         self.activeBBS = self.getProfile("ActiveBBS")
         self.activeInterface = self.getProfile("ActiveInterface")
         #save()
-
+    def clear(self):
+        self.settings.clear()
     def save(self):
         self.settings.sync()
 	# profiles
-    def addProfile(self,name): # makes the new one the active profile and copies serveral values
+    def addProfile(self,name): # just creates an empty profile, only used when running the first time
+        self.settings.setValue(f"Profiles/{name}/ActiveUserCallSign","")
+        self.activeProfile = name
+        self.settings.setValue("ActiveProfile",name)
+    def copyProfile(self,name): # makes the new one the active profile and copies serveral values
         ucs = self.activeUserCallSign
         tcs = self.activeTacticalCallSign
         bbs = self.activeBBS
         interface = self.activeInterface
         self.activeProfile = name
         self.setProfile("ActiveUserCallSign",ucs)
-        self.setProfile("ActiveTacticalCallSign",tcs)
+        if tcs: self.setProfile("ActiveTacticalCallSign",tcs)
         self.setProfile("ActiveBBS",bbs)
         self.setProfile("ActiveInterface",interface)
         self.setActiveProfile(name)
@@ -38,7 +45,7 @@ class PersistentData():
         if not self.activeUserCallSign:
             l = self.getUserCallSigns()
             if l: self.setActiveUserCallSign(l[0])
-            else: self.setActiveUserCallSign("TEMP")
+            else: self.setActiveUserCallSign("")
         self.activeTacticalCallSign = self.getProfile("ActiveTacticalCallSign")
         if not self.activeTacticalCallSign:
             self.setActiveTacticalCallSign("") # it is OK for these to be blank
@@ -71,9 +78,9 @@ class PersistentData():
         r = self.settings.childGroups()
         self.settings.endGroup()
         # we need at least one - make a fake one if needed
-        if len(r) == 0:
-            self.addUserCallSign("TEMP","Temporary call sign","TMP")
-            r.append("TEMP")
+#        if len(r) == 0:
+#            self.addUserCallSign("TEMP","Temporary call sign","TMP")
+#            r.append("TEMP")
         return r
     # special version of call sign getter that returns the user or the tactical, whichever is appropriate
     def getActiveCallSign(self,forstatusbar=False):
@@ -104,10 +111,6 @@ class PersistentData():
         self.settings.beginGroup("TacticalCallSigns")
         r = self.settings.childGroups()
         self.settings.endGroup()
-        # we need at least one - make a fake one if needed
-        if len(r) == 0:
-            self.addTacticalCallSign("TEMP","Temporary call sign","TMP")
-            r.append("TEMP")
         return r
     def getActiveTacticalCallSign(self): return self.activeTacticalCallSign
     def setActiveTacticalCallSign(self,s): 

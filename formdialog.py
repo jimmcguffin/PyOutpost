@@ -262,7 +262,7 @@ class FormDialog(QMainWindow):
 
         
     def onSend(self):
-        # checkincheckout is comepletely different than any otjer
+        # checkincheckout is comepletely different than any other
         if self.formid == "CheckInCheckOut":
             handling = "R"
             line1 = self.getFieldByName("Type") + " "

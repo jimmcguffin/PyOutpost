@@ -70,7 +70,7 @@ class KantronicsKPC3Plus(TncDevice):
         # give control over to BBS parser
         self.bbsParser = Jnos2Parser(self.pd,self)
         self.bbsParser.signalDisconnected.connect(self.onDisconnected)
-        self.bbsParser.Incoming.connect(self.onNewIncomingMessage)
+        self.bbsParser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
         self.bbsParser.startSession(self.serialStream)
 
     def onNewIncomingMessage(self,mbh,m):
@@ -84,3 +84,56 @@ class KantronicsKPC3Plus(TncDevice):
         self.serialStream.lineEnd = b"cmd:" # and reset this
         # self.signalDisconnected.emit() # todo: do final closing bits then emit this
 
+    @staticmethod
+    def getDefaultPrompts():
+        return  [
+			("PromptCommand","cmd:"),
+			("PromptTimeout","*** retry count exceeded"),
+			("PromptConnected","*** CONNECTED"),
+			("PromptDisconnected","*** DISCONNECTED"),
+            ]   
+
+    @staticmethod
+    def getDefaultCommands():
+         return (
+				("CommandMyCall","my"),
+				("CommandConnect","connect"),
+				("CommandRetry","retry"),
+				("CommandConvers","convers"),
+				("CommandDayTime","daytime"),
+         )
+    
+    @staticmethod
+    def getDefaultBeforeInitCommands():
+        return [
+            "INTFACE TERMINAL",
+            "CD SOFTWARE",
+            "NEWMODE ON",
+            "8BITCONV ON",
+            "BEACON EVERY 0",
+            "SLOTTIME 10",
+            "PERSIST 63",
+            "PACLEN 128",
+            "MAXFRAME 2",
+            "FRACK 6",
+            "RETRY 8",
+            "CHECK 30",
+            "TXDELAY 40",
+            "XFLOW OFF",
+            "SENDPAC $05",
+            "CR OFF",
+            "PACTIME AFTER 2",
+            "CPACTIME ON",
+            "STREAMEV OFF",
+            "STREAMSW $00",
+        ]
+
+    @staticmethod
+    def getDefaultAfterInitCommands():
+        return [
+            "SENDPAC $0D",
+            "CR ON",
+            "PACTIME AFTER 10",
+            "CPACTIME OFF",
+            "STREAMSW $7C"
+        ]
