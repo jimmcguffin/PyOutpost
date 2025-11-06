@@ -45,7 +45,7 @@ class SendReceiveSettingsDialog(QDialog):
             self.pd.setProfile("SRSettings/Automation/Automation","EveryX")
         else:
             self.pd.setProfile("SRSettings/Automation/Automation","Manual")
-        self.pd.setProfile("SRSettings/Automation/EveryN",str(self.cEveryNTime.value()));
+        self.pd.setProfile("SRSettings/Automation/EveryN",str(self.cEveryNTime.value()))
         self.pd.setProfile("SRSettings/Automation/EveryX",self.cEveryXList.text())
         self.pd.setProfile("SRSettings/Automation/SendImmediate",self.cSendImmediate.isChecked())
         if self.cSendReceive.isChecked():

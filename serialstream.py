@@ -35,13 +35,14 @@ class SerialStream(QObject):
     def write(self,s):
         if not self.readfromfile:
             self.serialPort.write(s.encode())
-            if False:
+            if True:
                 if self.logFile: 
                     tmp = s
-                    tmp = tmp.replace('\r',"<cr>")
-                    tmp = tmp.replace('\n',"<lf>")
-                    tmp = "{"+tmp+"}"
-                    self.logFile.write(tmp.encode())
+                    #tmp = tmp.replace('\r',"<cr>")
+                    #tmp = tmp.replace('\n',"<lf>")
+                    #tmp = "{"+tmp+"}"
+                    tmp = tmp.replace("\r","\r\n")
+                    self.logFile.write(b"\x1b[31m"+tmp.encode()+b"\x1b[0m")
                     self.logFile.flush()
     def onTimer(self): # only used when reading from file
         sdata = self.logFile.read(1)

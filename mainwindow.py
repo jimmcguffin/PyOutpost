@@ -105,55 +105,42 @@ class MainWindow(QMainWindow):
         self.mailfolder.load(self.currentFolder)
         self.updateMailList()
         # need to add the folder list in several places
-        self.cFolder1.setText(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
-        self.cFolder2.setText(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
-        self.cFolder3.setText(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
-        self.cFolder4.setText(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
-        self.cFolder5.setText(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
+        f = [
+            self.settings.getProfile("GeneralSettings/Folder1","Folder 1"),
+            self.settings.getProfile("GeneralSettings/Folder2","Folder 2"),
+            self.settings.getProfile("GeneralSettings/Folder3","Folder 3"),
+            self.settings.getProfile("GeneralSettings/Folder4","Folder 4"),
+            self.settings.getProfile("GeneralSettings/Folder5","Folder 5"),
+        ]
+        self.cFolder1.setText(f[0])
+        self.cFolder2.setText(f[1])
+        self.cFolder3.setText(f[2])
+        self.cFolder4.setText(f[3])
+        self.cFolder5.setText(f[4])
         # the first two (in/out) are already there
-        self.menuMove_to_Folder.addAction("Sent Messages")
-        self.menuMove_to_Folder.addAction("Archive")
-        self.menuMove_to_Folder.addAction("Draft Messages")
-        self.menuMove_to_Folder.addAction("Deleted")
-        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
-        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
-        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
-        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
-        self.menuMove_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
-        tmp = self.menuMove_to_Folder.actions()
-        tmp[0].triggered.connect(lambda: self.onMoveToFolder("InTray"))
-        tmp[1].triggered.connect(lambda: self.onMoveToFolder("OutTray"))
-        tmp[2].triggered.connect(lambda: self.onMoveToFolder("Sent"))
-        tmp[3].triggered.connect(lambda: self.onMoveToFolder("Archived"))
-        tmp[4].triggered.connect(lambda: self.onMoveToFolder("Draft"))
-        tmp[5].triggered.connect(lambda: self.onMoveToFolder("Deleted"))
-        tmp[6].triggered.connect(lambda: self.onMoveToFolder("Folder1"))
-        tmp[7].triggered.connect(lambda: self.onMoveToFolder("Folder2"))
-        tmp[8].triggered.connect(lambda: self.onMoveToFolder("Folder3"))
-        tmp[9].triggered.connect(lambda: self.onMoveToFolder("Folder4"))
-        tmp[10].triggered.connect(lambda: self.onMoveToFolder("Folder5"))
-        self.menuCopy_to_Folder.addAction("Sent Messages")
-        self.menuCopy_to_Folder.addAction("Archive")
-        self.menuCopy_to_Folder.addAction("Draft Messages")
-        self.menuCopy_to_Folder.addAction("Deleted")
-        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder1","Folder 1"))
-        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder2","Folder 2"))
-        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
-        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
-        self.menuCopy_to_Folder.addAction(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
-        tmp = self.menuCopy_to_Folder.actions()
-        tmp[0].triggered.connect(lambda: self.onCopyToFolder("InTray"))
-        tmp[1].triggered.connect(lambda: self.onCopyToFolder("OutTray"))
-        tmp[2].triggered.connect(lambda: self.onCopyToFolder("Sent"))
-        tmp[3].triggered.connect(lambda: self.onCopyToFolder("Archived"))
-        tmp[4].triggered.connect(lambda: self.onCopyToFolder("Draft"))
-        tmp[5].triggered.connect(lambda: self.onCopyToFolder("Deleted"))
-        tmp[6].triggered.connect(lambda: self.onCopyToFolder("Folder1"))
-        tmp[7].triggered.connect(lambda: self.onCopyToFolder("Folder2"))
-        tmp[8].triggered.connect(lambda: self.onCopyToFolder("Folder3"))
-        tmp[9].triggered.connect(lambda: self.onCopyToFolder("Folder4"))
-        tmp[10].triggered.connect(lambda: self.onCopyToFolder("Folder5"))
-        pass
+        self.menuMove_to_Folder.actions()[0].triggered.connect(lambda: self.onMoveToFolder("InTray"))
+        self.menuMove_to_Folder.actions()[1].triggered.connect(lambda: self.onMoveToFolder("OutTray"))
+        self.menuMove_to_Folder.addAction("Sent Messages").triggered.connect(lambda: self.onMoveToFolder("Sent"))
+        self.menuMove_to_Folder.addAction("Archive").triggered.connect(lambda: self.onMoveToFolder("Archived"))
+        self.menuMove_to_Folder.addAction("Draft Messages").triggered.connect(lambda: self.onMoveToFolder("Draft"))
+        self.menuMove_to_Folder.addAction("Deleted").triggered.connect(lambda: self.onMoveToFolder("Deleted"))
+        self.menuMove_to_Folder.addAction(f[0]).triggered.connect(lambda: self.onMoveToFolder("Folder1"))
+        self.menuMove_to_Folder.addAction(f[1]).triggered.connect(lambda: self.onMoveToFolder("Folder2"))
+        self.menuMove_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onMoveToFolder("Folder3"))
+        self.menuMove_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onMoveToFolder("Folder4"))
+        self.menuMove_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onMoveToFolder("Folder5"))
+
+        self.menuCopy_to_Folder.actions()[0].triggered.connect(lambda: self.onCopyToFolder("InTray"))
+        self.menuCopy_to_Folder.actions()[1].triggered.connect(lambda: self.onCopyToFolder("OutTray"))
+        self.menuCopy_to_Folder.addAction("Sent Messages").triggered.connect(lambda: self.onCopyToFolder("Sent"))
+        self.menuCopy_to_Folder.addAction("Archive").triggered.connect(lambda: self.onCopyToFolder("Archived"))
+        self.menuCopy_to_Folder.addAction("Draft Messages").triggered.connect(lambda: self.onCopyToFolder("Draft"))
+        self.menuCopy_to_Folder.addAction("Deleted").triggered.connect(lambda: self.onCopyToFolder("Deleted"))
+        self.menuCopy_to_Folder.addAction(f[0]).triggered.connect(lambda: self.onCopyToFolder("Folder1"))
+        self.menuCopy_to_Folder.addAction(f[1]).triggered.connect(lambda: self.onCopyToFolder("Folder2"))
+        self.menuCopy_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder("Folder3"))
+        self.menuCopy_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder("Folder4"))
+        self.menuCopy_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder("Folder5"))
     def onSelectFolder(self,s):
         self.currentFolder = s
         self.mailfolder.load(self.currentFolder)
@@ -163,8 +150,12 @@ class MainWindow(QMainWindow):
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(item.row())
-        self.mailfolder.copyMail(indexlist,s)
-        self.mailfolder.deleteMail(indexlist)
+        # if moving from deleted to deleted, just delete
+        if self.mailfolder.filename == "Deleted":
+            self.mailfolder.deleteMail(indexlist)
+        else:
+            self.mailfolder.copyMail(indexlist,s)
+            self.mailfolder.deleteMail(indexlist)
         self.updateMailList()
     def onCopyToFolder(self,s):
         indexlist = []
@@ -282,6 +273,7 @@ class MainWindow(QMainWindow):
         self.cFolder3.setText(self.settings.getProfile("GeneralSettings/Folder3","Folder 3"))
         self.cFolder4.setText(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
         self.cFolder5.setText(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
+        # todo: need to fix up the menu items as well
     def onNewMessage(self):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -402,7 +394,7 @@ class MainWindow(QMainWindow):
 
         f = self.openSerialPort()
         if not f:
-            QMessageBox.critical(self,"Error",f"Error {self.serialport.errorString()} opening serial port");
+            QMessageBox.critical(self,"Error",f"Error {self.serialport.errorString()} opening serial port")
             return
         self.sdata = bytearray()
         self.tncParser = KantronicsKPC3Plus(self.settings,self)
@@ -432,54 +424,70 @@ class MainWindow(QMainWindow):
     def onMailListRightClick(self,pos):
         item = self.cMailList.itemAt(pos)
         if not item: return
-        row = item.row();
+        row = item.row()
         if row < 0: return
         mailindex = self.mailIndex[row]
         m = QMenu(self)
-        a1 = QAction("Open",self)
-        m.addAction(a1)
+        m.addAction("Open").triggered.connect(lambda: self.onReadMessage(row,0))
         mm = QMenu("Open Enhanced",self)
-        a2 = QAction("as Text",self)
-        mm.addAction(a2)
-        a3 = QAction("in Client",self)
-        mm.addAction(a3)
+        mm.addAction("as Text").setEnabled(False)
+        mm.addAction("in Client").setEnabled(False)
         m.addMenu(mm)
-        a4 = QAction("Print",self)
-        m.addAction(a4)
-        a5 = QAction("Save As...",self)
-        m.addAction(a5)
-        a6 = QAction("Save As. No Headers...",self)
-        m.addAction(a6)
-        a7 = QAction("Mark as Unread",self)
-        m.addAction(a7)
-        a8 = QAction("Mark as Read",self)
-        m.addAction(a8)
+        m.addAction("Print").setEnabled(False)
+        m.addAction("Save As...").setEnabled(False)
+        m.addAction("Save As. No Headers...").setEnabled(False)
+        m.addAction("Mark as Unread").triggered.connect(lambda: self.mailfolder.markAsNew(mailindex,True))
+        m.addAction("Mark as Read").triggered.connect(lambda: self.mailfolder.markAsNew(mailindex,False))
+
         m.addSeparator()
-        a9 = QAction("Archive",self)
-        m.addAction(a9)
-#         a1 = m.addAction("Open",self)
-#         mm = m.addMenu("Open Enhanced",self)
-#         a2 = mm.addAction("as Text",self)
-#         a3 = mm.addAction("in Client",self)
-#         a4 = m.addAction("Print",self)
-#         a5 = m.addAction("Save As...",self)
-#         a6 = m.addAction("Save As. No Headers...",self)
-#         a7 = m.addAction("Mark as Unread",self)
-#         a8 = m.addAction("Mark as Read",self)
-#         m.addSeparator(self)
-#         a9 = m.addAction("Archive",self)
-# #        mm = m.addMenu("Archive")
-#         a10 = m.addAction("Print",self)
+        m.addAction("Archive")
+        f = [
+            self.settings.getProfile("GeneralSettings/Folder1","Folder 1"),
+            self.settings.getProfile("GeneralSettings/Folder2","Folder 2"),
+            self.settings.getProfile("GeneralSettings/Folder3","Folder 3"),
+            self.settings.getProfile("GeneralSettings/Folder4","Folder 4"),
+            self.settings.getProfile("GeneralSettings/Folder5","Folder 5"),
+        ]
+        mm = QMenu("Move To",self)
+        mm.addAction("In Tray").triggered.connect(lambda: self.onMoveToFolder("InTray"))
+        mm.addAction("Out Tray").triggered.connect(lambda: self.onMoveToFolder("OutTray"))
+        mm.addAction("Sent Messages").triggered.connect(lambda: self.onMoveToFolder("Sent"))
+        mm.addAction("Archive").triggered.connect(lambda: self.onMoveToFolder("Archived"))
+        mm.addAction("Draft Messages").triggered.connect(lambda: self.onMoveToFolder("Draft"))
+        mm.addAction("Deleted").triggered.connect(lambda: self.onMoveToFolder("Deleted"))
+        mm.addAction(f[0]).triggered.connect(lambda: self.onMoveToFolder("Folder1"))
+        mm.addAction(f[1]).triggered.connect(lambda: self.onMoveToFolder("Folder2"))
+        mm.addAction(f[2]).triggered.connect(lambda: self.onMoveToFolder("Folder3"))
+        mm.addAction(f[3]).triggered.connect(lambda: self.onMoveToFolder("Folder4"))
+        mm.addAction(f[4]).triggered.connect(lambda: self.onMoveToFolder("Folder5"))
+        m.addMenu(mm)
+
+        mm = QMenu("Copy To",self)
+        mm.addAction("In Tray").triggered.connect(lambda: self.onCopyToFolder("InTray"))
+        mm.addAction("Out Tray").triggered.connect(lambda: self.onCopyToFolder("OutTray"))
+        mm.addAction("Sent Messages").triggered.connect(lambda: self.onCopyToFolder("Sent"))
+        mm.addAction("Archive").triggered.connect(lambda: self.onCopyToFolder("Archived"))
+        mm.addAction("Draft Messages").triggered.connect(lambda: self.onCopyToFolder("Draft"))
+        mm.addAction("Deleted").triggered.connect(lambda: self.onCopyToFolder("Deleted"))
+        mm.addAction(f[0]).triggered.connect(lambda: self.onCopyToFolder("Folder1"))
+        mm.addAction(f[1]).triggered.connect(lambda: self.onCopyToFolder("Folder2"))
+        mm.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder("Folder3"))
+        mm.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder("Folder4"))
+        mm.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder("Folder5"))
+        m.addMenu(mm)
+        m.addSeparator()
+        m.addAction("Delete").triggered.connect(lambda: self.onMoveToFolder("Deleted"))
+
         r = m.exec(self.cMailList.mapToGlobal(pos))
-        if r == a1:
-            self.onReadMessage(row,0)
-        elif r == a7:
-            if self.mailfolder.markAsNew(mailindex,True):
-                self.updateMailList()
-        elif r == a8:
-            if self.mailfolder.markAsNew(mailindex,False):
-                self.updateMailList()
-        pass
+        # if r == a1:
+        #     self.onReadMessage(row,0)
+        # elif r == a7:
+        #     if self.mailfolder.markAsNew(mailindex,True):
+        #         self.updateMailList()
+        # elif r == a8:
+        #     if self.mailfolder.markAsNew(mailindex,False):
+        #         self.updateMailList()
+        # pass
 
     def resetAllToSccStandard(self,firsttime=False,callsign="",name="",prefix=""): # if callsign is blank, will ask
         if not callsign:

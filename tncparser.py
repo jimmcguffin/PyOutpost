@@ -10,6 +10,7 @@ class TncDevice(QObject):
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
     signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
+    signalOutgingMessageSent = pyqtSignal() # mostly so that mainwinow can repaint mail list if it is viewing the OutTrat
     def __init__(self,pd,parent=None):
         super(TncDevice,self).__init__(parent)
         self.pd = pd
@@ -24,6 +25,8 @@ class TncDevice(QObject):
     def send(self,b):
         self.messageQueue.append(b)
 
+# maybe this class should be called TAPR
+# todo: need to implement time-out/retry stuff in both this class and bbsparser
 class KantronicsKPC3Plus(TncDevice):
     def __init__(self,pd,parent=None):
         super(KantronicsKPC3Plus,self).__init__(pd,parent)
@@ -34,7 +37,7 @@ class KantronicsKPC3Plus(TncDevice):
         mycall = f"{self.pd.getInterface("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
         connectstr = f"{self.pd.getInterface("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
         # these are internally generated
-        # messageQueue.append(b"\r"); // flush out any half-written commands
+        # messageQueue.append(b"\r") // flush out any half-written commands
 #        self.messageQueue.append("\x03\r")
         self.messageQueue.append("\03\r")
         self.messageQueue.append("disconnect\r")
@@ -48,7 +51,7 @@ class KantronicsKPC3Plus(TncDevice):
         self.messageQueue.append(connectstr)
 
         # start things going
-        #qDebug() << "writing" << self.messageQueue.front() << '\n';
+        #qDebug() << "writing" << self.messageQueue.front() << '\n'
         self.serialStream.write(self.messageQueue[0])
 
     def onResponse(self,r):
@@ -71,6 +74,7 @@ class KantronicsKPC3Plus(TncDevice):
         self.bbsParser = Jnos2Parser(self.pd,self)
         self.bbsParser.signalDisconnected.connect(self.onDisconnected)
         self.bbsParser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
+        self.bbsParser.signalOutgingMessageSent.connect(lambda: self.onOutgoingMessageSent.emit())
         self.bbsParser.startSession(self.serialStream)
 
     def onNewIncomingMessage(self,mbh,m):

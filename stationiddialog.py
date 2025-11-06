@@ -17,7 +17,7 @@ class StationIdDialog(QDialog):
         self.loadTacticalCallSigns()
         self.need_save2 = False
         self.load2()
-        self.cUseTactical.setChecked(self.pd.getProfileBool("UseTacticalCallSign"));
+        self.cUseTactical.setChecked(self.pd.getProfileBool("UseTacticalCallSign"))
         self.cShowAtStartup.setChecked(self.pd.getProfileBool("ShowStationIdAtStartup"))
         self.cUserCallSign.currentTextChanged.connect(self.onUserCallSignChanged)
         self.cTacticalCallSign.currentTextChanged.connect(self.onTacticalCallSignChanged)

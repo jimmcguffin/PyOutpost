@@ -10,7 +10,7 @@ class GeneralSettingsDialog(QDialog):
         self.pd = pd
         load_ui.loadUi("GeneralSettingsdialog.ui",self)
         self.tabWidget.setCurrentIndex(0)
-        self.need_save = False;
+        self.need_save = False
         self.load()
 
     def accept(self):

@@ -198,21 +198,7 @@ class FormDialog(QMainWindow):
                             pass
         except FileNotFoundError:
             pass 
-        subject = ""
-        if self.pd.getProfileBool("MessageSettings/AddMessageNumber"):
-            subject += self.pd.getUserCallSign("MessagePrefix")
-        f = self.pd.getProfile("MessageSettings/Hyphenation_flag")
-        if f == "0":
-            subject += str(self.pd.getAndIncrementNextMessageNumber())
-        elif f == "1":
-            subject += "-"+str(self.pd.getAndIncrementNextMessageNumber())
-        elif f == "2":
-            dt = QDateTime.currentDateTime()
-            subject += dt.toString("yyMMddHHmmss")
-        if self.pd.getProfileBool("MessageSettings/AddCharacter"):
-            subject += self.pd.getProfile("MessageSettings/CharacterToAdd")
-        if self.pd.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
-            subject += ":"
+        subject = self.pd.makeStandardSubject()
         self.setFieldByName("MessageNumber",subject)
         #self.setFieldByName("Handling","PRIORITY") #test
         # special handing for this non-conforming form
@@ -221,7 +207,7 @@ class FormDialog(QMainWindow):
             self.setFieldByName("UserName",self.pd.getUserCallSign("Name"))
             self.setFieldByName("TacticalCall",self.pd.getActiveTacticalCallSign())
             self.setFieldByName("TacticalName",self.pd.getTacticalCallSign("Name"))
-            self.setFieldByName("UseTacticalCall",self.pd.getProfileBool("UseTacticalCallSign"));
+            self.setFieldByName("UseTacticalCall",self.pd.getProfileBool("UseTacticalCallSign"))
         else:
             d = datetime.datetime.now()
             self.setFieldByName("Date","{:%m/%d/%Y}".format(d))

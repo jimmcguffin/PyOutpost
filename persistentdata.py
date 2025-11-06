@@ -1,4 +1,4 @@
-from PyQt6.QtCore import QSettings
+from PyQt6.QtCore import QSettings, QDateTime
 
 class PersistentData():
     def __init__(self):
@@ -62,11 +62,12 @@ class PersistentData():
     def getProfile(self,s,default=""): return self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
     def getProfileBool(self,s,default=False): return True if self.settings.value(f"Profiles/{self.activeProfile}/{s}",default) == "true" else False
     def setProfile(self,s,value): self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
-    def getAndIncrementNextMessageNumber(self):
-        n = self.settings.value("NextMessageNumber",0)
-        r = n + 1
-        if r < n: r = 0 # r has overflowed
-        self.settings.setValue("NextMessageNumber",r)
+    def getNextMessageNumber(self,increment=True):
+        r = self.settings.value("NextMessageNumber",0)
+        if increment:
+            n = r + 1
+            if n < r: n = 0 # n has overflowed
+            self.settings.setValue("NextMessageNumber",n)
         return r
 
     # call signs
@@ -150,3 +151,22 @@ class PersistentData():
     def getInterface(self,s): return self.settings.value(f"Interfaces/{self.activeInterface}/{s}")
     def getInterfaceBool(self,s): return True if self.settings.value(f"Interfaces/{self.activeInterface}/{s}") == "true" else False
     def setInterface(self,s,value): self.settings.setValue(f"Interfaces/{self.activeInterface}/{s}",value)
+    # some convenience functions
+    def makeStandardSubject(self,increment=True):
+        mn = self.getNextMessageNumber(increment)
+        subject = ""
+        if self.getProfileBool("MessageSettings/AddMessageNumber"):
+            subject += self.getUserCallSign("MessagePrefix")
+        f = self.getProfile("MessageSettings/Hyphenation_flag")
+        if f == "0":
+            subject += f"{mn:03}"
+        elif f == "1":
+            subject += f"-{mn:03}"
+        elif f == "2":
+            dt = QDateTime.currentDateTime()
+            subject += dt.toString("yyMMddHHmmss")
+        if self.getProfileBool("MessageSettings/AddCharacter"):
+            subject += self.getProfile("MessageSettings/CharacterToAdd")
+        if self.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
+            subject += ":"
+        return subject

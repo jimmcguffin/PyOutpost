@@ -39,7 +39,7 @@ import os
 # 		else
 # 			return m_Date;
 # 		}
-# 	};
+# 	}fdelte
 
 # headers (items in same order as display)
 # */U/Type/From/To/BBS/LocalId/Subject/Date/Size
@@ -90,7 +90,7 @@ class MailBoxHeader:
         return False
     
     def toString(self):
-        r = f"*/{self.mIsNew}/{quote_plus(self.mUrgent)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n";
+        r = f"*/{self.mIsNew}/{quote_plus(self.mUrgent)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n"
         return r
     @staticmethod
     def toOutpostDate(s):
@@ -167,7 +167,7 @@ class MailBoxHeader:
                     if len(j) >= 3:
                         s = int(j[2])
         r = ""
-        if yy < 100: yy += 2000;
+        if yy < 100: yy += 2000
         if mm >= 1 and mm <= 12 and dd >= 1 and dd <= 31 and h >= 0 and h < 24 and m >= 0 and m < 60 and s >=0  and s < 60:
             d = datetime.datetime(yy,mm,dd,h,m,s)
             return "{:%Y-%m-%dT%H:%M:%S}".format(d)
@@ -195,6 +195,9 @@ class MailFolder:
                             file.seek(om+mbh.mSize)
         except FileNotFoundError:
             pass
+
+    def reload(self):
+        return self.load(self.filename)
 
     def addMail(self,mbh,message,folder): # mbh is a MailBoxHeader
         if folder == self.filename:
@@ -224,6 +227,7 @@ class MailFolder:
                 mbh.mOffsetToMessageBody = file.tell()
                 file.write(message.encode())
 
+
     def copyMail(self,indexlist,tomailbox): # to move mail, call copyMail followed by deleteMail with same indexlist
         # open input and output files
         outfile = open(tomailbox+".mail","ab")
@@ -248,6 +252,7 @@ class MailFolder:
         os.rename(self.filename+".tmp",self.filename+".mail")
         self.load(self.filename)
 
+    # returns a MailBoxHeader and a string contining the mail (may change this to a bytearray)
     def getMessage(self,n):
         if not 0 <= n < len(self.mail): return [],""
         offset = self.mail[n].mOffsetToMessageBody
