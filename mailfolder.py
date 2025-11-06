@@ -184,7 +184,7 @@ class MailFolder:
             with open(self.filename+".mail","rb") as file:
                 while (True):
                     oh = file.tell()
-                    l = file.readline().decode()
+                    l = file.readline().decode("latin-1")
                     if not l: break
                     if len(l) > 10 and l[0:2] == "*/":
                         om = file.tell()
@@ -208,9 +208,9 @@ class MailFolder:
             with open(self.filename+".mail","ab") as file:
                 mbh.mSize = len(message)
                 mbh.mOffsetToHeader = file.tell()
-                file.write(mbh.toString().encode())
+                file.write(mbh.toString().encode("latin-1"))
                 mbh.mOffsetToMessageBody = file.tell()
-                file.write(message.encode())
+                file.write(message.encode("latin-1"))
             mbh.mIndex = len(self.mail)
             self.mail.append(mbh)
         else:
@@ -223,9 +223,9 @@ class MailFolder:
             with open(target.filename+".mail","ab") as file:
                 mbh.mSize = len(message)
                 mbh.mOffsetToHeader = file.tell()
-                file.write(mbh.toString().encode())
+                file.write(mbh.toString().encode("latin-1"))
                 mbh.mOffsetToMessageBody = file.tell()
-                file.write(message.encode())
+                file.write(message.encode("latin-1"))
 
 
     def copyMail(self,indexlist,tomailbox): # to move mail, call copyMail followed by deleteMail with same indexlist
@@ -234,8 +234,8 @@ class MailFolder:
         for index in indexlist:
             if 0 <= index < len(self.mail):
                 mbh,m = self.getMessage(index)
-                outfile.write(mbh.toString().encode())
-                outfile.write(m.encode())
+                outfile.write(mbh.toString().encode("latin-1"))
+                outfile.write(m.encode("latin-1"))
         outfile.close()
 
     def deleteMail(self,indexlist):
@@ -246,7 +246,7 @@ class MailFolder:
             if not index in indexlist:
                 mbh,m = self.getMessage(index)
                 file.write(mbh.toString().encode())
-                file.write(m.encode())
+                file.write(m.encode("latin-1"))
         file.close()
         os.remove(self.filename+".mail")
         os.rename(self.filename+".tmp",self.filename+".mail")
@@ -260,7 +260,7 @@ class MailFolder:
         try:
             with open(self.filename+".mail","rb") as file:
                 file.seek(offset)
-                return self.mail[n],file.read(msize).decode()
+                return self.mail[n],file.read(msize).decode("latin-1")
         except FileNotFoundError:
             return [],""
 

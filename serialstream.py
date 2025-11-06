@@ -34,7 +34,7 @@ class SerialStream(QObject):
         self.serialport.readyRead.disconnect()
     def write(self,s):
         if not self.readfromfile:
-            self.serialPort.write(s.encode())
+            self.serialPort.write(s.encode("latin-1"))
             if True:
                 if self.logFile: 
                     tmp = s
@@ -42,7 +42,7 @@ class SerialStream(QObject):
                     #tmp = tmp.replace('\n',"<lf>")
                     #tmp = "{"+tmp+"}"
                     tmp = tmp.replace("\r","\r\n")
-                    self.logFile.write(b"\x1b[31m"+tmp.encode()+b"\x1b[0m")
+                    self.logFile.write(b"\x1b[31m"+tmp.encode("latin-1")+b"\x1b[0m")
                     self.logFile.flush()
     def onTimer(self): # only used when reading from file
         sdata = self.logFile.read(1)
@@ -64,7 +64,7 @@ class SerialStream(QObject):
             bytesleft = len(self.sdata)-i
             if bytesleft >= elen and self.sdata [i:i+elen] == self.lineEnd:
                     end = i+elen
-                    self.signalLineRead.emit(self.sdata[start:end].decode())
+                    self.signalLineRead.emit(self.sdata[start:end].decode("latin-1"))
                     start = end
                     i = start
             elif self.asyncConnected  and bytesleft >= len(self.asyncConnected) and self.sdata [i:i+len(self.asyncConnected)] == self.asyncConnected:

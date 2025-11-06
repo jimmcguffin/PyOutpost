@@ -55,9 +55,9 @@ class FormItemMultiString(FormItem):
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
         self.widget.setPalette(palette)
     def getValue(self):
-        return self.widget.toPlainText()
+        return self.widget.toPlainText().replace("]","`]").replace("\n","\\n")
     def setValue(self,value):
-        return self.widget.setText(value)
+        return self.widget.setText(value.replace("`]","]").replace("\\n","\n"))
 
 class FormItemRadioButtons(FormItem): # always multiple buttons
     def __init__(self,parent,f):
