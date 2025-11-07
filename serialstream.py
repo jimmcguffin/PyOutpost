@@ -91,4 +91,4 @@ class SerialStream(QObject):
              if start >= len(self.sdata):
                    self.sdata.clear()
              else: 
-                del self.data[0:start] #self.sdata = self.sdata[start:]
+                del self.sdata[0:start] #self.sdata = self.sdata[start:]

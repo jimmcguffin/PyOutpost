@@ -4,11 +4,29 @@ from serialstream import SerialStream
 import re
 from mailfolder import MailFolder, MailBoxHeader
 
-class BbsMessage():
-    def __init__(self,s,h=None):
-        self.whatToSend = s
-        self.handler = h # gets called when responded to
+# there is a list of these in the parser
+# they are executed one at a time
+# if there is a "mWhatToSend"", it is sent
+# then it waits until a response is received, which must match what was sent (due to echo mode)
+# then it calls "mHandler"
+class BbsSequenceStep():
+    def __init__(self,s,h=None,data=None):
+        self.mWhatToSend = s # can be blank
+        self.mHandler = h # gets called when responded to, can be None
+        # arbitrary data item that can be passed to the handler (after the reply value)
+        self.mData = data
+class BbsSequenceImmediateStep():
+    def __init__(self,h,data=None):
+        self.mHandler = h # gets called as soon as the sequencer gets to this item
+        # arbitrary data item that can be passed to the handler (as the only value)
+        self.hData = data
 
+
+# at any given time, "bbsSequence" is a mix of BbsSequenceSteps and BbsSequenceImmediateSteps, but the first entry as always a BbsSequenceStep that has 
+# already sent its mWhatToSend value and is awaiting the reply. There are two times this this is briefly not true:
+# 1 - the sequence is empty and a new bbsSequence has just been pushed
+# 2 - the front step has just been removed. Now the checkSequence should consume all BbsSequenceImmediateSteps until it gets to a BbsSequenceStep and then 
+# send the new mWhatToSend so that it is "normalled-up"
 class BbsParser(QObject):
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
@@ -17,8 +35,10 @@ class BbsParser(QObject):
     def __init__(self,pd,parent=None):
         super(BbsParser,self).__init__(parent)
         self.pd = pd
-        self.stuffToSend = list()
+        self.bbsSequence = list() # an list of BbsSequenceSteps
+        self.stepinprogress = False
         self.itemsSent = list() # they get moved to the "Sent" folder
+        self.messagesRead = list()
     def startSession(self,ss):
         self.serialStream = ss
         self.serialStream.lineEnd = b">\r\n"
@@ -27,6 +47,28 @@ class BbsParser(QObject):
         self.serialStream.signalDisconnected.connect(self.onDisconnected)
     def endSession(self):
         return
+    def addStep(self,step): # argument is a BbsSequenceStep or a BbsSequenceImmediateStep
+        # things are different if the sequence is empty
+        if self.bbsSequence:
+            self.bbsSequence.append(step) # it is not empty, just add it
+        else:
+            if isinstance(step,BbsSequenceImmediateStep):
+                step.mHandler(step.hData)
+            else:
+                self.bbsSequence.append(step)
+                self.serialStream.write(self.bbsSequence[0].mWhatToSend)
+        # self.bbsSequence.append(step)
+        # self.checkSequence()
+    # call this when items have been removed and there is a new "front"
+    def checkSequence(self):
+        # if there are immediate-mode comamnds, do them
+        while self.bbsSequence and isinstance(self.bbsSequence[0],BbsSequenceImmediateStep):
+            if self.bbsSequence[0].mHandler: # I think this will always be true
+                self.bbsSequence[0].mHandler(self.bbsSequence[0].hData)
+            del self.bbsSequence[0:1]
+        if len(self.bbsSequence) > 0:
+            assert isinstance(self.bbsSequence[0],BbsSequenceStep)
+            self.serialStream.write(self.bbsSequence[0].mWhatToSend)
     def onDisconnected(self):
         self.signalDisconnected.emit() 
 
@@ -36,10 +78,15 @@ class Jnos2Parser(BbsParser):
         self.outtray = MailFolder()
     def startSession(self,ss):
         super().startSession(ss)
-        self.stuffToSend.append(BbsMessage("")) # there is a prompt/terminator that will arrive without being told
-        self.stuffToSend.append(BbsMessage("x\r")) # this toggles long/short prompt, but we don't know the current state
-        self.stuffToSend.append(BbsMessage("xa\r"))
-        self.stuffToSend.append(BbsMessage("xm 0\r"))
+        self.addStep(BbsSequenceStep("",self.startSession2)) # there is a prompt/terminator that will arrive without being told
+    def startSession2(self,r,data=None):  
+        # if the initial prompt is long, change it to short
+        if r.find("A,B,C,") >= 0:
+            self.addStep(BbsSequenceStep("x\r")) # this toggles long/short prompt
+        self.addStep(BbsSequenceStep("xa\r"))
+        self.addStep(BbsSequenceStep("xm 0\r"))
+        self.addStep(BbsSequenceImmediateStep(self.sendOutgoing))
+    def sendOutgoing(self,data=None):
         # if there are outgoing messages send them now
         # this may turn out to be a bad idea but for now I read from the OutTray file
         self.outtray.load("OutTray")
@@ -47,24 +94,21 @@ class Jnos2Parser(BbsParser):
             mbh,m = self.outtray.getMessage(i)
             m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
             if not m2.endswith('\r'): m2 += '\r'
-            self.stuffToSend.append(BbsMessage(f"sp {mbh.mTo}\r{mbh.mSubject}\r{m2}/EX\r"),lambda: self.itemsSent.append(i))
-            #self.stuffToSend.append(BbsMessage("")) # aborb the useless line of text that follows
-        self.stuffToSend.append(BbsMessage("la\r",self.handleList))
-        #	self.stuffToSend.append(BbsMessage("a XSCPERM\r",self.handleArea))
-        #	self.stuffToSend.append(BbsMessage("la\r",self.handleList))
-        #	self.stuffToSend.pushappend_back(BbsMessage("a XSCEVENT\r",self.handleList))
-        #	self.stuffToSend.append(BbsMessage("la\r",self.handleList))
-        #	self.stuffToSend.append(BbsMessage("a ALLXSC\r",self.handleArea))
-        #	self.stuffToSend.append(BbsMessage("la\r",self.handleList))
-
-        # start things going
-        self.serialStream.write(self.stuffToSend[0].whatToSend)
-
+            self.addStep(BbsSequenceStep(f"sp {mbh.mTo}\r{mbh.mSubject}\r{m2}/EX\r",self.handleSent,i))
+        self.addStep(BbsSequenceImmediateStep(self.sendLists))
+    def sendLists(self,data=None):
+        self.addStep(BbsSequenceStep("la\r",self.handleList))
+        #	self.addStep(BbsSequenceStep("a XSCPERM\r",self.handleArea))
+        #	self.addStep(BbsSequenceStep("la\r",self.handleList))
+        #	self.addStep(BbsSequenceStep("a XSCEVENT\r",self.handleList))
+        #	self.BbsSequenceStep("la\r",self.handleList))
+        #	self.addStep(BbsSequenceStep("a ALLXSC\r",self.handleArea))
+        #	self.addStep(BbsSequenceStep("la\r",self.handleList))
     def onResponse(self,r):
-        if not self.stuffToSend:
+        if not self.bbsSequence:
             return # nothing expected
         # this is probably/hopefully the response to the front element
-        query = self.stuffToSend[0].whatToSend
+        query = self.bbsSequence[0].mWhatToSend
         # todo: code here used to match reply to query but not it appears to be gone
         # should match up to first \n
         qbase = query.partition("\r")[0]
@@ -73,12 +117,11 @@ class Jnos2Parser(BbsParser):
             print("Matches")
         else:
             print("Doesn't match")
-        if self.stuffToSend[0].handler:
-            self.stuffToSend[0].handler(r)
-        del self.stuffToSend[0:1]
-        if self.stuffToSend:
-            self.serialStream.write(self.stuffToSend[0].whatToSend)
-    def handleList(self,r):
+        if self.bbsSequence[0].mHandler:
+            self.bbsSequence[0].mHandler(r,self.bbsSequence[0].mData)
+        del self.bbsSequence[0:1]
+        self.checkSequence()
+    def handleList(self,r,data=None):
         # if we get here, it means that all of the outgoing messages have been sent
         if self.itemsSent:
             self.outtray.copyMail(self.itemsSent,"Sent")
@@ -101,14 +144,25 @@ class Jnos2Parser(BbsParser):
         if m: nmessages = int(m.groups()[0])
         for i  in range(nmessages):
             tmp = f"r {i+1}\r"
-            self.stuffToSend.append(BbsMessage(tmp,self.handleRead))
-        self.stuffToSend.append(BbsMessage("bye\r"))
+            self.addStep(BbsSequenceStep(tmp,self.handleRead,i))
+        self.addStep(BbsSequenceImmediateStep(self.killReadMessages))
+#        self.addStep(BbsSequenceStep("bye\r"))
         pass
-    def handleArea(self,r):
+    def killReadMessages(self,data=None):
+        if self.messagesRead:
+            k = "k"
+            for m in self.messagesRead:
+                k += " "
+                k += str(m)
+            self.addStep(BbsSequenceStep(k))
+        self.addStep(BbsSequenceStep("bye\r"))
+    def handleArea(self,r,data=None):
         print(f"got area {r}")
         pass
-    def handleRead(self,r):
+    def handleRead(self,r,data):
         print(f"got read {r}")
+        if r.startswith("r "):
+            self.messagesRead.append(data)
         lines = r.splitlines()
         if lines and lines[-1] == "": lines.pop()
         # discard up until last blank line
@@ -142,3 +196,6 @@ class Jnos2Parser(BbsParser):
         mbh.mSize = len(messagebody)
         self.signalNewIncomingMessage.emit(mbh,messagebody)
         # todo: then delete the message from the server
+    def handleSent(self,r,i):
+        self.itemsSent.append(i)
+    
