@@ -2,7 +2,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from persistentdata import PersistentData
 from serialstream import SerialStream
 import re
-from mailfolder import MailFolder, MailBoxHeader
+from mailfolder import MailFolder, MailBoxHeader, MailFlags
 
 # there is a list of these in the parser
 # they are executed one at a time
@@ -189,7 +189,7 @@ class Jnos2Parser(BbsParser):
             else:
                 messagebody += lines[i] + "\r\n"
         if not messagebody: return
-        mbh.mIsNew = "Y"
+        mbh.mFlags = MailFlags.IsNew.value | MailFlags.FolderInTray.value
         # todo: figure out the "urgent" flag and the message type
         mbh.mBbs = self.pd.getBBS("ConnectName")
         mbh.mDateReceived = MailBoxHeader.normalizedDate()

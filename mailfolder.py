@@ -2,6 +2,7 @@ from urllib.parse import quote_plus,unquote_plus
 import tempfile
 import datetime
 import os
+from enum import Enum 
 
 # struct MailBoxHeader
 # 	{
@@ -44,10 +45,28 @@ import os
 # headers (items in same order as display)
 # */U/Type/From/To/BBS/LocalId/Subject/Date/Size
 
+# the low 11 bits are the folders that the mail is currently in
+# the high it is New(Unread)
+# remaining 4 bits undefined
+
+class MailFlags(Enum):
+    FolderInTray = (1<<0)
+    FolderOutTray = (1<<1)
+    FolderSent = (1<<2)
+    FolderArchive = (1<<3)
+    FolderDraft = (1<<4)
+    FolderDeleted = (1<<5)
+    Folder1 = (1<<6)
+    Folder2 = (1<<7)
+    Folder3 = (1<<8)
+    Folder4 = (1<<9)
+    Folder5 = (1<<10)
+    IsNew = (1<<15)
+
 class MailBoxHeader:
     def __init__(self,s="",oh=0,om=0):
         self.mIndex = 0
-        self.mIsNew = "N" # "Y"=new/unread, "N"=read
+        self.mFlags = 0 # bit encoded, include New/unread and folder bit mask
         self.mUrgent = ""
         self.mType = ""
         self.mFrom = ""
@@ -66,7 +85,7 @@ class MailBoxHeader:
             if len(tmp) >= 12:
                 for index in range(2,10):
                     tmp[index]= unquote_plus(tmp[index])
-                self.mIsNew = tmp[1]
+                self.mFlags = int(tmp[1],16)
                 self.mUrgent = tmp[2]
                 self.mType = tmp[3]
                 self.mFrom = tmp[4]
@@ -90,7 +109,7 @@ class MailBoxHeader:
         return False
     
     def toString(self):
-        r = f"*/{self.mIsNew}/{quote_plus(self.mUrgent)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n"
+        r = f"*/{self.mFlags:04x}/{quote_plus(self.mUrgent)}/{quote_plus(self.mType)}/{quote_plus(self.mFrom)}/{quote_plus(self.mTo)}/{quote_plus(self.mBbs)}/{self.mLocalId}/{quote_plus(self.mSubject)}/{self.mDateSent}/{self.mDateReceived}/{self.mSize}\n"
         return r
     @staticmethod
     def toOutpostDate(s):
@@ -171,17 +190,17 @@ class MailBoxHeader:
         if mm >= 1 and mm <= 12 and dd >= 1 and dd <= 31 and h >= 0 and h < 24 and m >= 0 and m < 60 and s >=0  and s < 60:
             d = datetime.datetime(yy,mm,dd,h,m,s)
             return "{:%Y-%m-%dT%H:%M:%S}".format(d)
-
+    def isNew(self):
+        return self.mFlags & MailFlags.IsNew.value
+    
 class MailFolder:
     def __init__(self):
         super(MailFolder,self).__init__()
         self.mail = [] # a list of MailBoxHeader objects
-        self.filename = ""
-    def load(self,fn):
+    def load(self):
         self.mail.clear()
-        self.filename = fn
         try:
-            with open(self.filename+".mail","rb") as file:
+            with open("PyOutpost.mail","rb") as file:
                 while (True):
                     oh = file.tell()
                     l = file.readline().decode("latin-1")
@@ -195,95 +214,121 @@ class MailFolder:
                             file.seek(om+mbh.mSize)
         except FileNotFoundError:
             pass
+        pass
 
     def reload(self):
-        return self.load(self.filename)
+        return self.load()
+    
+    def addMail(self,mbh,message,folder): # mbh is a MailBoxHeader, folder can have multiple bits set but not likely
+        # before adding, look of we already have this one
+        for m in self.mail:
+            if m == mbh:
+                # todo: add folder to flags
+                return
+        mbh.mFlags |= folder
+        with open("PyOutpost.mail","ab") as file:
+            mbh.mSize = len(message)
+            mbh.mOffsetToHeader = file.tell()
+            file.write(mbh.toString().encode("latin-1"))
+            mbh.mOffsetToMessageBody = file.tell()
+            file.write(message.encode("latin-1"))
+        mbh.mIndex = len(self.mail)
+        self.mail.append(mbh)
 
-    def addMail(self,mbh,message,folder): # mbh is a MailBoxHeader
-        if folder == self.filename:
-            # before adding, look of we already have this one
-            for m in self.mail:
-                if m == mbh:
-                    return
-            with open(self.filename+".mail","ab") as file:
-                mbh.mSize = len(message)
-                mbh.mOffsetToHeader = file.tell()
-                file.write(mbh.toString().encode("latin-1"))
-                mbh.mOffsetToMessageBody = file.tell()
-                file.write(message.encode("latin-1"))
-            mbh.mIndex = len(self.mail)
-            self.mail.append(mbh)
-        else:
-            target = MailFolder()
-            target.load(folder)
-            # before adding, look of we already have this one
-            for m in target.mail:
-                if m == mbh:
-                    return
-            with open(target.filename+".mail","ab") as file:
-                mbh.mSize = len(message)
-                mbh.mOffsetToHeader = file.tell()
-                file.write(mbh.toString().encode("latin-1"))
-                mbh.mOffsetToMessageBody = file.tell()
-                file.write(message.encode("latin-1"))
+    # all of the below functions are slightly dangerout in that they carefully read the header line and then update it in-place
+    # this only works because the flags item is a fixed size (4 hex chars)
 
+    def copyMail(self,indexlist,tofolder):
+        try:
+            with open("PyOutpost.mail","rb+") as file:
+                for index in indexlist:
+                    if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
+                    self.mail[index].mFlags |= tofolder.value
+                    newflags = f"*/{self.mail[index].mFlags:04x}/".encode("latin-1")
+                    assert(len(newflags)) == 7
+                    offset = self.mail[index].mOffsetToHeader
+                    file.seek(offset)
+                    # read the next 7 bytes just to see if we are in the right spot
+                    oldflags = file.read(7)
+                    if len(oldflags) == 7 and oldflags.startswith(b"*/") and oldflags != newflags:
+                        file.seek(offset)
+                        file.write(newflags)
+        except FileNotFoundError:
+            pass
 
-    def copyMail(self,indexlist,tomailbox): # to move mail, call copyMail followed by deleteMail with same indexlist
-        # open input and output files
-        outfile = open(tomailbox+".mail","ab")
-        for index in indexlist:
-            if 0 <= index < len(self.mail):
-                mbh,m = self.getMessage(index)
-                outfile.write(mbh.toString().encode("latin-1"))
-                outfile.write(m.encode("latin-1"))
-        outfile.close()
+    def moveMail(self,indexlist,fromfolder,tofolder): # frommailbox can be multiple or none, tomailbox can be multiple
+        try:
+            with open("PyOutpost.mail","rb+") as file:
+                for index in indexlist:
+                    if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
+                    self.mail[index].mFlags &= ~fromfolder.value
+                    self.mail[index].mFlags |= tofolder.value
+                    newflags = f"*/{self.mail[index].mFlags:04x}/".encode("latin-1")
+                    assert(len(newflags)) == 7
+                    offset = self.mail[index].mOffsetToHeader
+                    file.seek(offset)
+                    # read the next 7 bytes just to see if we are in the right spot
+                    oldflags = file.read(7)
+                    if len(oldflags) == 7 and oldflags.startswith(b"*/") and oldflags != newflags:
+                        file.seek(offset)
+                        file.write(newflags)
+        except FileNotFoundError:
+            pass
 
+    # regular mail deletion just involves moving to the deleted folder - this will actually hard delete it
     def deleteMail(self,indexlist):
         # first, copy all the mail that will not be deleted
         # file = tempfile.TemporaryFile()
-        file = open(self.filename+".tmp","wb")
+        file = open("PyOutpost.mail.tmp","wb")
         for index in range (len(self.mail)):
             if not index in indexlist:
                 mbh,m = self.getMessage(index)
-                file.write(mbh.toString().encode())
+                file.write(mbh.toString().encode("latin-1"))
                 file.write(m.encode("latin-1"))
         file.close()
-        os.remove(self.filename+".mail")
-        os.rename(self.filename+".tmp",self.filename+".mail")
-        self.load(self.filename)
+        os.remove("PyOutpost.mail")
+        os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
+        self.load()
 
-    # returns a MailBoxHeader and a string contining the mail (may change this to a bytearray)
+    # returns a MailBoxHeader and a string containing the mail (may change this to a bytearray)
     def getMessage(self,n):
         if not 0 <= n < len(self.mail): return [],""
         offset = self.mail[n].mOffsetToMessageBody
         msize = self.mail[n].mSize
         try:
-            with open(self.filename+".mail","rb") as file:
+            with open("PyOutpost.mail","rb") as file:
                 file.seek(offset)
                 return self.mail[n],file.read(msize).decode("latin-1")
         except FileNotFoundError:
             return [],""
 
-    def markAsNew(self,n,mark=True): # mark as read is markAsNew(n,False), returns True if changed
-        if not 0 <= n < len(self.mail): return False
-        m = "Y" if mark else "N"
-        expectedh = b"*/N" if mark else b"*/Y" 
-        newh = b"*/Y" if mark else b"*/N" 
-        # if already new/notnew, return
-        if self.mail[n].mIsNew == m: return False
-        self.mail[n].mIsNew = m
-        # this is a delicate operation, need to read the header and then update it in-place
-        offset = self.mail[n].mOffsetToHeader
+    def markAsNew(self,index,mark=True): # mark as read is equivalemt tp markAsNew(n,False), returns True if changed
+        if not 0 <= index < len(self.mail): return False
+        if mark:
+            if self.mail[index].mFlags & MailFlags.IsNew.value: return False
+            self.mail[index].mFlags |= MailFlags.IsNew.value
+        else:
+            if not self.mail[index].mFlags & MailFlags.IsNew.value: return False
+            self.mail[index].mFlags &= ~MailFlags.IsNew.value
+        newflags = f"*/{self.mail[index].mFlags:04x}/".encode("latin-1")
+        assert(len(newflags)) == 7
+        offset = self.mail[index].mOffsetToHeader
         try:
-            with open(self.filename+".mail","rb+") as file:
+            with open("PyOutpost.mail","rb+") as file:
                 file.seek(offset)
-                # read the next 3 bytes just to see if we are in the right spot
-                h = file.read(3)
-                if len(h) == 3 and h == expectedh:
+                # read the next 7 bytes just to see if we are in the right spot
+                oldflags = file.read(7)
+                if len(oldflags) == 7 and oldflags.startswith(b"*/") and oldflags != newflags:
                     file.seek(offset)
-                    file.write(newh)
+                    file.write(newflags)
         except FileNotFoundError:
             pass
         return True
 
-    def getHeaders(self): return self.mail
+    def getHeaders(self,folder): 
+        # return self.mail
+        r = []
+        for m in self.mail:
+            if m.mFlags & folder.value:
+                r.append(m)
+        return r
