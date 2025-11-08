@@ -29,7 +29,7 @@ class MessageSettingsDialog(QDialog):
         self.cDefaultDestination.setText(self.pd.getProfile("MessageSettings/DefaultDestination"))
         # page 2
         self.cAddMessageNumber.setChecked(self.pd.getProfileBool("MessageSettings/AddMessageNumber",False))
-        f = int(self.pd.getProfile("MessageSettings/Hyphenation_flag"))
+        f = int(self.pd.getProfile("MessageSettings/Hyphenation_flag","0"))
         self.cWithoutHyphenation.setChecked(f == 0)
         self.cWithHyphenation.setChecked(f == 1)
         self.cWithDateTimeFormat.setChecked(f == 2)
