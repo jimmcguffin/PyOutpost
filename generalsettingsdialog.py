@@ -26,6 +26,7 @@ class GeneralSettingsDialog(QDialog):
         self.cFolder_3.setText(self.pd.getProfile("GeneralSettings/Folder3","Folder 3"))
         self.cFolder_4.setText(self.pd.getProfile("GeneralSettings/Folder4","Folder 4"))
         self.cFolder_5.setText(self.pd.getProfile("GeneralSettings/Folder5","Folder 5"))
+    
     def save(self):
         if not self.need_save: return
         self.pd.setProfile("ShowStationIdAtStartup",self.cShowStationIdAtStartup.isChecked())

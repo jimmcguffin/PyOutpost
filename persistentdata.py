@@ -60,7 +60,14 @@ class PersistentData():
             if l: self.setActiveInterface(l[0])
             else: self.setActiveInterface("TEMP")
     def getProfile(self,s,default=""): return self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
-    def getProfileBool(self,s,default=False): return True if self.settings.value(f"Profiles/{self.activeProfile}/{s}",default) == "true" else False
+    def getProfileBool(self,s,default=False): 
+        # here is a difference between platforms
+        # windows does not have boolens in the registry, so it use strings "true"/"false"
+        # apples do have native bools
+        # this will attempt tp handle both
+        v = self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
+        if isinstance(v,str): return True if v == "true" or v == "True" or v == "1" else False
+        return bool(v)
     def setProfile(self,s,value): self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
     def getNextMessageNumber(self,increment=True):
         r = self.settings.value("NextMessageNumber",0)
