@@ -42,9 +42,23 @@ class MainWindow(QMainWindow):
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
         self.actionNew_Message.triggered.connect(self.onNewMessage)
-        self.actionXSC_Check_In_Out_Message.triggered.connect(lambda: self.onNewForm("CheckInCheckOut","CheckInCheckOut"))
-        self.actionXSC_ICS_213_Message.triggered.connect(lambda: self.onNewForm("ICS-213_Message_Form_v20220119-1","ICS213"))
-        self.actionXSC_Damage_Assessment.triggered.connect(lambda: self.onNewForm("Damage_Assessment_v20250812","DmgAsmt"))
+        self.forms = []
+        try:
+            with open("forms.csv","rt") as file:
+                for line in file.readlines():
+                    line = line.rstrip()
+                    if not line: continue
+                    if line[0] == '#': continue
+                    f = line.split(",")
+                    if len(f) < 3: continue
+                    index = len(self.forms)
+                    self.forms.append(f)
+                    action = self.menuForms.addAction(f[0])
+                    action.setProperty("FormIndex",index)
+                    action.triggered.connect(self.onNewForm)
+                    #self.menuForms.addAction(f[0]).triggered.connect(lambda: self.onNewForm(index))
+        except FileNotFoundError:
+            pass
         self.actionBBS.triggered.connect(self.OnBbsSetup)
         self.actionInterface.triggered.connect(self.OnInterfaceSetup)
         self.actionStation_ID.triggered.connect(self.OnStationId)
@@ -281,8 +295,10 @@ class MainWindow(QMainWindow):
         tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.show()
         tmp.raise_()
-    def onNewForm(self,form,formid):
-        tmp = formdialog.FormDialog(self.settings,form,formid,self)
+    def onNewForm(self):
+        widget = self.sender()
+        index = widget.property("FormIndex")
+        tmp = formdialog.FormDialog(self.settings,self.forms[index][2],self.forms[index][1],self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
         tmp.show()
@@ -304,35 +320,50 @@ class MainWindow(QMainWindow):
         # is this a regular text message or a form?
         # for now, decide based on subject, but would be better to use message body
         s = h.mSubject.split("_")
-        if len(s) >= 3 and s[2].startsWith("CheckIn"):
-            tmp = formdialog.FormDialog(self.settings,"CheckInCheckOut","CheckInCheckOut",self)
-            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            tmp.setData(h,m)
-            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
-            tmp.show()
-            tmp.raise_()
-        elif len(s) >= 3 and s[2].startsWith("CheckOut"):
-            tmp = formdialog.FormDialog(self.settings,"CheckInCheckOut","CheckInCheckOut",self)
-            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            tmp.setData(h,m)
-            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
-            tmp.show()
-            tmp.raise_()
-        elif len(s) >= 4 and s[2] == "ICS213":
-            tmp = formdialog.FormDialog(self.settings,"ICS-213_Message_Form_v20220119-1","ICS213",self)
-            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            tmp.setData(h,m)
-            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
-            tmp.show()
-            tmp.raise_()
-        elif len(s) >= 4 and s[2] == "DmgAsmt":
-            tmp = formdialog.FormDialog(self.settings,"Damage_Assessment_v20250812","DmgAsmt",self)
-            tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            tmp.setData(h,m)
-            tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
-            tmp.show()
-            tmp.raise_()
-        else:
+        isform = False
+        if len(s) >= 3:
+            for f in self.forms:
+                # one form was two entries for the name
+                f1,sep,f2 = f[1].partition(" or ")
+                if s[2] == f1 or s[2] == f[2]:
+                    isform = True
+                    tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
+                    tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+                    tmp.setData(h,m)
+                    tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+                    tmp.show()
+                    tmp.raise_()
+                    break
+        if not isform:
+        # if len(s) >= 3 and s[2].startsWith("CheckIn"):
+        #     tmp = formdialog.FormDialog(self.settings,"CheckInCheckOut","CheckInCheckOut",self)
+        #     tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        #     tmp.setData(h,m)
+        #     tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+        #     tmp.show()
+        #     tmp.raise_()
+        # elif len(s) >= 3 and s[2].startsWith("CheckOut"):
+        #     tmp = formdialog.FormDialog(self.settings,"CheckInCheckOut","CheckInCheckOut",self)
+        #     tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        #     tmp.setData(h,m)
+        #     tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+        #     tmp.show()
+        #     tmp.raise_()
+        # elif len(s) >= 4 and s[2] == "ICS213":
+        #     tmp = formdialog.FormDialog(self.settings,"ICS-213_Message_Form_v20220119-1","ICS213",self)
+        #     tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        #     tmp.setData(h,m)
+        #     tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+        #     tmp.show()
+        #     tmp.raise_()
+        # elif len(s) >= 4 and s[2] == "DmgAsmt":
+        #     tmp = formdialog.FormDialog(self.settings,"Damage_Assessment_v20250812","DmgAsmt",self)
+        #     tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        #     tmp.setData(h,m)
+        #     tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+        #     tmp.show()
+        #     tmp.raise_()
+        # else:
             tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
             tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
             tmp.setData(h,m)
@@ -537,7 +568,7 @@ class MainWindow(QMainWindow):
 
         if not firsttime:
             self.updateStatusBar()
-            self.on_actionStation_ID_triggered() # if firsttime, will happen a little later
+            self.OnStationId() # if firsttime, will happen a little later
 
 
 

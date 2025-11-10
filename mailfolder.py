@@ -219,13 +219,13 @@ class MailFolder:
     def reload(self):
         return self.load()
     
-    def addMail(self,mbh,message,folder): # mbh is a MailBoxHeader, folder can have multiple bits set but not likely
+    def addMail(self,mbh,message,folder): # mbh is a MailBoxHeader
         # before adding, look of we already have this one
         for m in self.mail:
             if m == mbh:
                 # todo: add folder to flags
                 return
-        mbh.mFlags |= folder
+        mbh.mFlags |= folder.value
         with open("PyOutpost.mail","ab") as file:
             mbh.mSize = len(message)
             mbh.mOffsetToHeader = file.tell()

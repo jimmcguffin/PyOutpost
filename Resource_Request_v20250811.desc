@@ -1,0 +1,39 @@
+[Headers]
+!SCCoPIFO!
+#T: form-resource-request.html
+#V: 3.20-1.0
+
+[Footers]
+!/ADDON!
+
+[Fields]
+// see the ICS213 file for a description of these lines
+MsgNo,MessageNumber,str,,,284,64,441,83
+1a.,Date,str,Y,DateValid,91,138,156,154
+1b.,Time,str,&,TimeValid,240,138,307,154
+5.,Handling,rb,Y,,378,137,736,155,IMMEDIATE,389,138,0,0,PRIORITY,520,138,0,0,ROUTINE,629,138,0,0
+7a.,ToIcsPosition,dd,Y,,170,163,368,179,Resource Status & Tracking Unit,Supply Branh,Logistics
+8a.,FromIcsPosition,str,Y,,496,163,735,179
+7b.,ToLocation,str,Y,,151,188,368,203
+8b.,FromLocation,str,Y,,477,188,735,203
+7c.,ToName,str,,,135,212,368,228
+8c,FromName,str,,,462,212,735,228
+7d.,ToContactInfo,str,,,173,237,368,252
+8d.,FromContactInfo,str,,,499,237,735,252
+*20.,Title,str,Y,,89,287,735,302
+21.,Juristiction,dd,Y,,130,310,735,326,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+23n.,Item1N,str,Y,,195,359,529,375
+23q.,Item1Q,str,Y,NumValid,668,359,735,374
+23d.,Item1D,mstr,,,196,383,735,421
+23i.,Item1I,rb,Y,,350,427,462,445,YES,356,428,0,0,NO,417,428,0,0
+30.,Priority,rb,Y,,135,1141,529,1177,Urgent,150,1143,0,0,High,150,1162,0,0,Medium,385,1143,0,0,Low,385,1162,0,0
+40.,ReqName,str,Y,,183,1226,393,1240
+40s.,WithSignature,cb,,,469,1226,0,0
+41.,ReqPhone,str,Y,,185,1249,393,1263
+42.,ReqEMail,str,Y,,529,1249,735,1263
+43.,ReqPosition,str,Y,,196,1272,735,1287
+
+//OpName,OpName,str,,,95,828,308,846
+//OpCall,OpCall,str,,,374,828,477,846
+//OpDate,OpDate,str,,,522,828,584,846
+//OpTime,OpTime,str,,,666,828,743,846

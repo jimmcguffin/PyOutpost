@@ -41,7 +41,6 @@ class KantronicsKPC3Plus(TncDevice):
 #        self.messageQueue.append("\x03\r")
         self.messageQueue.append("\03\r")
         self.messageQueue.append("disconnect\r")
-        self.messageQueue.append("beacon every 0\r")
         self.messageQueue.append("echo on\r")
         self.messageQueue.append(mycall)
         self.messageQueue.append("monitor off\r")

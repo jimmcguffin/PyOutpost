@@ -76,6 +76,8 @@ class PersistentData():
             if n < r: n = 0 # n has overflowed
             self.settings.setValue("NextMessageNumber",n)
         return r
+    def setNextMessageNumber(self,n):
+        self.settings.setValue("NextMessageNumber",n)
 
     # call signs
     def addUserCallSign(self,callsign,name,messageprefix):
@@ -140,8 +142,11 @@ class PersistentData():
         self.activeBBS = s
         self.settings.setValue(f"Profiles/{self.activeProfile}/ActiveBBS",s)
     def getActiveBBS(self): return self.activeBBS
-    def getBBS(self,s): return self.settings.value(f"BBSs/{self.activeBBS}/{s}")
-    def getBBSBool(self,s): return True if self.settings.value(f"BBSs/{self.activeBBS}/{s}") == "true" else False
+    def getBBS(self,s,default=""): return self.settings.value(f"BBSs/{self.activeBBS}/{s}",default)
+    def getBBSBool(self,s,default=False): 
+        v = self.settings.value(f"BBSs/{self.activeBBS}/{s}",default)
+        if isinstance(v,str): return True if v == "true" or v == "True" or v == "1" else False
+        return bool(v)
     def setBBS(self,s,value): self.settings.setValue(f"BBSs/{self.activeBBS}/{s}",value)
     # Interfaces
     def getInterfaces(self):
@@ -155,8 +160,11 @@ class PersistentData():
         self.activeInterface = s
         self.settings.setValue(f"Profiles/{self.activeProfile}/ActiveInterface",s)
     def getActiveInterface(self): return self.activeInterface
-    def getInterface(self,s): return self.settings.value(f"Interfaces/{self.activeInterface}/{s}")
-    def getInterfaceBool(self,s): return True if self.settings.value(f"Interfaces/{self.activeInterface}/{s}") == "true" else False
+    def getInterface(self,s,default=""): return self.settings.value(f"Interfaces/{self.activeInterface}/{s}",default)
+    def getInterfaceBool(self,s,default=False): 
+        v = self.settings.value(f"Interfaces/{self.activeInterface}/{s}",default)
+        if isinstance(v,str): return True if v == "true" or v == "True" or v == "1" else False
+        return bool(v)
     def setInterface(self,s,value): self.settings.setValue(f"Interfaces/{self.activeInterface}/{s}",value)
     # some convenience functions
     def makeStandardSubject(self,increment=True):
