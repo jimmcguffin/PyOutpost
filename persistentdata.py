@@ -3,6 +3,11 @@ from PyQt6.QtCore import QSettings, QDateTime
 class PersistentData():
     def __init__(self):
         self.settings = QSettings("OpenOutpost","OpenOutpost")
+        self.activeProfile = ""
+        self.activeUserCallSign = ""
+        self.activeTacticalCallSign = ""
+        self.activeBBS = ""
+        self.activeInterface = ""
 
     def start(self): # this gets called once we know things are "normal"
         ap = self.settings.value("ActiveProfile","Outpost") # "Outpost" is the default profile
@@ -28,7 +33,8 @@ class PersistentData():
         interface = self.activeInterface
         self.activeProfile = name
         self.setProfile("ActiveUserCallSign",ucs)
-        if tcs: self.setProfile("ActiveTacticalCallSign",tcs)
+        if tcs:
+            self.setProfile("ActiveTacticalCallSign",tcs)
         self.setProfile("ActiveBBS",bbs)
         self.setProfile("ActiveInterface",interface)
         self.setActiveProfile(name)
@@ -37,43 +43,54 @@ class PersistentData():
         r = self.settings.childGroups()
         self.settings.endGroup()
         return r
-    def getActiveProfile(self): return self.activeProfile
+    def getActiveProfile(self):
+        return self.activeProfile
     def setActiveProfile(self,s):
         self.activeProfile = s
         self.settings.setValue("ActiveProfile",s)
         self.activeUserCallSign = self.getProfile("ActiveUserCallSign")
         if not self.activeUserCallSign:
             l = self.getUserCallSigns()
-            if l: self.setActiveUserCallSign(l[0])
-            else: self.setActiveUserCallSign("")
+            if l:
+                self.setActiveUserCallSign(l[0])
+            else:
+                self.setActiveUserCallSign("")
         self.activeTacticalCallSign = self.getProfile("ActiveTacticalCallSign")
         if not self.activeTacticalCallSign:
             self.setActiveTacticalCallSign("") # it is OK for these to be blank
         self.activeBBS = self.getProfile("ActiveBBS")
         if not self.activeBBS:
             l = self.getBBSs()
-            if l: self.setActiveBBS(l[0])
-            else: self.setActiveBBS("TEMP")
+            if l:
+                self.setActiveBBS(l[0])
+            else:
+                self.setActiveBBS("TEMP")
         self.activeInterface = self.getProfile("ActiveInterface")
         if not self.activeInterface:
             l = self.getInterfaces()
-            if l: self.setActiveInterface(l[0])
-            else: self.setActiveInterface("TEMP")
-    def getProfile(self,s,default=""): return self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
-    def getProfileBool(self,s,default=False): 
+            if l:
+                self.setActiveInterface(l[0])
+            else:
+                self.setActiveInterface("TEMP")
+    def getProfile(self,s,default=""):
+        return self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
+    def getProfileBool(self,s,default=False):
         # here is a difference between platforms
         # windows does not have boolens in the registry, so it use strings "true"/"false"
         # apples do have native bools
-        # this will attempt tp handle both
+        # this will attempt to handle both
         v = self.settings.value(f"Profiles/{self.activeProfile}/{s}",default)
-        if isinstance(v,str): return True if v == "true" or v == "True" or v == "1" else False
+        if isinstance(v,str):
+            return v in ("true","True","1")
         return bool(v)
-    def setProfile(self,s,value): self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
+    def setProfile(self,s,value):
+        self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
     def getNextMessageNumber(self,increment=True):
         r = self.settings.value("NextMessageNumber",0)
         if increment:
             n = r + 1
-            if n < r: n = 0 # n has overflowed
+            if n < r:
+                n = 0 # n has overflowed
             self.settings.setValue("NextMessageNumber",n)
         return r
     def setNextMessageNumber(self,n):
@@ -106,12 +123,15 @@ class PersistentData():
             return self.getTacticalCallSign("Name")
         else:
             return self.getUserCallSign("Name")
-    def getActiveUserCallSign(self): return self.activeUserCallSign
-    def setActiveUserCallSign(self,s): 
+    def getActiveUserCallSign(self):
+        return self.activeUserCallSign
+    def setActiveUserCallSign(self,s):
         self.activeUserCallSign = s
         self.setProfile("ActiveUserCallSign",s)
-    def getUserCallSign(self,s): return self.settings.value(f"UserCallSigns/{self.activeUserCallSign}/{s}")
-    def setUserCallSign(self,s,value): self.settings.setValue(f"UserCallSigns/{self.activeUserCallSign}/{s}",value)
+    def getUserCallSign(self,s):
+        return self.settings.value(f"UserCallSigns/{self.activeUserCallSign}/{s}")
+    def setUserCallSign(self,s,value):
+        self.settings.setValue(f"UserCallSigns/{self.activeUserCallSign}/{s}",value)
 
     # tactical call signs
     def addTacticalCallSign(self,callsign,name,messageprefix):
@@ -122,12 +142,15 @@ class PersistentData():
         r = self.settings.childGroups()
         self.settings.endGroup()
         return r
-    def getActiveTacticalCallSign(self): return self.activeTacticalCallSign
-    def setActiveTacticalCallSign(self,s): 
+    def getActiveTacticalCallSign(self):
+        return self.activeTacticalCallSign
+    def setActiveTacticalCallSign(self,s):
         self.activeTacticalCallSign = s
         self.settings.setValue("Profiles/"+self.activeProfile+"/ActiveTacticalCallSign",s)
-    def getTacticalCallSign(self,s): return self.settings.value(f"TacticalCallSigns/{self.activeTacticalCallSign}/{s}")
-    def setTacticalCallSign(self,s,value): self.settings.setValue(f"TacticalCallSigns/{self.activeTacticalCallSign}/{s}",value)
+    def getTacticalCallSign(self,s):
+        return self.settings.value(f"TacticalCallSigns/{self.activeTacticalCallSign}/{s}")
+    def setTacticalCallSign(self,s,value):
+        self.settings.setValue(f"TacticalCallSigns/{self.activeTacticalCallSign}/{s}",value)
 
     # BBSs
     def getBBSs(self):
@@ -141,13 +164,17 @@ class PersistentData():
     def setActiveBBS(self,s):
         self.activeBBS = s
         self.settings.setValue(f"Profiles/{self.activeProfile}/ActiveBBS",s)
-    def getActiveBBS(self): return self.activeBBS
-    def getBBS(self,s,default=""): return self.settings.value(f"BBSs/{self.activeBBS}/{s}",default)
-    def getBBSBool(self,s,default=False): 
+    def getActiveBBS(self):
+        return self.activeBBS
+    def getBBS(self,s,default=""):
+        return self.settings.value(f"BBSs/{self.activeBBS}/{s}",default)
+    def getBBSBool(self,s,default=False):
         v = self.settings.value(f"BBSs/{self.activeBBS}/{s}",default)
-        if isinstance(v,str): return True if v == "true" or v == "True" or v == "1" else False
+        if isinstance(v,str):
+            return v in ("true","True","1")
         return bool(v)
-    def setBBS(self,s,value): self.settings.setValue(f"BBSs/{self.activeBBS}/{s}",value)
+    def setBBS(self,s,value):
+        self.settings.setValue(f"BBSs/{self.activeBBS}/{s}",value)
     # Interfaces
     def getInterfaces(self):
         self.settings.beginGroup("Interfaces")
@@ -159,13 +186,17 @@ class PersistentData():
     def setActiveInterface(self,s):
         self.activeInterface = s
         self.settings.setValue(f"Profiles/{self.activeProfile}/ActiveInterface",s)
-    def getActiveInterface(self): return self.activeInterface
-    def getInterface(self,s,default=""): return self.settings.value(f"Interfaces/{self.activeInterface}/{s}",default)
-    def getInterfaceBool(self,s,default=False): 
+    def getActiveInterface(self):
+        return self.activeInterface
+    def getInterface(self,s,default=""):
+        return self.settings.value(f"Interfaces/{self.activeInterface}/{s}",default)
+    def getInterfaceBool(self,s,default=False):
         v = self.settings.value(f"Interfaces/{self.activeInterface}/{s}",default)
-        if isinstance(v,str): return True if v == "true" or v == "True" or v == "1" else False
+        if isinstance(v,str):
+            return v in ("true","True","1")
         return bool(v)
-    def setInterface(self,s,value): self.settings.setValue(f"Interfaces/{self.activeInterface}/{s}",value)
+    def setInterface(self,s,value):
+        self.settings.setValue(f"Interfaces/{self.activeInterface}/{s}",value)
     # some convenience functions
     def makeStandardSubject(self,increment=True):
         mn = self.getNextMessageNumber(increment)
@@ -179,7 +210,7 @@ class PersistentData():
             subject += f"-{mn:03}"
         elif f == "2":
             dt = QDateTime.currentDateTime()
-            subject += dt.toString("yyMMddHHmmss")
+            subject += dt.to_string("yyMMddHHmmss")
         if self.getProfileBool("MessageSettings/AddCharacter"):
             subject += self.getProfile("MessageSettings/CharacterToAdd")
         if self.getProfileBool("MessageSettings/AddMessageNumberSeparator"):

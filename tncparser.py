@@ -12,7 +12,7 @@ class TncDevice(QObject):
     signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     signalOutgingMessageSent = pyqtSignal() # mostly so that mainwinow can repaint mail list if it is viewing the OutTrat
     def __init__(self,pd,parent=None):
-        super(TncDevice,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         self.messageQueue = list()
     def startSession(self,ss):
@@ -29,7 +29,7 @@ class TncDevice(QObject):
 # todo: need to implement time-out/retry stuff in both this class and bbsparser
 class KantronicsKPC3Plus(TncDevice):
     def __init__(self,pd,parent=None):
-        super(KantronicsKPC3Plus,self).__init__(pd,parent)
+        super().__init__(pd,parent)
 
     def startSession(self,ss):
         super().startSession(ss)

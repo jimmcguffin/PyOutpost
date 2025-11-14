@@ -33,7 +33,7 @@ class BbsParser(QObject):
     signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     signalOutgingMessageSent= pyqtSignal()
     def __init__(self,pd,parent=None):
-        super(BbsParser,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         self.bbsSequence = list() # an list of BbsSequenceSteps
         self.stepinprogress = False
@@ -74,7 +74,7 @@ class BbsParser(QObject):
 
 class Jnos2Parser(BbsParser):
     def __init__(self,pd,parent=None):
-        super(Jnos2Parser,self).__init__(pd,parent)
+        super().__init__(pd,parent)
         self.outtray = MailFolder()
     def startSession(self,ss):
         super().startSession(ss)
@@ -88,13 +88,14 @@ class Jnos2Parser(BbsParser):
         self.addStep(BbsSequenceImmediateStep(self.sendOutgoing))
     def sendOutgoing(self,data=None):
         # if there are outgoing messages send them now
-        # this may turn out to be a bad idea but for now I read from the OutTray file
-        self.outtray.load("OutTray")
-        for i in range(0,len(self.outtray.mail)):
-            mbh,m = self.outtray.getMessage(i)
+        # this may turn out to be a bad idea but for now I read directly from the mail file
+        self.outtray.load()
+        headers = self.outtray.get_headers(MailFlags.FOLDER_OUT_TRAY)
+        for i in range(len(headers)):
+            mbh,m = self.outtray.get_message(i)
             m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
             if not m2.endswith('\r'): m2 += '\r'
-            self.addStep(BbsSequenceStep(f"sp {mbh.mTo}\r{mbh.mSubject}\r{m2}/EX\r",self.handleSent,i))
+            self.addStep(BbsSequenceStep(f"sp {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handleSent,i))
         self.addStep(BbsSequenceImmediateStep(self.sendLists))
     def sendLists(self,data=None):
         self.addStep(BbsSequenceStep("la\r",self.handleList))
@@ -124,8 +125,8 @@ class Jnos2Parser(BbsParser):
     def handleList(self,r,data=None):
         # if we get here, it means that all of the outgoing messages have been sent
         if self.itemsSent:
-            self.outtray.copyMail(self.itemsSent,"Sent")
-            self.outtray.deleteMail(self.itemsSent)
+            self.outtray.copy_mail(self.itemsSent,"Sent")
+            self.outtray.delete_mail(self.itemsSent)
             self.itemsSent.clear()
         print(f"got list {r}")
         # sample "la\r\nMail area: kw6w\r\n1 message  -  1 new\r\n\St.  #  TO            FROM     DATE   SIZE SUBJECT\r\n> N   1 kw6w@w1xsc.sc pkttue   Oct 15  747 DELIVERED: W6W-303P_P_ICS213_Shutti\r\nArea: kw6w Current msg# 1.\r\n" +terminator
@@ -153,7 +154,8 @@ class Jnos2Parser(BbsParser):
             k = "k"
             for m in self.messagesRead:
                 k += " "
-                k += str(m)
+                k += str(m+1)
+            k += "\r"
             self.addStep(BbsSequenceStep(k))
         self.addStep(BbsSequenceStep("bye\r"))
     def handleArea(self,r,data=None):
@@ -179,21 +181,21 @@ class Jnos2Parser(BbsParser):
                 l = l.strip()
                 r = r.strip()
                 if l == "Date":
-                    mbh.mDateSent = MailBoxHeader.normalizedDate(r)
+                    mbh.date_sent = MailBoxHeader.normalized_date(r)
                 elif l == "From":
-                    mbh.mFrom = r
+                    mbh.from_addr = r
                 elif l == "To":
-                    mbh.mTo = r
+                    mbh.to_addr = r
                 elif l == "Subject":
-                    mbh.mSubject = r
+                    mbh.subject = r
             else:
                 messagebody += lines[i] + "\r\n"
         if not messagebody: return
-        mbh.mFlags = MailFlags.IsNew.value | MailFlags.FolderInTray.value
+        mbh.flags = MailFlags.IS_NEW.value | MailFlags.FOLDER_IN_TRAY.value
         # todo: figure out the "urgent" flag and the message type
-        mbh.mBbs = self.pd.getBBS("ConnectName")
-        mbh.mDateReceived = MailBoxHeader.normalizedDate()
-        mbh.mSize = len(messagebody)
+        mbh.bbs = self.pd.getBBS("ConnectName")
+        mbh.date_received = MailBoxHeader.normalized_date()
+        mbh.size = len(messagebody)
         self.signalNewIncomingMessage.emit(mbh,messagebody)
         # todo: then delete the message from the server
     def handleSent(self,r,i):

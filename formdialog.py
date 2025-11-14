@@ -1,4 +1,5 @@
 import sys
+import datetime
 from PyQt6 import QtWidgets
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt, pyqtSignal, QObject
@@ -6,8 +7,6 @@ from PyQt6.QtWidgets import QMainWindow, QLineEdit, QWidget, QPlainTextEdit, QCh
 from PyQt6.QtGui import QPixmap, QPalette, QColor, QFont
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
-from mailfolder import MailBoxHeader
-import datetime
 
 class FormItem(QObject):
     def __init__(self,parent,f):
@@ -21,7 +20,7 @@ class FormItem(QObject):
         self.subjectlinesource = "Subject"
         if f[3] == "Y" and f[5] != "0":
         #if f[5] != "0": # this shows all of boxes that have been defined
-            self.valid = QFrame(parent) 
+            self.valid = QFrame(parent)
             # expand the coordinates a litle
             e = 4
             x0 = int(f[5])-e
@@ -112,8 +111,8 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
         if index < 0: return ""
         return self.values[index]
     def setValue(self,value):
-        for i in range(len(self.values)):
-            if self.values[i] == value:
+        for i, v in enumerate(self.values):
+            if v == value:
                 self.widget.button(i).setChecked(True)
 
 class FormItemCheckBox(FormItem):
@@ -159,14 +158,14 @@ class FormItemDropDown(FormItem):
         self.widget.setPalette(palette)
         self.widget.currentTextChanged.connect(lambda: self.signalValidityCheck.emit(self))
     def getValue(self):
-        return self.widget.currentText() 
+        return self.widget.currentText()
     def setValue(self,value):
         return self.widget.setCurrentText(value)
 
 class FormDialog(QMainWindow):
     signalNewOutgoingMessage = pyqtSignal(str,str,bool)
     def __init__(self,pd,form,formid,parent=None):
-        super(FormDialog,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         self.formid = formid
         load_ui.loadUi("formdialog.ui",self)
@@ -189,53 +188,53 @@ class FormDialog(QMainWindow):
         try:
             with open(form+".desc","rt") as file:
                 while l := file.readline():
-                        l = l.rstrip()
-                        if len(l) < 2: continue
-                        if l[0:2] == '//': continue
-                        if l == "[Headers]":
-                            section = 1
-                            continue
-                        elif l == "[Footers]":
-                            section = 2
-                            continue
-                        elif l == "[Fields]":
-                            section = 3
-                            continue
-                        elif l == "[Dependencies]":
-                            section = 4
-                            continue
-                        if section == 1:
-                            self.headers.append(l)
-                        elif section == 2:
-                            self.footers.append(l)
-                        elif section == 3:
-                            f = l.split(",")
-                            # typical line: 12.,Message,mstr,Y,valid,52,105,807,677
-                            # fields:       0   1       2    3 4     5  6   7   8
-                            if len(f) >= 9:
-                                index = len(self.fields)
-                                if f[0] and f[0][0] == '*':
-                                    self.subjectlinesource = f[1]
-                                    f[0] = f[0][1:]
-                                if f[2] == "str":
-                                    self.fields.append(FormItemString(self.cForm,f))
-                                elif f[2] == "mstr":
-                                    self.fields.append(FormItemMultiString(self.cForm,f))
-                                elif f[2] == "rb":
-                                    self.fields.append(FormItemRadioButtons(self.cForm,f))
-                                elif f[2] == "cb":
-                                    self.fields.append(FormItemCheckBox(self.cForm,f))
-                                elif f[2] == "dd":
-                                    self.fields.append(FormItemDropDown(self.cForm,f))
-                                if len(self.fields) > index: #something was added, add to dictionaries
-                                    self.fieldid[f[0]] = index
-                                    self.fieldname[f[1]] = index
-                                    self.fields[index].signalValidityCheck.connect(self.updateSingle)
+                    l = l.rstrip()
+                    if len(l) < 2: continue
+                    if l[0:2] == '//': continue
+                    if l == "[Headers]":
+                        section = 1
+                        continue
+                    elif l == "[Footers]":
+                        section = 2
+                        continue
+                    elif l == "[Fields]":
+                        section = 3
+                        continue
+                    elif l == "[Dependencies]":
+                        section = 4
+                        continue
+                    if section == 1:
+                        self.headers.append(l)
+                    elif section == 2:
+                        self.footers.append(l)
+                    elif section == 3:
+                        f = l.split(",")
+                        # typical line: 12.,Message,mstr,Y,valid,52,105,807,677
+                        # fields:       0   1       2    3 4     5  6   7   8
+                        if len(f) >= 9:
+                            index = len(self.fields)
+                            if f[0] and f[0][0] == '*':
+                                self.subjectlinesource = f[1]
+                                f[0] = f[0][1:]
+                            if f[2] == "str":
+                                self.fields.append(FormItemString(self.cForm,f))
+                            elif f[2] == "mstr":
+                                self.fields.append(FormItemMultiString(self.cForm,f))
+                            elif f[2] == "rb":
+                                self.fields.append(FormItemRadioButtons(self.cForm,f))
+                            elif f[2] == "cb":
+                                self.fields.append(FormItemCheckBox(self.cForm,f))
+                            elif f[2] == "dd":
+                                self.fields.append(FormItemDropDown(self.cForm,f))
+                            if len(self.fields) > index: #something was added, add to dictionaries
+                                self.fieldid[f[0]] = index
+                                self.fieldname[f[1]] = index
+                                self.fields[index].signalValidityCheck.connect(self.updateSingle)
 
-                        elif section == 4:
-                            pass
+                    elif section == 4:
+                        pass
         except FileNotFoundError:
-            pass 
+            pass
         subject = self.pd.makeStandardSubject()
         self.setFieldByName("MessageNumber",subject)
         #self.setFieldByName("Handling","PRIORITY") #test
@@ -325,16 +324,14 @@ class FormDialog(QMainWindow):
     def getFieldById(self,fname):
         if fname in self.fieldid:
             return self.fields[self.fieldid[fname]].getValue()
-        else:
-            return ""
+        return ""
     def setFieldByName(self,fname,value):
         if fname in self.fieldname:
             self.fields[self.fieldname[fname]].setValue(value)
     def getFieldByName(self,fname):
         if fname in self.fieldname:
             return self.fields[self.fieldname[fname]].getValue()
-        else:
-            return ""
+        return ""
         
     def onSend(self):
         # checkincheckout is comepletely different than any other
@@ -367,5 +364,3 @@ class FormDialog(QMainWindow):
             subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.getFieldByName(self.subjectlinesource) 
         self.signalNewOutgoingMessage.emit(subject,message,handling[0] == 'I')
         self.close()
-
-        

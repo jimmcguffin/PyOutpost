@@ -6,7 +6,7 @@ from persistentdata import PersistentData
 
 class SendReceiveSettingsDialog(QDialog):
     def __init__(self,pd,parent=None):
-        super(SendReceiveSettingsDialog,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         load_ui.loadUi("sendreceivesettingsdialog.ui",self)
         self.tabWidget.setCurrentIndex(0)

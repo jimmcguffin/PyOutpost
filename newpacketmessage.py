@@ -9,7 +9,7 @@ from mailfolder import MailBoxHeader
 class NewPacketMessage(QMainWindow):
     signalNewOutgoingMessage = pyqtSignal(MailBoxHeader,str)
     def __init__(self,pd,parent=None):
-        super(NewPacketMessage,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         load_ui.loadUi("newpacketmessage.ui",self)
         t = self.pd.getProfile("MessageSettings/DefaultNewMessageType","P")
@@ -35,17 +35,17 @@ class NewPacketMessage(QMainWindow):
             if message[-1] != '\n':
                 message += '\n'
         mbh = MailBoxHeader()
-        mbh.mUrgent = "Y" if self.cUrgent.isChecked() else ""
-        if self.cMessageTypeBulletin.isChecked(): mbh.mType = "B"
-        elif self.cMessageTypeNts.isChecked(): mbh.mType = "N"
-        else: mbh.mType = "" # blank means private
-        mbh.mFrom = self.cFrom.text()
-        mbh.mTo = self.cTo.text()
-        mbh.mBbs = self.cBBS.text()
-        #mbh.mLocalId = ""
-        mbh.mSubject = self.cSubject.text()
-        mbh.mDateSent = MailBoxHeader.normalizedDate()
-        #mbh.mDateReceived = "" # in ISO-8601 format
-        mbh.mSize = len(message)
+        mbh.urgent = "Y" if self.cUrgent.isChecked() else ""
+        if self.cMessageTypeBulletin.isChecked(): mbh.type = "B"
+        elif self.cMessageTypeNts.isChecked(): mbh.type = "N"
+        else: mbh.type = "" # blank means private
+        mbh.from_addr = self.cFrom.text()
+        mbh.to_addr = self.cTo.text()
+        mbh.bbs = self.cBBS.text()
+        #mbh.local_id = ""
+        mbh.subject = self.cSubject.text()
+        mbh.date_sent = MailBoxHeader.normalized_date()
+        #mbh.date_received = "" # in ISO-8601 format
+        mbh.size = len(message)
         self.signalNewOutgoingMessage.emit(mbh,message)
         self.close()

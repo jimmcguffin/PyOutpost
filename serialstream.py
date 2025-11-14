@@ -10,7 +10,7 @@ class SerialStream(QObject):
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
     def __init__(self,serialport):
-        super(SerialStream,self).__init__()
+        super().__init__()
         self.readfromfile = False
         if not self.readfromfile:
             self.serialPort = serialport
