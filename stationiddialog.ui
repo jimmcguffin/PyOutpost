@@ -35,31 +35,18 @@
        <x>10</x>
        <y>50</y>
        <width>450</width>
-       <height>290</height>
+       <height>135</height>
       </rect>
      </property>
      <property name="title">
       <string>Legal</string>
      </property>
-     <widget class="Line" name="line">
-      <property name="geometry">
-       <rect>
-        <x>70</x>
-        <y>125</y>
-        <width>355</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
-      </property>
-     </widget>
      <widget class="QLabel" name="label">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>25</y>
-        <width>110</width>
+        <width>135</width>
         <height>16</height>
        </rect>
       </property>
@@ -72,7 +59,7 @@
        <rect>
         <x>10</x>
         <y>50</y>
-        <width>110</width>
+        <width>135</width>
         <height>16</height>
        </rect>
       </property>
@@ -85,7 +72,7 @@
        <rect>
         <x>10</x>
         <y>75</y>
-        <width>110</width>
+        <width>135</width>
         <height>16</height>
        </rect>
       </property>
@@ -96,9 +83,9 @@
      <widget class="QLabel" name="label_4">
       <property name="geometry">
        <rect>
-        <x>185</x>
+        <x>210</x>
         <y>75</y>
-        <width>160</width>
+        <width>135</width>
         <height>16</height>
        </rect>
       </property>
@@ -106,49 +93,10 @@
        <string>(3 characters max)</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_6">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>175</y>
-        <width>110</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Tactical call sign</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_7">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>200</y>
-        <width>110</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Tactical name</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_8">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>225</y>
-        <width>110</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Message ID prefix</string>
-      </property>
-     </widget>
      <widget class="QComboBox" name="cUserCallSign">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>145</x>
         <y>25</y>
         <width>135</width>
         <height>22</height>
@@ -161,29 +109,9 @@
      <widget class="QLineEdit" name="cUserName">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>145</x>
         <y>50</y>
-        <width>135</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QComboBox" name="cTacticalCallSign">
-      <property name="geometry">
-       <rect>
-        <x>120</x>
-        <y>175</y>
-        <width>135</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="cTacticalName">
-      <property name="geometry">
-       <rect>
-        <x>120</x>
-        <y>200</y>
-        <width>135</width>
+        <width>160</width>
         <height>22</height>
        </rect>
       </property>
@@ -193,7 +121,7 @@
        <rect>
         <x>10</x>
         <y>100</y>
-        <width>110</width>
+        <width>135</width>
         <height>16</height>
        </rect>
       </property>
@@ -204,7 +132,7 @@
      <widget class="QLineEdit" name="cUserMessageIdPrefix">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>145</x>
         <y>75</y>
         <width>55</width>
         <height>22</height>
@@ -214,7 +142,7 @@
      <widget class="QCheckBox" name="checkBox">
       <property name="geometry">
        <rect>
-        <x>120</x>
+        <x>145</x>
         <y>100</y>
         <width>80</width>
         <height>20</height>
@@ -222,55 +150,6 @@
       </property>
       <property name="text">
        <string/>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="cUseTactical">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>150</y>
-        <width>270</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Use tactical call for all BBS interaction</string>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_5">
-      <property name="geometry">
-       <rect>
-        <x>185</x>
-        <y>225</y>
-        <width>160</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>(3 characters max)</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="cTacticalMessageIdPrefix">
-      <property name="geometry">
-       <rect>
-        <x>120</x>
-        <y>225</y>
-        <width>55</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_9">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>125</y>
-        <width>49</width>
-        <height>16</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Tactical</string>
       </property>
      </widget>
      <widget class="QPushButton" name="cNewUser">
@@ -299,32 +178,6 @@
        <string>Delete</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="cDeleteTactical">
-      <property name="geometry">
-       <rect>
-        <x>345</x>
-        <y>170</y>
-        <width>75</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Delete</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="cNewTactical">
-      <property name="geometry">
-       <rect>
-        <x>345</x>
-        <y>145</y>
-        <width>75</width>
-        <height>24</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>New</string>
-      </property>
-     </widget>
     </widget>
     <widget class="QLineEdit" name="cCurrentProfile">
      <property name="enabled">
@@ -332,9 +185,9 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>130</x>
+       <x>155</x>
        <y>20</y>
-       <width>320</width>
+       <width>295</width>
        <height>22</height>
       </rect>
      </property>
@@ -351,6 +204,140 @@
      <property name="text">
       <string>Current Profile</string>
      </property>
+    </widget>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>195</y>
+       <width>446</width>
+       <height>146</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Tactical</string>
+     </property>
+     <widget class="QLineEdit" name="cTacticalName">
+      <property name="geometry">
+       <rect>
+        <x>145</x>
+        <y>80</y>
+        <width>160</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cNewTactical">
+      <property name="geometry">
+       <rect>
+        <x>345</x>
+        <y>25</y>
+        <width>75</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>New</string>
+      </property>
+     </widget>
+     <widget class="QComboBox" name="cTacticalCallSign">
+      <property name="geometry">
+       <rect>
+        <x>145</x>
+        <y>55</y>
+        <width>135</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_5">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>105</y>
+        <width>135</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>(3 characters max)</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="cTacticalMessageIdPrefix">
+      <property name="geometry">
+       <rect>
+        <x>145</x>
+        <y>105</y>
+        <width>55</width>
+        <height>22</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_8">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>105</y>
+        <width>135</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Message ID prefix</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_7">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>135</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Tactical name</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_6">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>55</y>
+        <width>135</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Tactical call sign</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="cDeleteTactical">
+      <property name="geometry">
+       <rect>
+        <x>345</x>
+        <y>50</y>
+        <width>75</width>
+        <height>24</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Delete</string>
+      </property>
+     </widget>
+     <widget class="QCheckBox" name="cUseTactical">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>30</y>
+        <width>300</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Use tactical call for all BBS interaction</string>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="tab_2">
@@ -395,7 +382,7 @@
     <rect>
      <x>20</x>
      <y>410</y>
-     <width>185</width>
+     <width>225</width>
      <height>20</height>
     </rect>
    </property>
