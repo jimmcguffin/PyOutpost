@@ -2,7 +2,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from PyQt6.QtSerialPort import QSerialPort
 
 # this class reads fom a serial stream looking for "line" ends, which can be any string
-# it also looks for asynchtonous notification, like "*** Connected"
+# it also looks for asynchronous notifications, like "*** Connected"
 
 class SerialStream(QObject):
     signalLineRead = pyqtSignal(str)
@@ -16,6 +16,7 @@ class SerialStream(QObject):
             self.serialPort = serialport
         self.sdata = bytearray()
         self.lineEnd = b"cmd:"
+        self.include_line_end_in_reply = True
         self.asyncConnected = b"*** CONNECTED"
         self.asyncDisonnected = b"*** DISCONNECTED"
         self.asyncError = b"" #b"*** retry count exceeded"
@@ -33,6 +34,9 @@ class SerialStream(QObject):
         self.serialport.close()
         self.serialport.readyRead.disconnect()
     def write(self,s):
+        if not (s and s[0] != '\r'):
+             pass
+        assert(s and s[0] != '\r') # no blank lines
         if not self.readfromfile:
             self.serialPort.write(s.encode("latin-1"))
             if True:
@@ -42,6 +46,7 @@ class SerialStream(QObject):
                     #tmp = tmp.replace('\n',"<lf>")
                     #tmp = "{"+tmp+"}"
                     tmp = tmp.replace("\r","\r\n")
+                    tmp = tmp.replace("\x03","^c")
                     self.logFile.write(b"\x1b[31m"+tmp.encode("latin-1")+b"\x1b[0m")
                     self.logFile.flush()
     def onTimer(self): # only used when reading from file
@@ -64,7 +69,10 @@ class SerialStream(QObject):
             bytesleft = len(self.sdata)-i
             if bytesleft >= elen and self.sdata [i:i+elen] == self.lineEnd:
                     end = i+elen
-                    self.signalLineRead.emit(self.sdata[start:end].decode("latin-1"))
+                    if self.include_line_end_in_reply:
+                        self.signalLineRead.emit(self.sdata[start:end].decode("latin-1"))
+                    else:
+                        self.signalLineRead.emit(self.sdata[start:end-elen].decode("latin-1"))
                     start = end
                     i = start
             elif self.asyncConnected  and bytesleft >= len(self.asyncConnected) and self.sdata [i:i+len(self.asyncConnected)] == self.asyncConnected:

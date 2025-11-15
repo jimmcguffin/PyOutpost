@@ -22,6 +22,7 @@ import readmessagedialog
 import formdialog
 from mailfolder import MailFolder, MailBoxHeader, MailFlags
 from tncparser import KantronicsKPC3Plus
+from bbsparser import Jnos2Parser
 from serialstream import SerialStream
 
 class MainWindow(QMainWindow):
@@ -162,10 +163,10 @@ class MainWindow(QMainWindow):
         self.menuCopy_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_3))
         self.menuCopy_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_4))
         self.menuCopy_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_5))
-    def onSelectFolder(self,folder):
+    def onSelectFolder(self,folder:MailFlags):
         self.currentFolder = folder
         self.updateMailList()
-    def onMoveToFolder(self,folder):
+    def onMoveToFolder(self,folder:MailFlags):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
@@ -242,7 +243,7 @@ class MainWindow(QMainWindow):
         tmpindex = self.mailSortIndex+2 # now 2 to 10
         #if tmpindex == 9: tmpindex = 10
         if 2 <= tmpindex <= 10:
-            keyname = ["urgent","type","from_addr","to_addr","bbs","local_id","subject","date_sent","size"][tmpindex-2]
+            keyname = ["urgent","type_str","from_addr","to_addr","bbs","local_id","subject","date_sent","size"][tmpindex-2]
             headers = sorted(self.mailfolder.get_headers(self.currentFolder),key=attrgetter(keyname), reverse=self.mailSortBackwards)
         else:
             headers = self.mailfolder.get_headers(self.currentFolder)
@@ -260,9 +261,13 @@ class MainWindow(QMainWindow):
         n = len(headers)
         self.cMailList.setRowCount(n)
         for i in range(n):
+            urgent = ""
+            if headers[i].urgent:
+                urgent = "!!"
+                # display line in red
             self.mailIndex.append(headers[i].index)
-            self.cMailList.setItem(i,0,QTableWidgetItem(headers[i].urgent))
-            self.cMailList.setItem(i,1,QTableWidgetItem(headers[i].type))
+            self.cMailList.setItem(i,0,QTableWidgetItem(urgent))
+            self.cMailList.setItem(i,1,QTableWidgetItem(headers[i].type_str))
             self.cMailList.setItem(i,2,QTableWidgetItem(headers[i].from_addr))
             self.cMailList.setItem(i,3,QTableWidgetItem(headers[i].to_addr))
             self.cMailList.setItem(i,4,QTableWidgetItem(headers[i].bbs))
@@ -311,13 +316,14 @@ class MainWindow(QMainWindow):
         tmp.show()
         tmp.raise_()
     def onHandleNewOutgoingMessage(self,mbh,m):
+        mbh.flags |= MailFlags.IS_OUTGOING.value
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
         self.updateMailList()
     def onHandleNewOutgoingFormMessage(self,subject,m,urgent):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
-        tmp.setInitalData(subject,m,urgent)
+        tmp.setInitialData(subject,m,urgent)
         tmp.show()
         tmp.raise_()
     def onReadMessage(self,row,_):
@@ -409,10 +415,16 @@ class MainWindow(QMainWindow):
         #self.bbsParser = Nos2Parser(self.settings,self)
         self.serialStream = SerialStream(self.serialport)
         self.tnc_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
+        self.tnc_parser.signalDisconnected.connect(self.on_end_send_receive)
         self.tnc_parser.startSession(self.serialStream)
+
+    def on_end_send_receive(self):
+        self.serialport.close()
+
     def onNewIncomingMessage(self,mbh,m):
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
         self.updateMailList()
+
     def onDeleteMessages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
@@ -507,12 +519,17 @@ class MainWindow(QMainWindow):
         self.settings.save()
         self.settings.addProfile("Outpost")
         self.settings.addBBS("XSC_W1XSC-1","W1XSC-1","Santa Clara County ARES/RACES Packet System.  Located in San Jose.  JNOS.")
-        self.settings.setActiveBBS(self.settings.getBBSs()[0])
         self.settings.addBBS("XSC_W2XSC-1","W2XSC-1","Santa Clara County ARES/RACES Packet System.  Located on Crystal Peak (South County).  JNOS.")
         self.settings.addBBS("XSC_W3XSC-1","W3XSC-1","Santa Clara County ARES/RACES Packet System.  Located in Palo Alto.  JNOS.")
         self.settings.addBBS("XSC_W4XSC-1","W4XSC-1","Santa Clara County ARES/RACES Packet System.  Located on Frazier Peak (above Milpitas).  JNOS.")
         self.settings.addBBS("XSC_W5XSC-1","W5XSC-1","Santa Clara County ARES/RACES Packet System.  Used for training, back-up, etc.  JNOS.")
         self.settings.addBBS("XSC_W6XSC-1","W6XSC-1","Santa Clara County ARES/RACES Packet System.  Used for testing, etc.  JNOS.")
+        for bbs in self.settings.getBBSs():
+            self.settings.setActiveBBS(bbs)
+            for dc in Jnos2Parser.get_default_commands.items():
+                self.settings.setBBS(dc[0],dc[1])
+        self.settings.setActiveBBS(self.settings.getBBSs()[0])
+
         self.settings.addInterface("XSC_Kantronics_KPC3-Plus","KPC3+ TNC for use with Santa Clara County's BBS System. Verify the COM port setting for your system.")
         self.settings.setActiveInterface(self.settings.getInterfaces()[0])
         for p in KantronicsKPC3Plus.getDefaultPrompts():

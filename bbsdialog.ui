@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>4</number>
    </property>
    <widget class="QWidget" name="tab">
     <attribute name="title">
@@ -568,7 +568,7 @@ Send/Recevive (S/R) session</string>
        <rect>
         <x>225</x>
         <y>30</y>
-        <width>210</width>
+        <width>220</width>
         <height>20</height>
        </rect>
       </property>
@@ -638,7 +638,7 @@ Send/Recevive (S/R) session</string>
        </rect>
       </property>
       <property name="text">
-       <string>Custom retrieveal</string>
+       <string>Custom retrieval</string>
       </property>
      </widget>
      <widget class="QPlainTextEdit" name="plainTextEdit">

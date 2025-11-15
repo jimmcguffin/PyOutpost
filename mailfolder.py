@@ -4,11 +4,14 @@ import os
 from enum import Enum
 
 # headers (items in same order as display)
-# */U/Type/From/To/BBS/LocalId/Subject/Date/Size
+# */flagbits/From/To/BBS/LocalId/Subject/DateSent/DateReceived/Size
 
+# the flags are held in a 24 bit number
 # the low 11 bits are the folders that the mail is currently in
-# the high it is New(Unread)
-# remaining 4 bits undefined
+# 1 bit unused (maybe a 12th folder)
+# then the "type" as 2 bits
+# bit 22 is the urgent flag
+# the high bit (23) is New(Unread)
 
 class MailFlags(Enum):
     FOLDER_IN_TRAY = 1<<0
@@ -22,14 +25,19 @@ class MailFlags(Enum):
     FOLDER_3 = 1<<8
     FOLDER_4 = 1<<9
     FOLDER_5 = 1<<10
-    IS_NEW = 1<<15
+    # extra bit here
+    TYPE_BIT_0 = 1<<12 # these are used to make a 2-bit field, see code
+    TYPE_BIT_1 = 1<<13
+    # 2 exta bits here, maybe allow more types
+    IS_OUTGOING = 1<<16 # this means it was originally a message created and sent by this program
+    # 5 exta bits here
+    IS_URGENT = 1<<22
+    IS_NEW = 1<<23
 
 class MailBoxHeader:
     def __init__(self,s="",oh=0,om=0):
         self.index = 0
-        self.flags = 0 # bit encoded, include New/unread and folder bit mask
-        self.urgent = ""
-        self.type = ""
+        self.flags = 0 # bit encoded, includes New/unread and folder bit mask
         self.from_addr = ""
         self.to_addr = ""
         self.bbs = ""
@@ -43,20 +51,18 @@ class MailBoxHeader:
         s = s.rstrip()
         if s and len(s) > 2 and s[0:2] == "*/":
             tmp = s.split("/")
-            if len(tmp) >= 12:
-                for index in range(2,10):
+            if len(tmp) >= 10:
+                for index in range(2,7):
                     tmp[index]= unquote_plus(tmp[index])
                 self.flags = int(tmp[1],16)
-                self.urgent = tmp[2]
-                self.type = tmp[3]
-                self.from_addr = tmp[4]
-                self.to_addr = tmp[5]
-                self.bbs = tmp[6]
-                self.local_id = tmp[7]
-                self.subject = tmp[8]
-                self.date_sent = tmp[9]
-                self.date_received = tmp[10]
-                self.size = int(tmp[11])
+                self.from_addr = tmp[2]
+                self.to_addr = tmp[3]
+                self.bbs = tmp[4]
+                self.local_id = tmp[5]
+                self.subject = tmp[6]
+                self.date_sent = tmp[7]
+                self.date_received = tmp[8]
+                self.size = int(tmp[9])
                 self.offset_to_header = oh
                 self.offset_to_message_body = om
             else:
@@ -70,7 +76,7 @@ class MailBoxHeader:
         return False
 
     def to_string(self):
-        r = f"*/{self.flags:04x}/{quote_plus(self.urgent)}/{quote_plus(self.type)}/{quote_plus(self.from_addr)}/{quote_plus(self.to_addr)}/{quote_plus(self.bbs)}/{self.local_id}/{quote_plus(self.subject)}/{self.date_sent}/{self.date_received}/{self.size}\n"
+        r = f"*/{self.flags:06x}/{quote_plus(self.from_addr)}/{quote_plus(self.to_addr)}/{quote_plus(self.bbs)}/{quote_plus(self.local_id)}/{quote_plus(self.subject)}/{self.date_sent}/{self.date_received}/{self.size}\n"
         return r
     @staticmethod
     def to_outpost_date(s):
@@ -78,6 +84,13 @@ class MailBoxHeader:
         if not s: return ""
         dt = datetime.datetime.fromisoformat(s)
         return "{:%m/%d/%Y %H:%M}".format(dt)
+    @staticmethod
+    def to_in_mail_date(d=""):
+		# the date used inside mail headers has another formet
+        # if d is None, return current date/time
+        if not d:
+            d = datetime.datetime.now()
+        return "{:%a, %d %b %Y %H:%M:%S %Z}".format(d)
     @staticmethod
     def normalized_date(d="") -> str:
         # try to make sense out of any date format, return a string in ISO-8601 format
@@ -141,9 +154,35 @@ class MailBoxHeader:
             d = datetime.datetime(yy,mm,dd,h,m,s)
             return "{:%Y-%m-%dT%H:%M:%S}".format(d)
         return ""
-    def is_new(self):
-        return self.flags & MailFlags.IS_NEW.value
-
+    def is_new(self) -> bool:
+        return bool(self.flags & MailFlags.IS_NEW.value)
+    def is_urgent(self) -> bool:
+        return bool(self.flags & MailFlags.IS_URGENT.value)
+    def is_outgoing(self) -> bool:
+        return bool(self.flags & MailFlags.IS_OUTGOING.value)
+    def get_type(self) -> int:
+        v = 0
+        if self.flags & MailFlags.TYPE_BIT_0.value:
+            v |= 1
+        if self.flags & MailFlags.TYPE_BIT_1.value:
+            v |= 2
+        return v
+    def get_type_str(self) -> str:
+        return ["","B","NTS","DRAFT"][self.get_type()]
+    def set_type(self,t) -> None:
+        self.flags &= ~(MailFlags.TYPE_BIT_0.value|MailFlags.TYPE_BIT_1.value)
+        if t & 1:
+            self.flags |= MailFlags.TYPE_BIT_0.value
+        if t & 2:
+            self.flags |= MailFlags.TYPE_BIT_1.value
+    # these make the sorted fucntion work in the mail display
+    @property
+    def urgent(self) -> bool:
+        return bool(self.flags & MailFlags.IS_URGENT.value)
+    @property
+    def type_str(self) -> str:
+        t = self.get_type()
+        return ["","B","NTS","DRAFT"][t]
 
 class MailFolder:
     def __init__(self):
@@ -170,7 +209,7 @@ class MailFolder:
     def reload(self):
         return self.load()
 
-    def add_mail(self,mbh,message,folder): # mbh is a MailBoxHeader
+    def add_mail(self,mbh,message,folder:MailFlags): # mbh is a MailBoxHeader
         # before adding, look of we already have this one
         for m in self.mail:
             if m == mbh:
@@ -178,49 +217,51 @@ class MailFolder:
                 return
         mbh.flags |= folder.value
         with open("PyOutpost.mail","ab") as file:
+            # the size should be of the encoded data
+            message = message.encode("latin-1")
             mbh.size = len(message)
             mbh.offset_to_header = file.tell()
             file.write(mbh.to_string().encode("latin-1"))
             mbh.offset_to_message_body = file.tell()
-            file.write(message.encode("latin-1"))
+            file.write(message) # it has already been encoded above
         mbh.index = len(self.mail)
         self.mail.append(mbh)
 
     # all of the below functions are slightly dangerout in that they carefully read the header line and then update it in-place
     # this only works because the flags item is a fixed size (4 hex chars)
 
-    def copy_mail(self,indexlist,tofolder):
+    def copy_mail(self,indexlist,tofolder:MailFlags):
         try:
             with open("PyOutpost.mail","rb+") as file:
                 for index in indexlist:
                     if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
                     self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:04x}/".encode("latin-1")
-                    assert(len(newflags)) == 7
+                    newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+                    assert(len(newflags)) == 9
                     offset = self.mail[index].offset_to_header
                     file.seek(offset)
-                    # read the next 7 bytes just to see if we are in the right spot
-                    oldflags = file.read(7)
-                    if len(oldflags) == 7 and oldflags.startswith(b"*/") and oldflags != newflags:
+                    # read the next 9 bytes just to see if we are in the right spot
+                    oldflags = file.read(9)
+                    if len(oldflags) == 9 and oldflags.startswith(b"*/") and oldflags != newflags:
                         file.seek(offset)
                         file.write(newflags)
         except FileNotFoundError:
             pass
 
-    def move_mail(self,indexlist,fromfolder,tofolder): # frommailbox can be multiple or none, tomailbox can be multiple
+    def move_mail(self,indexlist,fromfolder:MailFlags,tofolder:MailFlags): # frommailbox can be multiple or none, tomailbox can be multiple
         try:
             with open("PyOutpost.mail","rb+") as file:
                 for index in indexlist:
                     if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
                     self.mail[index].flags &= ~fromfolder.value
                     self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:04x}/".encode("latin-1")
-                    assert(len(newflags)) == 7
+                    newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+                    assert(len(newflags)) == 9
                     offset = self.mail[index].offset_to_header
                     file.seek(offset)
-                    # read the next 7 bytes just to see if we are in the right spot
-                    oldflags = file.read(7)
-                    if len(oldflags) == 7 and oldflags.startswith(b"*/") and oldflags != newflags:
+                    # read the next 79 bytes just to see if we are in the right spot
+                    oldflags = file.read(9)
+                    if len(oldflags) == 9 and oldflags.startswith(b"*/") and oldflags != newflags:
                         file.seek(offset)
                         file.write(newflags)
         except FileNotFoundError:
@@ -261,7 +302,7 @@ class MailFolder:
         else:
             if not self.mail[index].flags & MailFlags.IS_NEW.value: return False
             self.mail[index].flags &= ~MailFlags.IS_NEW.value
-        newflags = f"*/{self.mail[index].flags:04x}/".encode("latin-1")
+        newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
         assert(len(newflags)) == 7
         offset = self.mail[index].offset_to_header
         try:
@@ -276,7 +317,7 @@ class MailFolder:
             pass
         return True
 
-    def get_headers(self,folder): 
+    def get_headers(self,folder:MailFlags): 
         # return self.mail
         r = []
         for m in self.mail:
