@@ -537,7 +537,7 @@ class MainWindow(QMainWindow):
 
         if not firsttime:
             self.updateStatusBar()
-            self.on_actionStation_ID_triggered() # if firsttime, will happen a little later
+            self.OnStationId() # if firsttime, will happen a little later
 
 
 
