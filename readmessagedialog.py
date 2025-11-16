@@ -8,14 +8,14 @@ from mailfolder import MailBoxHeader
 
 class ReadMessageDialog(QMainWindow):
     def __init__(self,pd,parent=None):
-        super(ReadMessageDialog,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         load_ui.loadUi("readmessagedialog.ui",self)
     def setData(self,h,m):
-        self.cBbs.setText(h.mBbs)
-        self.cFrom.setText(h.mFrom)
-        self.cTo.setText(h.mTo)
-        self.cSubject.setText(h.mSubject)
-        self.cReceived.setText(MailBoxHeader.toOutpostDate(h.mDateReceived))
-        self.cSent.setText(MailBoxHeader.toOutpostDate(h.mDateSent))
+        self.cBbs.setText(h.bbs)
+        self.cFrom.setText(h.from_addr)
+        self.cTo.setText(h.to_addr)
+        self.cSubject.setText(h.subject)
+        self.cReceived.setText(MailBoxHeader.to_outpost_date(h.date_received))
+        self.cSent.setText(MailBoxHeader.to_outpost_date(h.date_sent))
         self.cMessageBody.setPlainText(m)

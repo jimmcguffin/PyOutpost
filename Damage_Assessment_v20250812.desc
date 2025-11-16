@@ -9,51 +9,39 @@
 !/ADDON!
 
 [Fields]
-// Message tag as it appears ib outgoing message (followed by a ": "
-// FieldName, does not appear anywhere, currently if it contains "Date" or "Time" trigger a validity check (or it will soon)
-// Type, can be "str" for string, "mstr" for multiline string, "rb" for a set of radio buttons, "cb" for a checkbox
-// 4 numbers for the location on screen, assumes 850x1100 image (100dpi), upper left and lower right, both inclusive, for radio buttons is a box that encloses all of them
-
-// Next fields are only for radio buttons, they are in groups of 5, one for each radio button
-// First is the string that will be sent as the value for this button choice
-// Then 4 numbers for the location on screen, same details as for the main location
-// If the lower right coordinates are set to 0, it means "+14 from the upper left"
-
-// Soon there will be a "required" flag, probably just before the type
-// I may decide to allow custom validity check functions, it so, they may be after "required" flag, and this is end the automatic validity checks for date/timee
-
-MsgNo,MessageNumber,str,289,80,396,101
-1a.,Date,str,90,148,161,169
-1b.,Time,str,243,148,302,169
-5.,Handling,rb,0,0,0,0,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
-7a.,ToIcsPosition,dd,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
-8a.,FromIcsPosition,str,520,177,736,199
-7b.,ToLocation,str,146,206,404,228
-8b.,FromLocation,str,501,206,736,228
-7c.,ToName,str,130,236,404,257
-8c,FromName,str,485,236,736,257
-7d.,ToContactInfo,str,168,264,404,287
-8d.,FromContactInfo,str,523,264,736,287
-20.,Juristiction,dd,186,318,391,336,dd,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
-//21.,IndicentName,str
-22.,Address,str,109,343,390,359
-//23.,Unit,str
-24.,TypeOfStructure,rb,0,0,0,0,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
-//25.:NumberOfStories,str
-//26.:OwnRent,rb
-27a.,Flooding,cb,198,456,0,0
-27b.,Roof,cb,198,476,0,0
-27c.,Structural,cb,433,456,0,0
-27d.,Other,cb,433,476,0,0
-//28.:BasementType,rb
-//29.:DamageClassification,rb,0,0,0,0,Destroyed,Minor,No Visible Damage,Major,Affected
-//30.:Tag,rb,0,0,0,0,Green,Yellow,Red
-//31.:Insuranve,rb,0,0,0,0,Yes,No
-//32.:EstimatedDamage,str
-//33.:Comment,str
-//34.:ContactName,str
-//35.:ContextPhone,str
-OpName,OpName,str,95,828,308,846
-OpCall,OpCall,str,374,828,477,846
-OpDate,OpDate,str,522,828,584,846
-OpTime,OpTime,str,666,828,743,846
+// see the ICS213 file for a description of these lines
+MsgNo,MessageNumber,str,,,289,80,396,101
+1a.,Date,str,,,90,148,161,169
+1b.,Time,str,,,243,148,302,169
+5.,Handling,rb,,,0,0,0,0,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
+7a.,ToIcsPosition,dd,,,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
+8a.,FromIcsPosition,str,,,520,177,736,199
+7b.,ToLocation,str,,,146,206,404,228
+8b.,FromLocation,str,,,501,206,736,228
+7c.,ToName,str,,,130,236,404,257
+8c,FromName,str,,,485,236,736,257
+7d.,ToContactInfo,str,,,168,264,404,287
+8d.,FromContactInfo,str,,,523,264,736,287
+20.,Juristiction,dd,,,186,318,391,336,dd,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+//21.,IndicentName,str,,
+*22.,Address,str,,,109,343,390,359
+//23.,Unit,str,,
+24.,TypeOfStructure,rb,,,0,0,0,0,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
+//25.:NumberOfStories,str,,
+//26.:OwnRent,rb,,
+27a.,Flooding,cb,,,198,456,0,0
+27b.,Roof,cb,,,198,476,0,0
+27c.,Structural,cb,,,433,456,0,0
+27d.,Other,cb,,,433,476,0,0
+//28.:BasementType,rb,,
+//29.:DamageClassification,rb,,,0,0,0,0,Destroyed,Minor,No Visible Damage,Major,Affected
+//30.:Tag,rb,,,0,0,0,0,Green,Yellow,Red
+//31.:Insuranve,rb,,,0,0,0,0,Yes,No
+//32.:EstimatedDamage,str,,
+//33.:Comment,str,,
+//34.:ContactName,str,,
+//35.:ContextPhone,str,,
+OpName,OpName,str,,,95,828,308,846
+OpCall,OpCall,str,,,374,828,477,846
+OpDate,OpDate,str,,,522,828,584,846
+OpTime,OpTime,str,,,666,828,743,846

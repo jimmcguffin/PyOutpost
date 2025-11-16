@@ -6,7 +6,7 @@ from persistentdata import PersistentData
 
 class BbsDialog(QDialog):
     def __init__(self,pd,parent=None):
-        super(BbsDialog,self).__init__(parent)
+        super().__init__(parent)
         self.pd = pd
         load_ui.loadUi("bbsdialog.ui",self)
         self.tabWidget.setCurrentIndex(0)

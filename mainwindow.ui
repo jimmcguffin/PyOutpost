@@ -533,9 +533,8 @@
     <property name="title">
      <string>Forms</string>
     </property>
-    <addaction name="actionXSC_Check_In_Out_Message"/>
-    <addaction name="actionXSC_ICS_213_Message"/>
-    <addaction name="actionXSC_Damage_Assessment"/>
+    <addaction name="actionICS_309_Communications_Log"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuActions">
     <property name="title">
@@ -919,6 +918,11 @@
   <action name="actionXSC_Check_In_Out_Message">
    <property name="text">
     <string>XSC Check-In/Out Message</string>
+   </property>
+  </action>
+  <action name="actionICS_309_Communications_Log">
+   <property name="text">
+    <string>ICS-309 Communications Log</string>
    </property>
   </action>
  </widget>

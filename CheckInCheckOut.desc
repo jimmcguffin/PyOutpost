@@ -4,10 +4,10 @@
 
 [Fields]
 1,MessageNumber,str,169,25,319,44
-2,Type,rb,0,0,0,0,Check-In,174,57,0,0,Check-Out,273,57,0,0
-3,UserCall,str,169,82,260,101
-4,UserName,str,336,82,787,101
-5,UseTacticalCall,cb,20,114,0,0
-6,TacticalCall,str,169,111,260,129
-7,TacticalName,str,336,111,787,129
+2,Type,rb,,,0,0,0,0,Check-In,174,57,0,0,Check-Out,273,57,0,0
+3,UserCall,str,,,169,82,260,101
+4,UserName,str,,,336,82,787,101
+5,UseTacticalCall,cb,2,,0,114,0,0
+6,TacticalCall,str,,,169,111,260,129
+7,TacticalName,str,,,336,111,787,129
 
