@@ -5,7 +5,7 @@ from persistentdata import PersistentData
 from serialstream import SerialStream
 from bbsparser import Jnos2Parser
 from mailfolder import MailBoxHeader
-
+#from globalsignals import GlobalSignals
 
 class TncDevice(QObject):
     signalConnected = pyqtSignal()
@@ -13,6 +13,7 @@ class TncDevice(QObject):
     signalDisconnected = pyqtSignal()
     signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     signalOutgingMessageSent = pyqtSignal() # mostly so that mainwinow can repaint mail list if it is viewing the OutTray
+    signal_status_bar_message = pyqtSignal(str) # send "" to revert to default status bar
     def __init__(self,pd,parent=None):
         super().__init__(parent)
         self.pd = pd
@@ -25,16 +26,18 @@ class TncDevice(QObject):
         self.serialStream.signalLineRead.connect(self.onResponse)        
         self.serialStream.signalConnected.connect(self.onConnected)        
         self.serialStream.signalDisconnected.connect(self.onDisconnected)
-
+        self.signal_status_bar_message.emit("Initializing TNC")
     def endSession(self):
+        self.messageQueue.clear()
+        self.signal_status_bar_message.emit("")
+        self.signalDisconnected.emit()
         return
 
     def send(self,b):
         self.messageQueue.append(b)
         if len(self.messageQueue) == 1:
             if self.messageQueue[0] == self.special_disconnect_value:
-                del self.messageQueue[0:1]
-                self.signalDisconnected.emit()
+                self.endSession()
             else:
                 self.serialStream.write(self.messageQueue[0])
 
@@ -64,7 +67,7 @@ class KantronicsKPC3Plus(TncDevice):
 
     def startSession(self,ss):
         super().startSession(ss)
-        self.serialStream.lineEnd = b"cmd:"
+        self.serialStream.line_end = b"cmd:"
         self.serialStream.include_line_end_in_reply = self.using_echo
         mycall = f"{self.pd.getInterface("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
         connectstr = f"{self.pd.getInterface("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
@@ -131,8 +134,7 @@ class KantronicsKPC3Plus(TncDevice):
             del self.messageQueue[0:1]
             if self.messageQueue:
                 if self.messageQueue[0] == self.special_disconnect_value:
-                    del self.messageQueue[0:1]
-                    self.signalDisconnected.emit()
+                    self.endSession()
                 else:
                     self.serialStream.write(self.messageQueue[0])
         else:
@@ -147,6 +149,7 @@ class KantronicsKPC3Plus(TncDevice):
         self.bbs_parser.signalDisconnected.connect(self.onDisconnected)
         self.bbs_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
         self.bbs_parser.signalOutgingMessageSent.connect(lambda: self.onOutgoingMessageSent.emit())
+        self.bbs_parser.signal_status_bar_message.connect(lambda s: self.signal_status_bar_message.emit(s))
         self.bbs_parser.start_session(self.serialStream)
 
     def onNewIncomingMessage(self,mbh,m):
@@ -156,12 +159,13 @@ class KantronicsKPC3Plus(TncDevice):
         # if we never actually connected, there will not be a bbs_parser
         if not self.bbs_parser:
             return # this happens at startup sometimes - the TNC was holding on to it from a previous session
-        print("Disconnected!")
+        print("TNC got disconnected!")
+        self.signal_status_bar_message.emit("Resetting TNC")
         self.bbs_parser.signalDisconnected.disconnect()
         self.bbs_parser.signalNewIncomingMessage.disconnect()
         self.bbs_parser = None
         self.serialStream.signalLineRead.connect(self.onResponse) # point this back to us
-        self.serialStream.lineEnd = b"cmd:" # and reset this
+        self.serialStream.line_end = b"cmd:" # and reset this
         self.serialStream.include_line_end_in_reply = self.using_echo # and this
         if self.pd.getInterfaceBool("AlwaysSendInitCommands"):
             for s in self.pd.getInterface("CommandsAfter"):

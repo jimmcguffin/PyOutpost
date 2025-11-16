@@ -1,5 +1,6 @@
+# pylint:  disable="line-too-long,missing-function-docstring,multiple-statements,no-name-in-module"
+
 from PyQt6.QtCore import QObject, pyqtSignal, QTimer
-from PyQt6.QtSerialPort import QSerialPort
 
 # this class reads fom a serial stream looking for "line" ends, which can be any string
 # it also looks for asynchronous notifications, like "*** Connected"
@@ -9,94 +10,95 @@ class SerialStream(QObject):
     signalConnected = pyqtSignal()
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
-    def __init__(self,serialport):
+    def __init__(self,serial_port):
         super().__init__()
-        self.readfromfile = False
-        if not self.readfromfile:
-            self.serialPort = serialport
-        self.sdata = bytearray()
-        self.lineEnd = b"cmd:"
+        self._read_from_file = False
+        if not self._read_from_file:
+            self.serial_port = serial_port
+        self._sdata = bytearray()
+        self.line_end = b"cmd:"
         self.include_line_end_in_reply = True
-        self.asyncConnected = b"*** CONNECTED"
-        self.asyncDisonnected = b"*** DISCONNECTED"
-        self.asyncError = b"" #b"*** retry count exceeded"
-        if self.readfromfile:
-            self.logFile = open("s.log","rb")
-            self.timer = QTimer(self)
-            self.timer.timeout.connect(self.onTimer)
-            self.timer.start(4)
+        self._async_connected = b"*** CONNECTED"
+        self._async_disonnected = b"*** DISCONNECTED"
+        self._async_error = b"" #b"*** retry count exceeded"
+        if self._read_from_file:
+            self._log_file = open("s.log","rb")
+            self._timer = QTimer(self)
+            self._timer.timeout.connect(self.on_timer)
+            self._timer.start(4)
         else:
-            self.serialPort.readyRead.connect(self.onSerialPortReady)
-            self.logFile = open("serial.log","ab")
-            if self.logFile:
-                 self.logFile.write(b"\r\n--------\r\n")
-    def done(self):
-        self.serialport.close()
-        self.serialport.readyRead.disconnect()
+            self.serial_port.readyRead.connect(self.on_serial_port_ready)
+            self._log_file = open("serial.log","ab")
+            if self._log_file:
+                self._log_file.write(b"\r\n--------\r\n")
+    def reset(self):
+        self.serial_port.close()
+        self.serial_port.readyRead.disconnect()
+        self._sdata.clear()
     def write(self,s):
         if not (s and s[0] != '\r'):
-             pass
+            pass
         assert(s and s[0] != '\r') # no blank lines
-        if not self.readfromfile:
-            self.serialPort.write(s.encode("latin-1"))
+        if not self._read_from_file:
+            self.serial_port.write(s.encode("latin-1"))
             if True:
-                if self.logFile: 
+                if self._log_file:
                     tmp = s
                     #tmp = tmp.replace('\r',"<cr>")
                     #tmp = tmp.replace('\n',"<lf>")
                     #tmp = "{"+tmp+"}"
                     tmp = tmp.replace("\r","\r\n")
                     tmp = tmp.replace("\x03","^c")
-                    self.logFile.write(b"\x1b[31m"+tmp.encode("latin-1")+b"\x1b[0m")
-                    self.logFile.flush()
-    def onTimer(self): # only used when reading from file
-        sdata = self.logFile.read(1)
-        self.sdata += sdata
-        return self.findLines()
-    def onSerialPortReady(self): # normal path, uses serial port
-        sdata = bytearray(self.serialPort.readAll())
-        if self.logFile: 
-             self.logFile.write(sdata)
-             self.logFile.flush()
-        self.sdata += sdata
-        return self.findLines()
-    def findLines(self):
+                    self._log_file.write(b"\x1b[31m"+tmp.encode("latin-1")+b"\x1b[0m")
+                    self._log_file.flush()
+    def on_timer(self): # only used when reading from file
+        sdata = self._log_file.read(1)
+        self._sdata += sdata
+        return self.find_lines()
+    def on_serial_port_ready(self): # normal path, uses serial port
+        sdata = bytearray(self.serial_port.readAll())
+        if self._log_file:
+            self._log_file.write(sdata)
+            self._log_file.flush()
+        self._sdata += sdata
+        return self.find_lines()
+    def find_lines(self):
         start = 0
         end = 0
-        elen = len(self.lineEnd)
+        elen = len(self.line_end)
         i = 0
-        while i < len(self.sdata):
-            bytesleft = len(self.sdata)-i
-            if bytesleft >= elen and self.sdata [i:i+elen] == self.lineEnd:
-                    end = i+elen
-                    if self.include_line_end_in_reply:
-                        self.signalLineRead.emit(self.sdata[start:end].decode("latin-1"))
-                    else:
-                        self.signalLineRead.emit(self.sdata[start:end-elen].decode("latin-1"))
-                    start = end
-                    i = start
-            elif self.asyncConnected  and bytesleft >= len(self.asyncConnected) and self.sdata [i:i+len(self.asyncConnected)] == self.asyncConnected:
-                    end = i+len(self.asyncConnected)
-                    self.signalConnected.emit()
-                    start = end
-                    i = start
-                    break # leave any other bytes in the buffer to be process by (possibly) new reader
-            elif self.asyncDisonnected and bytesleft >= len(self.asyncDisonnected) and self.sdata [i:i+len(self.asyncDisonnected)] == self.asyncDisonnected:
-                    end = i+len(self.asyncDisonnected)
-                    self.signalDisconnected.emit()
-                    start = end
-                    break # leave any other bytes in the buffer to be process by (possibly) new reader
-            elif self.asyncError and bytesleft >= len(self.asyncError) and self.sdata [i:i+len(self.asyncError)] == self.asyncError:
-                    end = i+len(self.asyncError)
-                    self.signalTimeout.emit()
-                    start = end
-                    i = start
-                    break # leave any other bytes in the buffer to be process by (possibly) new reader
+        while i < len(self._sdata):
+            bytesleft = len(self._sdata)-i
+            if bytesleft >= elen and self._sdata [i:i+elen] == self.line_end:
+                end = i+elen
+                if self.include_line_end_in_reply:
+                    self.signalLineRead.emit(self._sdata[start:end].decode("latin-1"))
+                else:
+                    self.signalLineRead.emit(self._sdata[start:end-elen].decode("latin-1"))
+                start = end
+                i = start
+            elif self._async_connected  and bytesleft >= len(self._async_connected) and self._sdata [i:i+len(self._async_connected)] == self._async_connected:
+                end = i+len(self._async_connected)
+                self.signalConnected.emit()
+                start = end
+                i = start
+                break # leave any other bytes in the buffer to be process by (possibly) new reader
+            elif self._async_disonnected and bytesleft >= len(self._async_disonnected) and self._sdata [i:i+len(self._async_disonnected)] == self._async_disonnected:
+                end = i+len(self._async_disonnected)
+                self.signalDisconnected.emit()
+                start = end
+                break # leave any other bytes in the buffer to be process by (possibly) new reader
+            elif self._async_error and bytesleft >= len(self._async_error) and self._sdata [i:i+len(self._async_error)] == self._async_error:
+                end = i+len(self._async_error)
+                self.signalTimeout.emit()
+                start = end
+                i = start
+                break # leave any other bytes in the buffer to be process by (possibly) new reader
             else:
-                 i += 1
+                i += 1
         # we got to the end, remove any bytes that have been processed
         if start:
-             if start >= len(self.sdata):
-                   self.sdata.clear()
-             else: 
-                del self.sdata[0:start] #self.sdata = self.sdata[start:]
+            if start >= len(self._sdata):
+                self._sdata.clear()
+            else:
+                del self._sdata[0:start] #self.sdata = self.sdata[start:]

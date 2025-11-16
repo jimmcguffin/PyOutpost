@@ -1,10 +1,6 @@
 # pylint:  disable="line-too-long,missing-function-docstring,multiple-statements,no-name-in-module"
 
-import re
-
 from PyQt6.QtCore import QObject, pyqtSignal
-from persistentdata import PersistentData
-from serialstream import SerialStream
 from mailfolder import MailFolder, MailBoxHeader, MailFlags
 
 # the general sequence is:
@@ -36,16 +32,17 @@ class BbsSequenceImmediateStep():
         self.data = data
 
 
-# at any given time, "bbsSequence" is a mix of BbsSequenceSteps and BbsSequenceImmediateSteps, but the first entry as always a BbsSequenceStep that has 
+# at any given time, "bbsSequence" is a mix of BbsSequenceSteps and BbsSequenceImmediateSteps, but the first entry as always a BbsSequenceStep that has
 # already sent its what_to_send value and is awaiting the reply. There are two times this this is briefly not true:
 # 1 - the sequence is empty and a new bbsSequence has just been pushed
-# 2 - the front step has just been removed. Now the check_sequence should consume all BbsSequenceImmediateSteps until it gets to a BbsSequenceStep and then 
+# 2 - the front step has just been removed. Now the check_sequence should consume all BbsSequenceImmediateSteps until it gets to a BbsSequenceStep and then
 # send the new what_to_send so that it is "normalled-up"
 class BbsParser(QObject):
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
     signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     signalOutgingMessageSent= pyqtSignal()
+    signal_status_bar_message = pyqtSignal(str)
     def __init__(self,pd,using_echo,parent=None):
         super().__init__(parent)
         self.pd = pd
@@ -58,14 +55,16 @@ class BbsParser(QObject):
 
     def start_session(self,ss):
         self.serial_stream = ss
-        self.serial_stream.lineEnd = b">\r\n"
+        self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses
         self.serial_stream.include_line_end_in_reply = True
         self.serial_stream.signalLineRead.disconnect()
-        self.serial_stream.signalLineRead.connect(self.on_response)        
+        self.serial_stream.signalLineRead.connect(self.on_response)
         self.serial_stream.signalDisconnected.connect(self.on_disconnected)
+        self.signal_status_bar_message.emit("Initializing the BBS")
 
     def end_session(self):
-        return
+        print("BBS emitting disconnect")
+        self.signalDisconnected.emit()
 
     def add_step(self,step): # argument is a BbsSequenceStep or a BbsSequenceImmediateStep
         # things are different if the sequence is empty
@@ -94,18 +93,19 @@ class BbsParser(QObject):
                 self.serial_stream.write(self.bbs_sequence[0].what_to_send)
 
     def on_disconnected(self):
-        self.signalDisconnected.emit() 
-
+        print("BBS got disconnected")
+        self.end_session()
 
 class Jnos2Parser(BbsParser):
     def __init__(self,pd,using_echo,parent=None):
         super().__init__(pd,using_echo,parent)
-        self.outtray = MailFolder()
+        self.mailfolder = MailFolder()
+        self.current_area = ""
     def start_session(self,ss):
         super().start_session(ss)
         self.add_step(BbsSequenceStep("",self.start_session2)) # there is a prompt/terminator that will arrive without being told
 
-    def start_session2(self,r,data=None):  
+    def start_session2(self,r,_=None):
         # if the initial prompt is long, change it to short
         if r.find("A,B,C,") >= 0:
             self.add_step(BbsSequenceStep("x\r")) # this toggles long/short prompt
@@ -118,19 +118,22 @@ class Jnos2Parser(BbsParser):
                     self.add_step(BbsSequenceStep(s+"\r"))
         self.add_step(BbsSequenceImmediateStep(self.send_outgoing))
 
-    def send_outgoing(self,data=None):
+    def send_outgoing(self,_=None):
         # if there are outgoing messages send them now
         # this may turn out to be a bad idea but for now I read directly from the mail file
-        self.outtray.load()
-        headers = self.outtray.get_headers(MailFlags.FOLDER_OUT_TRAY)
-        for i in range(len(headers)):
-            mbh,m = self.outtray.get_message(i)
-            m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
-            if not m2.endswith('\r'): m2 += '\r'
-            self.add_step(BbsSequenceStep(f"sp {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,i))
+        self.mailfolder.load()
+        headers = self.mailfolder.get_headers(MailFlags.FOLDER_OUT_TRAY)
+        if headers:
+            self.signal_status_bar_message.emit("Sending out messages")
+            for i in range(len(headers)):
+                mbh,m = self.mailfolder.get_message(i)
+                m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
+                if not m2.endswith('\r'): m2 += '\r'
+                self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,i))
         self.add_step(BbsSequenceImmediateStep(self.send_lists))
 
-    def send_lists(self,data=None):
+    def send_lists(self,_=None):
+        self.signal_status_bar_message.emit("Reading messages")
         self.add_step(BbsSequenceStep("la\r",self.handle_list))
         #	self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
         #	self.add_step(BbsSequenceStep("la\r",self.handle_list))
@@ -159,60 +162,85 @@ class Jnos2Parser(BbsParser):
         del self.bbs_sequence[0:1]
         self.check_sequence()
 
-    def handle_list(self,r,data=None):
+    def handle_list(self,r,_=None):
         # if we get here, it means that all of the outgoing messages have been sent
         if self.items_sent:
-            self.outtray.copy_mail(self.items_sent,MailFlags.FOLDER_SENT)
-            self.outtray.delete_mail(self.items_sent)
+            self.mailfolder.move_mail(self.items_sent,MailFlags.FOLDER_SENT)
             self.items_sent.clear()
         print(f"got list {r}")
         # sample "la\r\nMail area: kw6w\r\n1 message  -  1 new\r\n\St.  #  TO            FROM     DATE   SIZE SUBJECT\r\n> N   1 kw6w@w1xsc.sc pkttue   Oct 15  747 DELIVERED: W6W-303P_P_ICS213_Shutti\r\nArea: kw6w Current msg# 1.\r\n" +terminator
         # or "la\r\nMail area: xscperm\r\n4 messages  -  4 new\r\nSt.  #  TO            FROM     DATE   SIZE SUBJECT\r\n> N   1 xscperm       xsceoc   Nov 27 5962 SCCo XSC Tactical Calls v191127    \r\n  N   2 xscperm       xsceoc   Sep  5 1932 SCCo Packet Frequencies v200905    \r\n  N   3 xscperm       xsceoc   Aug 13 2768 SCCo Packet Subject Line v220803   \r\n  N   4 xscperm       xsceoc   Aug  9 4326 SCCo Packet Tactical Calls v2024080\r\nArea: xscperm Current msg# 1.\r\n?,A,B,C,CONV,D,E,F,H,I,IH,IP,J,K,L,M,N,NR,O,P,PI,R,S,T,U,V,W,X,Z " >>
         lines = r.splitlines()
-        if len(lines) >= 3:
-            # line 0 is just the la command
-            # line 1 will have the mail area
-            area = ""
-            words = lines[1].split()
-            if words and words[0] == "Mail" and words[1] == "area:":
-                area = words[2]
-            # # line 2 will have the counts
+        if len(lines) >= 2:
+            #asume no echo
+            area_line = 0
+            message_counts_line = 1
+            first_message_line = 4
+            if self.using_echo:
+                area_line += 1
+                message_counts_line += 1
+                first_message_line += 1
+            words = lines[area_line].split()
+            if len(words) >= 2 and words[0] == "Area:":
+                self.current_area = words[1]
+            elif len(words) >= 3 and words[0] == "Mail" and words[1] == "area:":
+                self.current_area = words[2]
+            # # line "message_counts_line" will have the counts
             # nmessages = 0
-            # m = re.match(r"(\d+) message",lines[2])
+            # m = re.match(r"(\d+) message",lines[message_counts_line])
             # if m: nmessages = int(m.groups()[0])
             # for i  in range(nmessages):
             #     tmp = f"r {i+1}\r"
             #     self.add_step(BbsSequenceStep(tmp,self.handleRead,i))
-            
+
             # the code above assumes that all messages are consecutively numbered 1-n, which it turns out is not necessarily true
-            # let's ignore the meesage count and just count the lines as we find them
+            # let's ignore the message count and just count the lines as we find them
             # line 3 is blank, 4 has the column headers
-            for l in lines[4:]:
+            for l in lines[first_message_line:]:
                 # the first char might be a ">" which indicates the current message, we dont care about that, and then a space
-                words = l[2:].split() # the date will span multiple words
-                # todo: we might consider checking if we already have this message, but it might be hard when there is
-                # only a partial subject and weird date formats, so for new read (and later kill) all of them
+                words = l[2:].split(None,7) # the date will span multiple words
+                # word[0] is the message number
+                # word[1] is the to_addr
+                # word[2] is the from_adddr
+                # word[3] is the month
+                # word[4] is the day
+                # word[5] is the size
+                # everything after this is the subject
                 if len(words) >= 2 and words[0] in ("Y","N") and words[1].isdigit():
+                    # todo: we might consider checking if we already have this message, but it might be hard when there is
+                    # only a partial subject and weird date formats, so for now read (and later kill) all of them
+                    if len(words) >= 8:
+                        self.mailfolder.load()
+                        maybematch = self.mailfolder.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
+                        print(f"matcher says {maybematch},{words[7].rstrip()}")
+                        if maybematch:
+                            continue
                     mn = int(words[1])
                     tmp = f"{self.get_command("CommandRead")} {mn}\r"
                     self.add_step(BbsSequenceStep(tmp,self.handle_read,mn))
         # there are now 0 or more read commands in the list
         # issue the command that will kill them after they are read
         self.add_step(BbsSequenceImmediateStep(self.kill_read_messages))
-        pass
 
-    def kill_read_messages(self,data=None):
-        if self.messages_read:
-            k = self.get_command("CommandDelete")
-            for m in self.messages_read:
-                k += " "
-                k += str(m)
-            k += "\r"
-            self.add_step(BbsSequenceStep(k))
-        # todo: this should start the precedure to send delivery confirmations
-        self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
+    def kill_read_messages(self,_=None):
+        # only kill read messages on own area
+        callsign = self.pd.getActiveCallSign(False)
+        if self.current_area == callsign:
+            if self.messages_read:
+                k = self.get_command("CommandDelete")
+                for m in self.messages_read:
+                    k += " "
+                    k += str(m)
+                k += "\r"
+                self.add_step(BbsSequenceStep(k))
+            self.messages_read.clear()
+        if self.current_area != "xscperm":
+            self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
+            self.add_step(BbsSequenceStep("la\r",self.handle_list))
+        else:
+            self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
 
-    def send_after_commands(self,data=None):
+    def send_after_commands(self,_=None):
         if self.pd.getBBSBool("AlwaysSendInitCommands"):
             # these come from the dialog
             for s in self.pd.getBBS("CommandsAfter"):
@@ -225,7 +253,7 @@ class Jnos2Parser(BbsParser):
             self.add_step(BbsSequenceStep(f"# this is {callsign}\r"))
         self.add_step(BbsSequenceStep(self.get_command("CommandBye")+"\r")) # this will trigger the *** disconnect message
 
-    def handle_area(self,r,data=None):
+    def handle_area(self,r,_=None):
         print(f"got area {r}")
         pass
 
@@ -284,7 +312,7 @@ class Jnos2Parser(BbsParser):
 
     @staticmethod
     def get_default_commands():
-         return {
+        return {
 				"CommandBye":"B",
 				"CommandDelete":"K",
 				"CommandListBulletin":"LB",

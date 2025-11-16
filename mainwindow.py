@@ -5,7 +5,7 @@ from enum import Enum
 from operator import attrgetter
 
 #from PyQt6 import QtWidgets
-from PyQt6.QtCore import Qt, QIODeviceBase
+from PyQt6.QtCore import Qt,QIODeviceBase
 from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
 from PyQt6.uic import load_ui
@@ -24,6 +24,7 @@ from mailfolder import MailFolder, MailBoxHeader, MailFlags
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream
+#from globalsignals import GlobalSignals
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,6 +34,7 @@ class MainWindow(QMainWindow):
         self.sdata = bytearray()
         self.serialStream = SerialStream(self.serialport)
         self.tnc_parser = None
+        self.tempory_status_bar_message = ""
         # self.settings.clear()
         # special things that have to be done the first time
         firsttime = False
@@ -116,6 +118,7 @@ class MainWindow(QMainWindow):
         self.cStatusBar.addWidget(self.cStatusCenter,800)
         self.cStatusBar.addPermanentWidget(self.cStatusRight1,100)
         self.cStatusBar.addPermanentWidget(self.cStatusRight2,100)
+        #GlobalSignals().status_bar_message.connect(self.on_status_bar_message)
         #self.setStatusBar(self.cStatusBar)
         self.updateProfileList()
         self.updateStatusBar()
@@ -214,13 +217,16 @@ class MainWindow(QMainWindow):
         self.updateStatusBar()
     def updateStatusBar(self):
         if not hasattr(self,'cStatusCenter'): return
-        l1 = self.settings.getActiveCallSign(True)
-        l2 = self.settings.getActiveBBS()
-        l3 = self.settings.getActiveInterface()
-        l4 = ""
-        cp = self.settings.getInterface("ComPort")
-        if (cp): l4 = cp.partition("/")[0].rstrip()
-        self.cStatusCenter.setText(f"{l1} -- {l2} -- {l3} ({l4})")
+        if self.tempory_status_bar_message:
+            self.cStatusCenter.setText(self.tempory_status_bar_message)
+        else:
+            l1 = self.settings.getActiveCallSign(True)
+            l2 = self.settings.getActiveBBS()
+            l3 = self.settings.getActiveInterface()
+            l4 = ""
+            cp = self.settings.getInterface("ComPort")
+            if (cp): l4 = cp.partition("/")[0].rstrip()
+            self.cStatusCenter.setText(f"{l1} -- {l2} -- {l3} ({l4})")
     def updateProfileList(self):
         ap = self.settings.getActiveProfile()
         self.cProfile.blockSignals(True)
@@ -416,10 +422,12 @@ class MainWindow(QMainWindow):
         self.serialStream = SerialStream(self.serialport)
         self.tnc_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
         self.tnc_parser.signalDisconnected.connect(self.on_end_send_receive)
+        self.tnc_parser.signal_status_bar_message.connect(self.on_status_bar_message)
         self.tnc_parser.startSession(self.serialStream)
 
     def on_end_send_receive(self):
-        self.serialport.close()
+        #self.serialport.close()
+        self.serialStream.reset()
 
     def onNewIncomingMessage(self,mbh,m):
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
@@ -562,7 +570,9 @@ class MainWindow(QMainWindow):
         if not firsttime:
             self.updateStatusBar()
             self.OnStationId() # if firsttime, will happen a little later
-
+    def on_status_bar_message(self,s):
+        self.tempory_status_bar_message = s
+        self.updateStatusBar()
 
 
 

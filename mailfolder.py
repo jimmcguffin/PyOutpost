@@ -303,14 +303,14 @@ class MailFolder:
             if not self.mail[index].flags & MailFlags.IS_NEW.value: return False
             self.mail[index].flags &= ~MailFlags.IS_NEW.value
         newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
-        assert(len(newflags)) == 7
+        assert(len(newflags)) == 9
         offset = self.mail[index].offset_to_header
         try:
             with open("PyOutpost.mail","rb+") as file:
                 file.seek(offset)
-                # read the next 7 bytes just to see if we are in the right spot
-                oldflags = file.read(7)
-                if len(oldflags) == 7 and oldflags.startswith(b"*/") and oldflags != newflags:
+                # read the next 9 bytes just to see if we are in the right spot
+                oldflags = file.read(9)
+                if len(oldflags) == 9 and oldflags.startswith(b"*/") and oldflags != newflags:
                     file.seek(offset)
                     file.write(newflags)
         except FileNotFoundError:
@@ -324,3 +324,18 @@ class MailFolder:
             if m.flags & folder.value:
                 r.append(m)
         return r
+    # this was copied from tncparser, I don't know the recommended way to store loose functions
+    @staticmethod
+    def matches_ignore_case(str1, str2): # if str2 is a prefix of str1
+        l = len(str2)
+        str1 = str1[0:l].upper()
+        str2 = str2.upper()
+        return str1 == str2
+
+    def is_possibly_a_duplicate(self,to_addr:str,from_addr:str,subject:str) -> bool:
+        for m in self.mail:
+            if self.matches_ignore_case(m.to_addr,to_addr) and self.matches_ignore_case(m.from_addr,from_addr) and self.matches_ignore_case(m.subject,subject):
+                return True
+        return False
+            
+
