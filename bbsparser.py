@@ -141,7 +141,7 @@ class Jnos2Parser(BbsParser):
                     mbh,m = self.mailfolder.get_message(index)
                     m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
                     if not m2.endswith('\r'): m2 += '\r'
-                    self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,i))
+                    self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,index))
         self.add_step(BbsSequenceImmediateStep(self.send_lists))
 
     def send_lists(self,_=None):
