@@ -55,9 +55,11 @@ class BbsParser(QObject):
         self.messages_read = []
         self.serial_stream = None # later will be set to a SerialStream
         self.using_echo = using_echo
+        self.srflags = 0
 
-    def start_session(self,ss):
+    def start_session(self,ss,srflags:int):
         self.serial_stream = ss
+        self.srflags = srflags
         self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses, does now wotk if TNC is set for long prompts ("Z >\r\n" would be work)
         self.serial_stream.include_line_end_in_reply = True
         self.serial_stream.signalLineRead.disconnect()
@@ -110,8 +112,8 @@ class Jnos2Parser(BbsParser):
         super().__init__(pd,using_echo,parent)
         self.mailfolder = MailFolder()
         self.current_area = ""
-    def start_session(self,ss):
-        super().start_session(ss)
+    def start_session(self,ss,srflags):
+        super().start_session(ss,srflags)
         self.add_step(BbsSequenceStep("",self.start_session2)) # there is a prompt/terminator that will arrive without being told
 
     def start_session2(self,r,_=None):
@@ -128,22 +130,24 @@ class Jnos2Parser(BbsParser):
         self.add_step(BbsSequenceImmediateStep(self.send_outgoing))
 
     def send_outgoing(self,_=None):
-        # if there are outgoing messages send them now
-        # this may turn out to be a bad idea but for now I read directly from the mail file
-        self.mailfolder.load()
-        headers = self.mailfolder.get_headers(MailFlags.FOLDER_OUT_TRAY)
-        if headers:
-            self.signal_status_bar_message.emit("Sending out messages")
-            for i in range(len(headers)):
-                mbh,m = self.mailfolder.get_message(i)
-                m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
-                if not m2.endswith('\r'): m2 += '\r'
-                self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,i))
+        if self.srflags & 1:
+            # if there are outgoing messages send them now
+            # this may turn out to be a bad idea but for now I read directly from the mail file
+            self.mailfolder.load()
+            indexes = self.mailfolder.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
+            if indexes:
+                self.signal_status_bar_message.emit("Sending out messages")
+                for index in indexes:
+                    mbh,m = self.mailfolder.get_message(index)
+                    m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
+                    if not m2.endswith('\r'): m2 += '\r'
+                    self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,i))
         self.add_step(BbsSequenceImmediateStep(self.send_lists))
 
     def send_lists(self,_=None):
-        self.signal_status_bar_message.emit("Reading messages")
-        self.add_step(BbsSequenceStep("la\r",self.handle_list))
+        if self.srflags & 2:
+            self.signal_status_bar_message.emit("Reading messages")
+            self.add_step(BbsSequenceStep("la\r",self.handle_list))
         #	self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
         #	self.add_step(BbsSequenceStep("la\r",self.handle_list))
         #	self.add_step(BbsSequenceStep("a XSCEVENT\r",self.handle_area))
@@ -243,7 +247,8 @@ class Jnos2Parser(BbsParser):
                 k += "\r"
                 self.add_step(BbsSequenceStep(k))
             self.messages_read.clear()
-        if self.current_area != "xscperm":
+        if self.current_area != "xscperm" and self.srflags & 4:
+            self.signal_status_bar_message.emit("Checking bulletins")
             self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
             self.add_step(BbsSequenceStep("la\r",self.handle_list))
         else:
@@ -277,6 +282,7 @@ class Jnos2Parser(BbsParser):
         while len(lines) >= 2 and lines[-1] != "": lines.pop()
         mbh = MailBoxHeader()
         inheader = True
+        isfirst = True
         messagebody = ""
         for line in lines[1:]:
             if line == "" and inheader: # the blank line that separates header from body
@@ -295,12 +301,13 @@ class Jnos2Parser(BbsParser):
                     mbh.subject = r
             else:
                 # if this is the first line of the message body, look for the !URG! tag
-                if not messagebody:
+                if isfirst:
                     if line.startswith("!URG!"):
                         mbh.flags |= MailFlags.IS_URGENT.value
                         line = line[5:] # remove the !URG!, maybe remove others as well "!*!"
-                # messagebody += line + "\r\n"
-                messagebody += line + "\n"
+                    isfirst = False
+            # messagebody += line + "\r\n"
+            messagebody += line + "\n"
         if not messagebody: return
         mbh.flags |= MailFlags.IS_NEW.value | MailFlags.FOLDER_IN_TRAY.value
         mbh.bbs = self.pd.getBBS("ConnectName")

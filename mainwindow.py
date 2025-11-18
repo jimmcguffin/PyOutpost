@@ -72,7 +72,7 @@ class MainWindow(QMainWindow):
         self.actionBBS.triggered.connect(self.OnBbsSetup)
         self.actionInterface.triggered.connect(self.OnInterfaceSetup)
         self.actionStation_ID.triggered.connect(self.OnStationId)
-        self.actionSend_Receive_Settings.triggered.connect(self.onSendReceiveSettings)
+        self.actionSend_Receive_Settings.triggered.connect(self.on_send_receive_settings)
         self.actionMessage_Settings.triggered.connect(self.onMessageSettings)
         self.actionGeneral_Settings.triggered.connect(self.onGeneralSettings)
         self.actionDelete.triggered.connect(self.onDeleteMessages)
@@ -81,14 +81,17 @@ class MainWindow(QMainWindow):
         self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
         self.cMailList.customContextMenuRequested.connect(self.onMailListRightClick)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
-        self.actionSend_Receive.triggered.connect(self.onSendReceive)
+        self.actionSend_Receive.triggered.connect(lambda: self.on_send_receive(True,True,True))
+        self.actionSend_Receive_No_Bulletins.triggered.connect(lambda: self.on_send_receive(True,True,False))
+        self.actionSend_Only.triggered.connect(lambda: self.on_send_receive(True,False,False))
+        self.actionReceive_Only.triggered.connect(lambda: self.on_send_receive(False,True,False)) # not sure about the last False
         self.actionReset_all_to_SCC_standard.triggered.connect(self.resetAllToSccStandard)
         self.cNew.clicked.connect(self.onNewMessage)
         #self.cOpen.clicked.connect(self.onNewMessage)
         self.cArchive.clicked.connect(self.onArchiveMessages)
         self.cDelete.clicked.connect(self.onDeleteMessages)
         #self.cPrint.clicked.connect(self.onDeleteMessages)
-        self.cSendReceive.clicked.connect(self.onSendReceive)
+        self.cSendReceive.clicked.connect(lambda: self.on_send_receive(True,True,True))
 
         self.cInTray.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_IN_TRAY))
         self.cOutTray.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_OUT_TRAY))
@@ -291,7 +294,7 @@ class MainWindow(QMainWindow):
                     self.cMailList.item(i,j).setFont(font)
         self.cMailList.resizeRowsToContents()
 
-    def onSendReceiveSettings(self):
+    def on_send_receive_settings(self):
         srsd = sendreceivesettingsdialog.SendReceiveSettingsDialog(self.settings,self)
         srsd.exec()
     def onMessageSettings(self):
@@ -406,7 +409,8 @@ class MainWindow(QMainWindow):
             self.serialport.setDataTerminalReady(True)
             self.serialport.setRequestToSend(True)
         return True
-    def onSendReceive(self):
+    
+    def on_send_receive(self,send:bool,recv:bool,recv_bulletins:bool):
         # if a cycle was in progress, cancel it
         if self.tnc_parser:
             self.on_end_send_receive()
@@ -426,11 +430,18 @@ class MainWindow(QMainWindow):
         self.tnc_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
         self.tnc_parser.signalDisconnected.connect(self.on_end_send_receive)
         self.tnc_parser.signal_status_bar_message.connect(self.on_status_bar_message)
-        self.tnc_parser.startSession(self.serialStream)
+        srflags = 0
+        if send:
+            srflags |= 1
+        if recv:
+            srflags |= 2
+        if recv_bulletins:
+            srflags |= 4
+        self.tnc_parser.start_session(self.serialStream,srflags)
 
     def on_end_send_receive(self):
         #self.serialport.close()
-        # this causes a loop # self.tnc_parser.endSession()
+        # this causes a loop # self.tnc_parser.end_session()
         self.serialStream.reset()
         self.serialStream = None
         self.tnc_parser = None

@@ -34,6 +34,7 @@ class NewPacketMessage(QMainWindow):
         else:
             if message[-1] != '\n':
                 message += '\n'
+        mbh = MailBoxHeader()
         h1 = f"Date: {MailBoxHeader.to_in_mail_date()}"
         h2 = f"From: {self.cFrom.text()}"
         h3 = f"To: {self.cTo.text()}"
@@ -42,7 +43,6 @@ class NewPacketMessage(QMainWindow):
         if self.cUrgent.isChecked():
             mbh.flags |= MailFlags.IS_URGENT.value
             urg = "!URG!"
-        mbh = MailBoxHeader()
         message = f"{h1}\n{h2}\n{h3}\n{h4}\n\n{urg}{message}"
         # want this to work however we get the message, so support all of "\r\n", "\r", "\n"
         #message = message.replace("\r\n","\n").replace("\r","\n").replace("\n","\r\n")

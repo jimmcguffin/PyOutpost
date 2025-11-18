@@ -324,6 +324,14 @@ class MailFolder:
             if m.flags & folder.value:
                 r.append(m)
         return r
+
+    def get_header_indexes(self,folder:MailFlags): 
+        r = []
+        for m in self.mail:
+            if m.flags & folder.value:
+                r.append(m.index)
+        return r
+
     # this was copied from tncparser, I don't know the recommended way to store loose functions
     @staticmethod
     def matches_ignore_case(str1, str2): # if str2 is a prefix of str1
