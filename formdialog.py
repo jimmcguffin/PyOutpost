@@ -272,17 +272,17 @@ class FormDialog(QMainWindow):
 
     @staticmethod
     def TelValid(s):
-        # simple test, must be 7 or 10 digits, 0, 1, or 2 "-" but np other characters
+        # simple test, must be 7 or 10 digits, 0, 1, or 2 hyphens or spaces but no other characters
         nd = 0
-        nh = 0
+        ns = 0
         for c in s:
             if c.isdigit():
                 nd += 1
-            elif c == "-":
-                nh += 1;
+            elif c == "-" or c == " ":
+                ns += 1;
             else:
                 return False
-        return True if  nd == 7 or nd == 10 and nh <= 2 else False
+        return True if  nd == 7 or nd == 10 and ns <= 2 else False
 
     @staticmethod
     def NumValid(s):
