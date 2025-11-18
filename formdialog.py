@@ -18,31 +18,48 @@ class FormItem(QObject):
         self.valid = None
         self.validator = ""
         self.subjectlinesource = "Subject"
-        if f[3] == "Y" and f[5] != "0":
-        #if f[5] != "0": # this shows all of boxes that have been defined
+        #if f[3] == "Y" and f[5] != "0":
+        if f[5] != "0": # this shows all of boxes that have been defined
             self.valid = QFrame(parent)
             # expand the coordinates a litle
             e = 4
-            x0 = int(f[5])-e
-            y0 = int(f[6])-e
-            x1 = int(f[7])+e
-            y1 = int(f[8])+e
+            x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9])
+            x0 -= e
+            y0 -= e
+            x1 += e
+            y1 += e
             self.valid.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
             self.valid.setStyleSheet("QFrame { border: 6px solid #C02020;}")
             self.valid.setFrameStyle(QFrame.Shape.Box|QFrame.Shadow.Plain)
             self.valid.hide()
             self.validator = f[4] # possibly a custom validator
+
     def getValue(self): pass
+
+    @staticmethod
+    def get_coordinates(f:list,dw=0,dh=0):
+        x0 = int(f[0])
+        y0 = int(f[1])
+        if f[2][0] == "+":
+            x1 = x0 + int(f[2])
+        else:
+            x1 = int(f[2])
+            if not x1:
+                x1 = x0 + dw
+        if f[3][0] == "+":
+            y1 = y0 + int(f[3])
+        else:
+            y1 = int(f[3])
+            if not y1:
+                y1 = y0 + dh
+        return (x0,y0,x1,y1)
 
 class FormItemString(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
     def __init__(self,parent,f):
         super().__init__(parent,f)
         self.widget = QLineEdit("",parent) # or f[1]
-        x0 = int(f[5])
-        y0 = int(f[6])
-        x1 = int(f[7])
-        y1 = int(f[8])
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],0,26)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         font = QFont()
         #font =  self.cMailList.item(i,0).font()
@@ -62,10 +79,7 @@ class FormItemMultiString(FormItem):
     def __init__(self,parent,f):
         super().__init__(parent,f)
         self.widget = QPlainTextEdit(parent)
-        x0 = int(f[5])
-        y0 = int(f[6])
-        x1 = int(f[7])
-        y1 = int(f[8])
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9])
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         self.widget.setPlainText("") # or f[1]
         font = QFont()
@@ -91,14 +105,7 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
         for i in range (nb):
             j = i*5+9
             tmpwidget = QRadioButton("                ",parent)
-            x0 = int(f[j+1])
-            y0 = int(f[j+2])
-            x1 = int(f[j+3])
-            y1 = int(f[j+4])
-            if x1 == 0:
-                x1 = x0 + 64
-            if y1 == 0:
-                y1 = y0 + 14
+            x0,y0,x1,y1 = FormItem.get_coordinates(f[j+1:j+5],64,14)
             tmpwidget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
             self.widget.addButton(tmpwidget,i)
             palette = tmpwidget.palette()
@@ -120,14 +127,7 @@ class FormItemCheckBox(FormItem):
     def __init__(self,parent,f):
         super().__init__(parent,f)
         self.widget = QCheckBox("                ",parent) # or f[1]
-        x0 = int(f[5])
-        y0 = int(f[6])
-        x1 = int(f[7])
-        y1 = int(f[8])
-        if x1 == 0:
-            x1 = x0 + 64
-        if y1 == 0:
-            y1 = y0 + 14
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],64,14)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         palette = self.widget.palette()
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
@@ -143,10 +143,7 @@ class FormItemDropDown(FormItem):
     def __init__(self,parent,f):
         super().__init__(parent,f)
         self.widget = QComboBox(parent) # or f[1]
-        x0 = int(f[5])
-        y0 = int(f[6])
-        x1 = int(f[7])
-        y1 = int(f[8])
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],0,26)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         n = len(f)-9
         for i in range(n):

@@ -4,7 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from mailfolder import MailFolder, MailBoxHeader, MailFlags
 
 # the general sequence is:
-# sent the startup commands
+# send the startup commands
 # send any outgoing messages
 # get any incoming mail
 # kill any messages read
@@ -25,6 +25,9 @@ class BbsSequenceStep():
         self.handler = h # gets called when responded to, can be None
         # arbitrary data item that can be passed to the handler (after the reply value)
         self.data = data
+class BbsSequenceStepNoResonse(): # I think only "BYE" uses this
+    def __init__(self,s,data=None):
+        self.what_to_send = s
 class BbsSequenceImmediateStep():
     def __init__(self,h,data=None):
         self.handler = h # gets called as soon as the sequencer gets to this item
@@ -46,7 +49,7 @@ class BbsParser(QObject):
     def __init__(self,pd,using_echo,parent=None):
         super().__init__(parent)
         self.pd = pd
-        self.bbs_sequence = [] # a list of BbsSequenceSteps
+        self.bbs_sequence = [] # a list of BbsSequenceSteps (and simmilar)
         self.stepinprogress = False
         self.items_sent = [] # they get moved to the "Sent" folder
         self.messages_read = []
@@ -55,7 +58,7 @@ class BbsParser(QObject):
 
     def start_session(self,ss):
         self.serial_stream = ss
-        self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses
+        self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses, does now wotk if TNC is set for long prompts ("Z >\r\n" would be work)
         self.serial_stream.include_line_end_in_reply = True
         self.serial_stream.signalLineRead.disconnect()
         self.serial_stream.signalLineRead.connect(self.on_response)
@@ -63,16 +66,19 @@ class BbsParser(QObject):
         self.signal_status_bar_message.emit("Initializing the BBS")
 
     def end_session(self):
+        self.bbs_sequence.clear() # forget any unfinished busniness
         print("BBS emitting disconnect")
         self.signalDisconnected.emit()
 
-    def add_step(self,step): # argument is a BbsSequenceStep or a BbsSequenceImmediateStep
+    def add_step(self,step): # argument is a BbsSequenceStep, a BbsSequenceStepNoResonse, or a BbsSequenceImmediateStep
         # things are different if the sequence is empty
         if self.bbs_sequence:
-            self.bbs_sequence.append(step) # it is not empty, just add it
+            self.bbs_sequence.append(step) # it is not empty, just add it to the end
         else:
             if isinstance(step,BbsSequenceImmediateStep):
                 step.handler(step.data)
+            elif isinstance(step,BbsSequenceStepNoResonse):
+                self.serial_stream.write(self.bbs_sequence[0].what_to_send)
             else:
                 self.bbs_sequence.append(step)
                 if self.bbs_sequence[0].what_to_send:
@@ -83,14 +89,17 @@ class BbsParser(QObject):
     # call this when items have been removed and there is a new "front"
     def check_sequence(self):
         # if there are immediate-mode comamnds, do them
-        while self.bbs_sequence and isinstance(self.bbs_sequence[0],BbsSequenceImmediateStep):
-            if self.bbs_sequence[0].handler: # I think this will always be true
-                self.bbs_sequence[0].handler(self.bbs_sequence[0].data)
-            del self.bbs_sequence[0:1]
-        if len(self.bbs_sequence) > 0:
-            assert isinstance(self.bbs_sequence[0],BbsSequenceStep)
-            if self.bbs_sequence[0].what_to_send:
+        while self.bbs_sequence:
+            if isinstance(self.bbs_sequence[0],BbsSequenceStep):
                 self.serial_stream.write(self.bbs_sequence[0].what_to_send)
+                break
+            elif isinstance(self.bbs_sequence[0],BbsSequenceStepNoResonse):
+                self.serial_stream.write(self.bbs_sequence[0].what_to_send)
+                del self.bbs_sequence[0:1]
+            elif isinstance(self.bbs_sequence[0],BbsSequenceImmediateStep):
+                if self.bbs_sequence[0].handler: # I think this will always be true
+                    self.bbs_sequence[0].handler(self.bbs_sequence[0].data)
+                del self.bbs_sequence[0:1]
 
     def on_disconnected(self):
         print("BBS got disconnected")
@@ -251,7 +260,7 @@ class Jnos2Parser(BbsParser):
         callsign = self.pd.getActiveCallSign(True)
         if " as " in callsign:
             self.add_step(BbsSequenceStep(f"# this is {callsign}\r"))
-        self.add_step(BbsSequenceStep(self.get_command("CommandBye")+"\r")) # this will trigger the *** disconnect message
+        self.add_step(BbsSequenceStepNoResonse(self.get_command("CommandBye")+"\r")) # this will trigger the *** disconnect message
 
     def handle_area(self,r,_=None):
         print(f"got area {r}")

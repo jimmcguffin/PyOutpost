@@ -69,8 +69,8 @@ class KantronicsKPC3Plus(TncDevice):
         super().startSession(ss)
         self.serialStream.line_end = b"cmd:"
         self.serialStream.include_line_end_in_reply = self.using_echo
-        mycall = f"{self.pd.getInterface("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
-        connectstr = f"{self.pd.getInterface("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
+        mycall = f"{self.get_command("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
+        connectstr = f"{self.get_command("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
         # these are internally generated
         # self.send(b"\r") // flush out any half-written commands
         self.send("\x03\r")
@@ -183,15 +183,23 @@ class KantronicsKPC3Plus(TncDevice):
 			("PromptDisconnected","*** DISCONNECTED"),
             ]   
 
+    def get_command(self,s):
+        c = self.pd.getInterface(s)
+        if c:
+            return c
+        if s in self.get_default_commands():
+            return self.get_default_commands()[s]
+        return "<"+s+">" # this will never work but it will show in the log as a problem
+
     @staticmethod
     def getDefaultCommands():
-         return (
-				("CommandMyCall","my"),
-				("CommandConnect","connect"),
-				("CommandRetry","retry"),
-				("CommandConvers","convers"),
-				("CommandDayTime","daytime"),
-         )
+         return {
+				"CommandMyCall":"my",
+				"CommandConnect":"connect",
+				"CommandRetry":"retry",
+				"CommandConvers":"convers",
+				"CommandDayTime":"daytime",
+         }
     
     @staticmethod
     def getDefaultBeforeInitCommands():

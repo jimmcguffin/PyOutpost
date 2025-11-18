@@ -389,8 +389,8 @@ class MainWindow(QMainWindow):
             case _:   self.serialport.setDataBits(QSerialPort.DataBits.Data8)
         match stopbits:
             case "1":   self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
-            case "1.5": self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
-            case "2":   self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
+            case "1.5": self.serialport.setStopBits(QSerialPort.StopBits.OneAndHalfStop)
+            case "2":   self.serialport.setStopBits(QSerialPort.StopBits.TwoStop)
             case _:     self.serialport.setStopBits(QSerialPort.StopBits.OneStop)
         if not flowcontrol: flowcontrol = "R"
         flowcontrolflag = flowcontrol.upper()[0]
@@ -407,6 +407,9 @@ class MainWindow(QMainWindow):
             self.serialport.setRequestToSend(True)
         return True
     def onSendReceive(self):
+        # if a cycle was in progress, cancel it
+        if self.tnc_parser:
+            self.on_end_send_receive()
         port = self.settings.getInterface("ComPort")
         if not port:
             QMessageBox.critical(self,"Error",f"Error serial port has not been configuired, go to Setup/Interface")
@@ -427,7 +430,10 @@ class MainWindow(QMainWindow):
 
     def on_end_send_receive(self):
         #self.serialport.close()
+        # this causes a loop # self.tnc_parser.endSession()
         self.serialStream.reset()
+        self.serialStream = None
+        self.tnc_parser = None
 
     def onNewIncomingMessage(self,mbh,m):
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
@@ -544,8 +550,8 @@ class MainWindow(QMainWindow):
             self.settings.setInterface(p[0],p[1])
         self.settings.setInterface("AlwaysSendInitCommands",True)
         self.settings.setInterface("IncludeCommandPrefix",False)
-        for p in KantronicsKPC3Plus.getDefaultCommands():
-            self.settings.setInterface(p[0],p[1])
+        for dc in KantronicsKPC3Plus.get_default_commands.items():
+            self.settings.setInterface(dc[0],dc[1])
         self.settings.setInterface("CommandPrefix","")
         self.settings.setInterface("CommandsBefore",KantronicsKPC3Plus.getDefaultBeforeInitCommands())
         self.settings.setInterface("CommandsAfter",KantronicsKPC3Plus.getDefaultAfterInitCommands())
