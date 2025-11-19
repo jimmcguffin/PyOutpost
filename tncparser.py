@@ -155,7 +155,7 @@ class KantronicsKPC3Plus(TncDevice):
         self.bbs_parser.signal_status_bar_message.connect(lambda s: self.signal_status_bar_message.emit(s))
         self.bbs_parser.start_session(self.serialStream,self.srflags)
 
-    def onNewIncomingMessage(self,mbh,m):
+    def onNewIncomingMessage(self,mbh:MailBoxHeader,m:str):
         self.signalNewIncomingMessage.emit(mbh,m)
 
     def onDisconnected(self):

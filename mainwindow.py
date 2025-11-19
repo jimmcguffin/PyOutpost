@@ -3,8 +3,8 @@
 import sys
 from enum import Enum
 from operator import attrgetter
+from urllib.parse import quote_plus,unquote_plus
 
-#from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt,QIODeviceBase
 from PyQt6.QtGui import QAction, QPalette, QColor
 from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
@@ -325,8 +325,16 @@ class MainWindow(QMainWindow):
         tmp.show()
         tmp.raise_()
     def onHandleNewOutgoingMessage(self,mbh,m):
+        # log activity
         mbh.flags |= MailFlags.IS_OUTGOING.value
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
+        # log this
+        try:
+            with open("activity.log","at") as file:
+                s = f"s,{mbh.date_sent},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
+                file.write(s.to_string().encode("latin-1"))
+        except FileNotFoundError:
+            pass
         self.updateMailList()
     def onHandleNewOutgoingFormMessage(self,subject,m,urgent):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
@@ -446,8 +454,15 @@ class MainWindow(QMainWindow):
         self.serialStream = None
         self.tnc_parser = None
 
-    def onNewIncomingMessage(self,mbh,m):
+    def onNewIncomingMessage(self,mbh:MailBoxHeader,m):
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
+        # log this
+        try:
+            with open("activity.log","at") as file:
+                s = f"r,{mbh.date_received},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
+                file.write(s.to_string().encode("latin-1"))
+        except FileNotFoundError:
+            pass
         self.updateMailList()
 
     def onDeleteMessages(self):

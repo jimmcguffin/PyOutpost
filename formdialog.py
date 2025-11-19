@@ -9,7 +9,7 @@ from PyQt6.uic import load_ui
 from persistentdata import PersistentData
 
 class FormItem(QObject):
-    def __init__(self,parent,f):
+    def __init__(self,parent,f,dw=0,dh=0):
         super().__init__(parent)
         self.parent = parent
         self.widget = QWidget(parent)
@@ -23,7 +23,7 @@ class FormItem(QObject):
             self.valid = QFrame(parent)
             # expand the coordinates a litle
             e = 4
-            x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9])
+            x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
             x0 -= e
             y0 -= e
             x1 += e
@@ -34,7 +34,7 @@ class FormItem(QObject):
             self.valid.hide()
             self.validator = f[4] # possibly a custom validator
 
-    def getValue(self): pass
+    def get_value(self): pass
 
     @staticmethod
     def get_coordinates(f:list,dw=0,dh=0):
@@ -57,9 +57,11 @@ class FormItem(QObject):
 class FormItemString(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
     def __init__(self,parent,f):
-        super().__init__(parent,f)
+        dw = 0 # default sizees
+        dh = 26
+        super().__init__(parent,f,dw,dh)
         self.widget = QLineEdit("",parent) # or f[1]
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],0,26)
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         font = QFont()
         #font =  self.cMailList.item(i,0).font()
@@ -69,7 +71,7 @@ class FormItemString(FormItem):
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
         self.widget.setPalette(palette)
         self.widget.textChanged.connect(lambda: self.signalValidityCheck.emit(self))
-    def getValue(self):
+    def get_value(self):
         return self.widget.text()
     def setValue(self,value):
         return self.widget.setText(value)
@@ -89,7 +91,7 @@ class FormItemMultiString(FormItem):
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
         self.widget.setPalette(palette)
         self.widget.textChanged.connect(lambda: self.signalValidityCheck.emit(self))
-    def getValue(self):
+    def get_value(self):
         return self.widget.toPlainText().replace("]","`]").replace("\n","\\n")
     def setValue(self,value):
         return self.widget.setText(value.replace("`]","]").replace("\\n","\n"))
@@ -97,7 +99,9 @@ class FormItemMultiString(FormItem):
 class FormItemRadioButtons(FormItem): # always multiple buttons
     signalValidityCheck = pyqtSignal(FormItem)
     def __init__(self,parent,f):
-        super().__init__(parent,f)
+        dw = 64 # default size
+        dh = 14
+        super().__init__(parent,f,dw,dh)
         default_height = 14
         nb = (len(f)-9)//5
         self.widget = QButtonGroup(parent)
@@ -105,7 +109,7 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
         for i in range (nb):
             j = i*5+9
             tmpwidget = QRadioButton("                ",parent)
-            x0,y0,x1,y1 = FormItem.get_coordinates(f[j+1:j+5],64,14)
+            x0,y0,x1,y1 = FormItem.get_coordinates(f[j+1:j+5],dw,dh)
             tmpwidget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
             self.widget.addButton(tmpwidget,i)
             palette = tmpwidget.palette()
@@ -113,7 +117,7 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
             tmpwidget.setPalette(palette)
             self.values.append(f[j])
         self.widget.idClicked.connect(lambda: self.signalValidityCheck.emit(self))
-    def getValue(self):
+    def get_value(self):
         index = self.widget.checkedId()
         if index < 0: return ""
         return self.values[index]
@@ -125,25 +129,29 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
 class FormItemCheckBox(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
     def __init__(self,parent,f):
-        super().__init__(parent,f)
+        dw = 64 # default size
+        dh = 14
+        super().__init__(parent,f,dw,dh)
         self.widget = QCheckBox("                ",parent) # or f[1]
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],64,14)
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         palette = self.widget.palette()
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
         self.widget.setPalette(palette)
         self.widget.clicked.connect(lambda: self.signalValidityCheck.emit(self))
-    def getValue(self):
-        return self.widget.isChecked()
+    def get_value(self):
+        return "checked" if self.widget.isChecked() else ""
     def setValue(self,value):
         return self.widget.setChecked(value)
 
 class FormItemDropDown(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
     def __init__(self,parent,f):
+        dw = 0 # default size
+        dh = 26
         super().__init__(parent,f)
         self.widget = QComboBox(parent) # or f[1]
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],0,26)
+        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         n = len(f)-9
         for i in range(n):
@@ -154,7 +162,7 @@ class FormItemDropDown(FormItem):
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
         self.widget.setPalette(palette)
         self.widget.currentTextChanged.connect(lambda: self.signalValidityCheck.emit(self))
-    def getValue(self):
+    def get_value(self):
         return self.widget.currentText()
     def setValue(self,value):
         return self.widget.setCurrentText(value)
@@ -232,7 +240,7 @@ class FormDialog(QMainWindow):
                         pass
         except FileNotFoundError:
             pass
-        subject = self.pd.makeStandardSubject()
+        subject = self.pd.make_standard_subject()
         self.setFieldByName("MessageNumber",subject)
         #self.setFieldByName("Handling","PRIORITY") #test
         # special handing for this non-conforming form
@@ -289,9 +297,13 @@ class FormDialog(QMainWindow):
         if not s or s.startswith("0"): return False
         return s.isdigit()
 
+    @staticmethod
+    def ZipValid(s):
+        return s and len(s) == 5 and s.isdigit()
+
     def updateSingle(self,f):
         if (f.valid):
-            v = f.getValue().lstrip().rstrip()
+            v = f.get_value().lstrip().rstrip()
             if f.validator and hasattr(self,f.validator):
                 func = getattr(self,f.validator)
                 if callable(func):
@@ -320,14 +332,14 @@ class FormDialog(QMainWindow):
             self.fields[self.fieldid[fname]].setValue(value)
     def getFieldById(self,fname):
         if fname in self.fieldid:
-            return self.fields[self.fieldid[fname]].getValue()
+            return self.fields[self.fieldid[fname]].get_value()
         return ""
     def setFieldByName(self,fname,value):
         if fname in self.fieldname:
             self.fields[self.fieldname[fname]].setValue(value)
     def getFieldByName(self,fname):
         if fname in self.fieldname:
-            return self.fields[self.fieldname[fname]].getValue()
+            return self.fields[self.fieldname[fname]].get_value()
         return ""
         
     def onSend(self):
@@ -351,7 +363,7 @@ class FormDialog(QMainWindow):
             for h in self.headers:
                 message += h + "\n"
             for f in self.fields:
-                v = f.getValue()
+                v = f.get_value()
                 if v:
                     message += f"{f.label}: [{v}]\n"
             for f in self.footers:

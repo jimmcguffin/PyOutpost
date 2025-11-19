@@ -310,6 +310,9 @@ class Jnos2Parser(BbsParser):
             messagebody += line + "\n"
         if not messagebody: return
         mbh.flags |= MailFlags.IS_NEW.value | MailFlags.FOLDER_IN_TRAY.value
+        if not mbh.subject.startswith("DELIVERED:"):
+            if self.pd.getProfileBool("MessageSettings/AddMessageNumberToInbound"):
+                mbh.local_id = self.pd.make_standard_local_id()
         mbh.bbs = self.pd.getBBS("ConnectName")
         mbh.date_received = MailBoxHeader.normalized_date()
         mbh.size = len(messagebody)
