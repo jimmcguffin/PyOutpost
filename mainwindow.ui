@@ -95,7 +95,7 @@
    <widget class="QComboBox" name="cProfile">
     <property name="geometry">
      <rect>
-      <x>760</x>
+      <x>1055</x>
       <y>10</y>
       <width>196</width>
       <height>26</height>
@@ -105,7 +105,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>690</x>
+      <x>985</x>
       <y>10</y>
       <width>66</width>
       <height>30</height>
@@ -412,6 +412,32 @@
       <string>Size</string>
      </property>
     </column>
+   </widget>
+   <widget class="QPushButton" name="cSendOnly">
+    <property name="geometry">
+     <rect>
+      <x>675</x>
+      <y>10</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>SendOnly</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="cReceiveOnly">
+    <property name="geometry">
+     <rect>
+      <x>780</x>
+      <y>10</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Receive Only</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

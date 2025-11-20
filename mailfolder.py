@@ -194,7 +194,7 @@ class MailFolder:
             with open("PyOutpost.mail","rb") as file:
                 while True:
                     oh = file.tell()
-                    l = file.readline().decode("latin-1")
+                    l = file.readline().decode("windows-1252")
                     if not l: break
                     if len(l) > 10 and l[0:2] == "*/":
                         om = file.tell()
@@ -218,10 +218,10 @@ class MailFolder:
         mbh.flags |= folder.value
         with open("PyOutpost.mail","ab") as file:
             # the size should be of the encoded data
-            message = message.encode("latin-1")
+            message = message.encode("windows-1252")
             mbh.size = len(message)
             mbh.offset_to_header = file.tell()
-            file.write(mbh.to_string().encode("latin-1"))
+            file.write(mbh.to_string().encode("windows-1252"))
             mbh.offset_to_message_body = file.tell()
             file.write(message) # it has already been encoded above
         mbh.index = len(self.mail)
@@ -236,7 +236,7 @@ class MailFolder:
                 for index in indexlist:
                     if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
                     self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+                    newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
                     assert(len(newflags)) == 9
                     offset = self.mail[index].offset_to_header
                     file.seek(offset)
@@ -255,7 +255,7 @@ class MailFolder:
                     if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
                     self.mail[index].flags &= ~fromfolder.value
                     self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+                    newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
                     assert(len(newflags)) == 9
                     offset = self.mail[index].offset_to_header
                     file.seek(offset)
@@ -275,8 +275,8 @@ class MailFolder:
         for index in range (len(self.mail)):
             if not index in indexlist:
                 mbh,m = self.get_message(index)
-                file.write(mbh.to_string().encode("latin-1"))
-                file.write(m.encode("latin-1"))
+                file.write(mbh.to_string().encode("windows-1252"))
+                file.write(m.encode("windows-1252"))
         file.close()
         os.remove("PyOutpost.mail")
         os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
@@ -290,7 +290,7 @@ class MailFolder:
         try:
             with open("PyOutpost.mail","rb") as file:
                 file.seek(offset)
-                return self.mail[n],file.read(msize).decode("latin-1")
+                return self.mail[n],file.read(msize).decode("windows-1252")
         except FileNotFoundError:
             return [],""
 
@@ -302,7 +302,7 @@ class MailFolder:
         else:
             if not self.mail[index].flags & MailFlags.IS_NEW.value: return False
             self.mail[index].flags &= ~MailFlags.IS_NEW.value
-        newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+        newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
         assert(len(newflags)) == 9
         offset = self.mail[index].offset_to_header
         try:

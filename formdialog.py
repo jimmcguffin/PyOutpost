@@ -94,7 +94,7 @@ class FormItemMultiString(FormItem):
     def get_value(self):
         return self.widget.toPlainText().replace("]","`]").replace("\n","\\n")
     def setValue(self,value):
-        return self.widget.setText(value.replace("`]","]").replace("\\n","\n"))
+        return self.widget.setPlainText(value.replace("`]","]").replace("\\n","\n"))
 
 class FormItemRadioButtons(FormItem): # always multiple buttons
     signalValidityCheck = pyqtSignal(FormItem)
@@ -172,7 +172,8 @@ class FormDialog(QMainWindow):
     def __init__(self,pd,form,formid,parent=None):
         super().__init__(parent)
         self.pd = pd
-        self.formid = formid
+        self.form = form # the name of the desc and png files
+        self.formid = formid # a short item used in the subject line
         load_ui.loadUi("formdialog.ui",self)
         pm = QPixmap(form+".png")
         # w = pm.width()
@@ -244,7 +245,7 @@ class FormDialog(QMainWindow):
         self.setFieldByName("MessageNumber",subject)
         #self.setFieldByName("Handling","PRIORITY") #test
         # special handing for this non-conforming form
-        if self.formid == "CheckInCheckOut":
+        if self.form == "CheckInCheckOut":
             self.setFieldByName("UserCall",self.pd.getActiveUserCallSign())
             self.setFieldByName("UserName",self.pd.getUserCallSign("Name"))
             self.setFieldByName("TacticalCall",self.pd.getActiveTacticalCallSign())
@@ -254,10 +255,14 @@ class FormDialog(QMainWindow):
             d = datetime.datetime.now()
             self.setFieldByName("Date","{:%m/%d/%Y}".format(d))
             self.setFieldByName("Time","{:%H:%M}".format(d))
-            self.setFieldByName("OpDate","{:%m/%d/%Y}".format(d))
+            self.setFieldByName("OpDate","{:%m/%d/%Y}".format(d)) # these will get overwritten
             self.setFieldByName("OpTime","{:%H:%M}".format(d))
-            self.setFieldByName("OpName",self.pd.getActiveCallSignName())
-            self.setFieldByName("OpCall",self.pd.getActiveCallSign())
+            self.setFieldByName("OpCall",self.pd.getActiveUserCallSign())
+            self.setFieldByName("OpName",self.pd.getUserCallSign("Name"))
+            self.setFieldByName("Method","Other")
+            self.setFieldByName("Other","Packet")
+           
+
 
         self.cSend.clicked.connect(self.onSend)
         self.updateAll()
@@ -319,13 +324,24 @@ class FormDialog(QMainWindow):
 
     # this gets called when reading an existing form
     def setData(self,h,m):
-        # we need to process the messaage
+        # we need to process the message, including multiline items
         lines = m.splitlines()
+        value = ""
         for line in lines:
-            id,tmp,r = line.partition(":")
-            r = r.lstrip()
-            if not r or r[0] != '[' or r[-1] != ']': continue
-            self.setFieldById(id,r[1:-1])
+            if value: # we are in the middle of a multi-line item
+                value += line
+                if value[-1] != ']':
+                    continue
+                self.setFieldById(id,value[1:-1])
+                value = ""
+                continue
+            id,_,r = line.partition(":")
+            value = r.lstrip()
+            if not value or value[0] != '[':
+                continue
+            if value[-1] == ']': 
+                self.setFieldById(id,value[1:-1])
+                value = ""
 
     def setFieldById(self,fname,value):
         if fname in self.fieldid:
@@ -344,7 +360,7 @@ class FormDialog(QMainWindow):
         
     def onSend(self):
         # checkincheckout is comepletely different than any other
-        if self.formid == "CheckInCheckOut":
+        if self.form == "CheckInCheckOut":
             handling = "R"
             line1 = self.getFieldByName("Type") + " "
             line2 = ""

@@ -202,25 +202,30 @@ class PersistentData():
         mn = self.getNextMessageNumber(increment)
         subject = ""
         if self.getProfileBool("MessageSettings/AddMessageNumber"):
-            subject += self.getUserCallSign("MessagePrefix")
-        f = self.getProfile("MessageSettings/Hyphenation_flag")
-        if f == "0":
-            subject += f"{mn:03}"
-        elif f == "1":
-            subject += f"-{mn:03}"
-        elif f == "2":
-            dt = QDateTime.currentDateTime()
-            subject += dt.to_string("yyMMddHHmmss")
-        if self.getProfileBool("MessageSettings/AddCharacter"):
-            subject += self.getProfile("MessageSettings/CharacterToAdd")
-        if self.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
-            subject += ":"
+            if self.getProfileBool("UseTacticalCallSign"):
+                subject += self.getTacticalCallSign("MessagePrefix")
+            else:
+                subject += self.getUserCallSign("MessagePrefix")
+            f = self.getProfile("MessageSettings/Hyphenation_flag")
+            if f == "0":
+                subject += f"{mn:03}"
+            elif f == "1":
+                subject += f"-{mn:03}"
+            elif f == "2":
+                dt = QDateTime.currentDateTime()
+                subject += dt.to_string("yyMMddHHmmss")
+            if self.getProfileBool("MessageSettings/AddCharacter"):
+                subject += self.getProfile("MessageSettings/CharacterToAdd")
+            if self.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
+                subject += ":"
         return subject
     def make_standard_local_id(self,increment=True):
         # almost the same as make_standard_subject, ignores two itrams
         mn = self.getNextMessageNumber(increment)
         id = ""
-        if self.getProfileBool("MessageSettings/AddMessageNumber"):
+        if self.getProfileBool("UseTacticalCallSign"):
+            id += self.getTacticalCallSign("MessagePrefix")
+        else:
             id += self.getUserCallSign("MessagePrefix")
         f = self.getProfile("MessageSettings/Hyphenation_flag")
         if f == "0" or f == "2":

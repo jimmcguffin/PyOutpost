@@ -1,5 +1,6 @@
 # pylint:  disable="line-too-long,missing-function-docstring,multiple-statements,no-name-in-module"
 
+import datetime
 from PyQt6.QtCore import QObject, pyqtSignal
 from mailfolder import MailFolder, MailBoxHeader, MailFlags
 
@@ -53,6 +54,7 @@ class BbsParser(QObject):
         self.stepinprogress = False
         self.items_sent = [] # they get moved to the "Sent" folder
         self.messages_read = []
+        self.messages_to_be_acknowledged = []
         self.serial_stream = None # later will be set to a SerialStream
         self.using_echo = using_echo
         self.srflags = 0
@@ -154,6 +156,10 @@ class Jnos2Parser(BbsParser):
         #	self.add+step(BbsSequenceStep("la\r",self.handle_list))
         #	self.add_step(BbsSequenceStep("a ALLXSC\r",self.handle_area))
         #	self.add_step(BbsSequenceStep("la\r",self.handle_list))
+        else:
+            # this must be a send-only cycle, so skip list/read/confirm steps
+            self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
+
 
     def on_response(self,r):
         if not self.bbs_sequence:
@@ -178,7 +184,7 @@ class Jnos2Parser(BbsParser):
     def handle_list(self,r,_=None):
         # if we get here, it means that all of the outgoing messages have been sent
         if self.items_sent:
-            self.mailfolder.move_mail(self.items_sent,MailFlags.FOLDER_SENT)
+            self.mailfolder.move_mail(self.items_sent,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
             self.items_sent.clear()
         print(f"got list {r}")
         # sample "la\r\nMail area: kw6w\r\n1 message  -  1 new\r\n\St.  #  TO            FROM     DATE   SIZE SUBJECT\r\n> N   1 kw6w@w1xsc.sc pkttue   Oct 15  747 DELIVERED: W6W-303P_P_ICS213_Shutti\r\nArea: kw6w Current msg# 1.\r\n" +terminator
@@ -252,7 +258,24 @@ class Jnos2Parser(BbsParser):
             self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
             self.add_step(BbsSequenceStep("la\r",self.handle_list))
         else:
-            self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
+            self.add_step(BbsSequenceImmediateStep(self.send_confirmations))
+
+    def send_confirmations(self,_=None):
+        self.signal_status_bar_message.emit("Sending delivery confirmations")
+        d = datetime.datetime.now()
+        date = "{:%m/%d/%Y}".format(d)
+        time = "{:%H:%M}".format(d)
+        for mbh in self.messages_to_be_acknowledged:
+            subject = f"DELIVERED: {mbh.subject}"
+            b1 = f"!LMI!{mbh.local_id}!DR!{date} {time}\n"
+            b2 = f"Your Message\nTo: z{mbh.from_addr}\n"
+            b3 = f"Subject: {mbh.subject}\n"
+            b4 = f"was delivered on {date} {time}\r"
+            b5 = f"Recipient's Local Message ID: {mbh.local_id}\r"
+            rmessagebody = f"{b1}{b2}{b3}{b4}{b5}"
+            self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.from_addr}\r{subject}\r{rmessagebody}/EX\r"))
+            #self.signalNewOutgoingMessage.emit(mbh,rmessagebody)
+        self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
 
     def send_after_commands(self,_=None):
         if self.pd.getBBSBool("AlwaysSendInitCommands"):
@@ -306,8 +329,7 @@ class Jnos2Parser(BbsParser):
                         mbh.flags |= MailFlags.IS_URGENT.value
                         line = line[5:] # remove the !URG!, maybe remove others as well "!*!"
                     isfirst = False
-            # messagebody += line + "\r\n"
-            messagebody += line + "\n"
+                messagebody += line + "\n"
         if not messagebody: return
         mbh.flags |= MailFlags.IS_NEW.value | MailFlags.FOLDER_IN_TRAY.value
         if not mbh.subject.startswith("DELIVERED:"):
@@ -317,6 +339,10 @@ class Jnos2Parser(BbsParser):
         mbh.date_received = MailBoxHeader.normalized_date()
         mbh.size = len(messagebody)
         self.signalNewIncomingMessage.emit(mbh,messagebody)
+        # decide if we want to send a delivery confirmation
+        # this code is cut/pasted from newpacketmessage
+        if not mbh.subject.startswith("DELIVERED:"):
+            self.messages_to_be_acknowledged.append(mbh)
 
     def handle_sent(self,r,i):
         self.items_sent.append(i)

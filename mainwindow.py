@@ -54,7 +54,7 @@ class MainWindow(QMainWindow):
         self.actionNew_Message.triggered.connect(self.onNewMessage)
         self.forms = []
         try:
-            with open("forms.csv","rt",encoding="latin-1") as file:
+            with open("forms.csv","rt",encoding="windows-1252") as file:
                 for line in file.readlines():
                     line = line.rstrip()
                     if not line: continue
@@ -92,6 +92,8 @@ class MainWindow(QMainWindow):
         self.cDelete.clicked.connect(self.onDeleteMessages)
         #self.cPrint.clicked.connect(self.onDeleteMessages)
         self.cSendReceive.clicked.connect(lambda: self.on_send_receive(True,True,True))
+        self.cSendOnly.clicked.connect(lambda: self.on_send_receive(True,False,False))
+        self.cReceiveOnly.clicked.connect(lambda: self.on_send_receive(False,True,False))
 
         self.cInTray.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_IN_TRAY))
         self.cOutTray.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_OUT_TRAY))
@@ -330,9 +332,9 @@ class MainWindow(QMainWindow):
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
         # log this
         try:
-            with open("activity.log","at") as file:
+            with open("activity.log","ab") as file:
                 s = f"s,{mbh.date_sent},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
-                file.write(s.to_string().encode("latin-1"))
+                file.write(s.encode("windows-1252"))
         except FileNotFoundError:
             pass
         self.updateMailList()
@@ -349,21 +351,22 @@ class MainWindow(QMainWindow):
         if not h: return
         # is this a regular text message or a form?
         # for now, decide based on subject, but would be better to use message body
-        s = h.subject.split("_")
         isform = False
-        if len(s) >= 3:
-            for f in self.forms:
-                # one form was two entries for the name
-                f1,_,_ = f[1].partition(" or ")
-                if s[2] == f1 or s[2] == f[2]:
-                    isform = True
-                    tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
-                    tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-                    tmp.setData(h,m)
-                    tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
-                    tmp.show()
-                    tmp.raise_()
-                    break
+        if not h.subject.startswith("DELIVERED"):
+            s = h.subject.split("_")
+            if len(s) >= 3:
+                for f in self.forms:
+                    # one form was two entries for the name
+                    f1,_,_ = f[1].partition(" or ")
+                    if s[2] == f1 or s[2] == f[2]:
+                        isform = True
+                        tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
+                        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+                        tmp.setData(h,m)
+                        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
+                        tmp.show()
+                        tmp.raise_()
+                        break
         if not isform:
             tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
             tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
@@ -458,9 +461,9 @@ class MainWindow(QMainWindow):
         self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
         # log this
         try:
-            with open("activity.log","at") as file:
+            with open("activity.log","ab") as file:
                 s = f"r,{mbh.date_received},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
-                file.write(s.to_string().encode("latin-1"))
+                file.write(s.encode("windows-1252"))
         except FileNotFoundError:
             pass
         self.updateMailList()

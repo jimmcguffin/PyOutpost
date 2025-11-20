@@ -11,9 +11,9 @@
 [Fields]
 // see the ICS213 file for a description of these lines
 MsgNo,MessageNumber,str,,,289,80,396,101
-1a.,Date,str,,,90,148,161,169
-1b.,Time,str,,,243,148,302,169
-5.,Handling,rb,,,0,0,0,0,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
+1a.,Date,str,Y,DateValid,90,148,161,169
+1b.,Time,str,Y,TimeValid,243,148,302,169
+5.,Handling,rb,Y,,0,0,0,0,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
 7a.,ToIcsPosition,dd,,,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
 8a.,FromIcsPosition,str,,,520,177,736,199
 7b.,ToLocation,str,,,146,206,404,228

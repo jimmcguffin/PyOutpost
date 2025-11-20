@@ -1,6 +1,6 @@
 #Name as it appears in menu, name as it appears in subject lines, descriptor amd image root filenames (+.desc and +.png, respectively)
 XSC Check-In/Out Message,Check-In or Check-Out,CheckInCheckOut
-XSC ICS-213 Message,ICS-213,ICS-213_Message_Form_v20220119-1
+XSC ICS-213 Message,ICS213,ICS-213_Message_Form_v20220119-1
 XCS CPOD Commodities Update,CPODUpd,CPOD_Commodities_v20250730
 XCS CPOD Site Information,CPODSite,CPOD_Site_Information_v20250812
 XSC Damage_Assessment,DmgAsmt,Damage_Assessment_v20250812
