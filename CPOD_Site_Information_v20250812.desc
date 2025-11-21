@@ -24,7 +24,7 @@ MsgNo,MessageNumber,str,Y,,304,54,448,76
 20.,Juristiction,dd,,,142,312,781,+18,dd,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
 21d.,PreparedDate,str,Y,DateValid,163,339,+70,+16
 21t.,PreparedTime,str,Y,TimeValid,532,339,+60,+16
-*22,SiteName,str,Y,,135,364,781,380
+*22.,SiteName,str,Y,,135,364,781,380
 23.,CpodType,rb,,,152,387,778,427,Type I,165,389,0,0,Type II,165,411,0,0,Type III,315,389,0,0,LSA,315,411,0,0,Non-CPOD Distribution Point,565,389,0,0
 24.,CpodStatus,rb,,,152,432,778,471,Activated,165,434,0,0,Pending Activation,165,455,0,0,Pending Demobilization,365,434,0,0,Demobilization,365,455,0,0,Not Activated,565,434,0,0
 25a.,Address,str,,,121,479,363,+16
@@ -58,8 +58,8 @@ MsgNo,MessageNumber,str,Y,,304,54,448,76
 52b.,,cb,,,215,1011,542,+16
 52c.,,cb,,,215,1033,730,+16
 60d.,DateOpened,str,Y,DateValid,167,1082,+70,+17
-60t.,TimeOpened,str,Y,TimeValid,167,1107,+60,+17
-61d.,DateClosed,str,Y,DateValid,472,1082,+70,+17
+60t.,TimeOpened,str,Y,TimeValid,472,1082,+70,+17
+61d.,DateClosed,str,Y,DateValid,167,1107,+60,+17
 61t.,TimeClosed,str,Y,TimeValid,472,1107,+60,+17
 70a.,CType1,str,Y,,262,1166,781,+20
 70b.,StartQ1,str,Y,NumValid,262,1202,+70,+17

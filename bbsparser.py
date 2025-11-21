@@ -3,6 +3,7 @@
 import datetime
 from PyQt6.QtCore import QObject, pyqtSignal
 from mailfolder import MailFolder, MailBoxHeader, MailFlags
+from globalsignals import global_signals
 
 # the general sequence is:
 # send the startup commands
@@ -44,7 +45,6 @@ class BbsSequenceImmediateStep():
 class BbsParser(QObject):
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
-    signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     signalOutgingMessageSent= pyqtSignal()
     signal_status_bar_message = pyqtSignal(str)
     def __init__(self,pd,using_echo,parent=None):
@@ -52,7 +52,6 @@ class BbsParser(QObject):
         self.pd = pd
         self.bbs_sequence = [] # a list of BbsSequenceSteps (and simmilar)
         self.stepinprogress = False
-        self.items_sent = [] # they get moved to the "Sent" folder
         self.messages_read = []
         self.messages_to_be_acknowledged = []
         self.serial_stream = None # later will be set to a SerialStream
@@ -112,7 +111,6 @@ class BbsParser(QObject):
 class Jnos2Parser(BbsParser):
     def __init__(self,pd,using_echo,parent=None):
         super().__init__(pd,using_echo,parent)
-        self.mailfolder = MailFolder()
         self.current_area = ""
     def start_session(self,ss,srflags):
         super().start_session(ss,srflags)
@@ -135,12 +133,13 @@ class Jnos2Parser(BbsParser):
         if self.srflags & 1:
             # if there are outgoing messages send them now
             # this may turn out to be a bad idea but for now I read directly from the mail file
-            self.mailfolder.load()
-            indexes = self.mailfolder.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
+            mailfolder = MailFolder()
+            mailfolder.load()
+            indexes = mailfolder.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
             if indexes:
                 self.signal_status_bar_message.emit("Sending out messages")
                 for index in indexes:
-                    mbh,m = self.mailfolder.get_message(index)
+                    mbh,m = mailfolder.get_message(index)
                     m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
                     if not m2.endswith('\r'): m2 += '\r'
                     self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,index))
@@ -183,9 +182,6 @@ class Jnos2Parser(BbsParser):
 
     def handle_list(self,r,_=None):
         # if we get here, it means that all of the outgoing messages have been sent
-        if self.items_sent:
-            self.mailfolder.move_mail(self.items_sent,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
-            self.items_sent.clear()
         print(f"got list {r}")
         # sample "la\r\nMail area: kw6w\r\n1 message  -  1 new\r\n\St.  #  TO            FROM     DATE   SIZE SUBJECT\r\n> N   1 kw6w@w1xsc.sc pkttue   Oct 15  747 DELIVERED: W6W-303P_P_ICS213_Shutti\r\nArea: kw6w Current msg# 1.\r\n" +terminator
         # or "la\r\nMail area: xscperm\r\n4 messages  -  4 new\r\nSt.  #  TO            FROM     DATE   SIZE SUBJECT\r\n> N   1 xscperm       xsceoc   Nov 27 5962 SCCo XSC Tactical Calls v191127    \r\n  N   2 xscperm       xsceoc   Sep  5 1932 SCCo Packet Frequencies v200905    \r\n  N   3 xscperm       xsceoc   Aug 13 2768 SCCo Packet Subject Line v220803   \r\n  N   4 xscperm       xsceoc   Aug  9 4326 SCCo Packet Tactical Calls v2024080\r\nArea: xscperm Current msg# 1.\r\n?,A,B,C,CONV,D,E,F,H,I,IH,IP,J,K,L,M,N,NR,O,P,PI,R,S,T,U,V,W,X,Z " >>
@@ -201,9 +197,9 @@ class Jnos2Parser(BbsParser):
                 first_message_line += 1
             words = lines[area_line].split()
             if len(words) >= 2 and words[0] == "Area:":
-                self.current_area = words[1]
+                self.current_area = words[1].upper()
             elif len(words) >= 3 and words[0] == "Mail" and words[1] == "area:":
-                self.current_area = words[2]
+                self.current_area = words[2].upper()
             # # line "message_counts_line" will have the counts
             # nmessages = 0
             # m = re.match(r"(\d+) message",lines[message_counts_line])
@@ -228,12 +224,16 @@ class Jnos2Parser(BbsParser):
                 if len(words) >= 2 and words[0] in ("Y","N") and words[1].isdigit():
                     # todo: we might consider checking if we already have this message, but it might be hard when there is
                     # only a partial subject and weird date formats, so for now read (and later kill) all of them
-                    if len(words) >= 8:
-                        self.mailfolder.load()
-                        maybematch = self.mailfolder.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
-                        print(f"matcher says {maybematch},{words[7].rstrip()}")
-                        if maybematch:
-                            continue
+                    # matching works ok for bulletins but not so good for the regular mail area
+                    callsign = self.pd.getActiveCallSign(False).upper()
+                    if self.current_area != callsign:
+                        if len(words) >= 8:
+                            mailfolder = MailFolder()
+                            mailfolder.load()
+                            maybematch = mailfolder.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
+                            print(f"matcher says {maybematch},{words[7].rstrip()}")
+                            if maybematch:
+                                continue
                     mn = int(words[1])
                     tmp = f"{self.get_command("CommandRead")} {mn}\r"
                     self.add_step(BbsSequenceStep(tmp,self.handle_read,mn))
@@ -243,7 +243,7 @@ class Jnos2Parser(BbsParser):
 
     def kill_read_messages(self,_=None):
         # only kill read messages on own area
-        callsign = self.pd.getActiveCallSign(False)
+        callsign = self.pd.getActiveCallSign(False).upper()
         if self.current_area == callsign:
             if self.messages_read:
                 k = self.get_command("CommandDelete")
@@ -253,7 +253,7 @@ class Jnos2Parser(BbsParser):
                 k += "\r"
                 self.add_step(BbsSequenceStep(k))
             self.messages_read.clear()
-        if self.current_area != "xscperm" and self.srflags & 4:
+        if self.current_area != "XSCPERM" and self.srflags & 4:
             self.signal_status_bar_message.emit("Checking bulletins")
             self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
             self.add_step(BbsSequenceStep("la\r",self.handle_list))
@@ -268,13 +268,13 @@ class Jnos2Parser(BbsParser):
         for mbh in self.messages_to_be_acknowledged:
             subject = f"DELIVERED: {mbh.subject}"
             b1 = f"!LMI!{mbh.local_id}!DR!{date} {time}\n"
-            b2 = f"Your Message\nTo: z{mbh.from_addr}\n"
+            b2 = f"Your Message\nTo: {mbh.from_addr}\n"
             b3 = f"Subject: {mbh.subject}\n"
             b4 = f"was delivered on {date} {time}\r"
             b5 = f"Recipient's Local Message ID: {mbh.local_id}\r"
             rmessagebody = f"{b1}{b2}{b3}{b4}{b5}"
             self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.from_addr}\r{subject}\r{rmessagebody}/EX\r"))
-            #self.signalNewOutgoingMessage.emit(mbh,rmessagebody)
+            #global_signals.signal_new_outgoing_text_message.emit(mbh,rmessagebody)
         self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
 
     def send_after_commands(self,_=None):
@@ -338,14 +338,14 @@ class Jnos2Parser(BbsParser):
         mbh.bbs = self.pd.getBBS("ConnectName")
         mbh.date_received = MailBoxHeader.normalized_date()
         mbh.size = len(messagebody)
-        self.signalNewIncomingMessage.emit(mbh,messagebody)
+        global_signals.signal_new_incoming_message.emit(mbh,messagebody)
         # decide if we want to send a delivery confirmation
         # this code is cut/pasted from newpacketmessage
         if not mbh.subject.startswith("DELIVERED:"):
             self.messages_to_be_acknowledged.append(mbh)
 
     def handle_sent(self,r,i):
-        self.items_sent.append(i)
+        global_signals.signal_message_sent.emit(i)
 
     def get_command(self,s):
         c = self.pd.getBBS(s)

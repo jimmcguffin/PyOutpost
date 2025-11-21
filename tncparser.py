@@ -5,13 +5,12 @@ from persistentdata import PersistentData
 from serialstream import SerialStream
 from bbsparser import Jnos2Parser
 from mailfolder import MailBoxHeader
-#from globalsignals import GlobalSignals
+from globalsignals import global_signals
 
 class TncDevice(QObject):
     signalConnected = pyqtSignal()
     signalTimeout = pyqtSignal()
     signalDisconnected = pyqtSignal()
-    signalNewIncomingMessage = pyqtSignal(MailBoxHeader,str)
     signalOutgingMessageSent = pyqtSignal() # mostly so that mainwinow can repaint mail list if it is viewing the OutTray
     signal_status_bar_message = pyqtSignal(str) # send "" to revert to default status bar
     def __init__(self,pd,parent=None):
@@ -150,13 +149,8 @@ class KantronicsKPC3Plus(TncDevice):
         # give control over to BBS parser
         self.bbs_parser = Jnos2Parser(self.pd,self.using_echo,self)
         self.bbs_parser.signalDisconnected.connect(self.onDisconnected)
-        self.bbs_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
-        self.bbs_parser.signalOutgingMessageSent.connect(lambda: self.onOutgoingMessageSent.emit())
         self.bbs_parser.signal_status_bar_message.connect(lambda s: self.signal_status_bar_message.emit(s))
         self.bbs_parser.start_session(self.serialStream,self.srflags)
-
-    def onNewIncomingMessage(self,mbh:MailBoxHeader,m:str):
-        self.signalNewIncomingMessage.emit(mbh,m)
 
     def onDisconnected(self):
         # if we never actually connected, there will not be a bbs_parser
@@ -165,7 +159,6 @@ class KantronicsKPC3Plus(TncDevice):
         print("TNC got disconnected!")
         self.signal_status_bar_message.emit("Resetting TNC")
         self.bbs_parser.signalDisconnected.disconnect()
-        self.bbs_parser.signalNewIncomingMessage.disconnect()
         self.bbs_parser = None
         self.serialStream.signalLineRead.connect(self.onResponse) # point this back to us
         self.serialStream.line_end = b"cmd:" # and reset this

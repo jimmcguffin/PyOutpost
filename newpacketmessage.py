@@ -5,9 +5,9 @@ from PyQt6.QtWidgets import QMainWindow
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
 from mailfolder import MailBoxHeader, MailFlags
+from globalsignals import global_signals
 
 class NewPacketMessage(QMainWindow):
-    signalNewOutgoingMessage = pyqtSignal(MailBoxHeader,str)
     def __init__(self,pd,parent=None):
         super().__init__(parent)
         self.pd = pd
@@ -63,5 +63,5 @@ class NewPacketMessage(QMainWindow):
         mbh.date_sent = MailBoxHeader.normalized_date()
         #mbh.date_received = "" # in ISO-8601 format
         mbh.size = len(message)
-        self.signalNewOutgoingMessage.emit(mbh,message)
+        global_signals.signal_new_outgoing_text_message.emit(mbh,message)
         self.close()

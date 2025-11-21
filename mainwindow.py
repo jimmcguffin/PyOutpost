@@ -24,7 +24,7 @@ from mailfolder import MailFolder, MailBoxHeader, MailFlags
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream
-#from globalsignals import GlobalSignals
+from globalsignals import global_signals
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -171,17 +171,26 @@ class MainWindow(QMainWindow):
         self.menuCopy_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_3))
         self.menuCopy_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_4))
         self.menuCopy_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_5))
+        global_signals.signal_new_outgoing_text_message.connect(self.onHandleNewOutgoingMessage)
+        global_signals.signal_new_outgoing_form_message.connect(self.onHandleNewOutgoingFormMessage)
+
+    def closeEvent(self, event):
+        if self.mailfolder.needs_cleaning():
+            self.mailfolder.clean() # erases items in folder X
+        event.accept()
+
     def onSelectFolder(self,folder:MailFlags):
         self.currentFolder = folder
         self.updateMailList()
+
     def onMoveToFolder(self,folder:MailFlags):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        # if moving from deleted to deleted, just delete
+        # if moving from deleted to deleted, move to FOLDER_E
         if self.currentFolder == MailFlags.FOLDER_DELETED and folder == MailFlags.FOLDER_DELETED:
-            self.mailfolder.delete_mail(indexlist)
+            self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_X)
         else:
             self.mailfolder.move_mail(indexlist,self.currentFolder,folder)
         self.updateMailList()
@@ -315,7 +324,6 @@ class MainWindow(QMainWindow):
     def onNewMessage(self):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.show()
         tmp.raise_()
     def onNewForm(self):
@@ -323,7 +331,6 @@ class MainWindow(QMainWindow):
         index = widget.property("FormIndex")
         tmp = formdialog.FormDialog(self.settings,self.forms[index][2],self.forms[index][1],self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
         tmp.show()
         tmp.raise_()
     def onHandleNewOutgoingMessage(self,mbh,m):
@@ -338,13 +345,14 @@ class MainWindow(QMainWindow):
         except FileNotFoundError:
             pass
         self.updateMailList()
+
     def onHandleNewOutgoingFormMessage(self,subject,m,urgent):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.setInitialData(subject,m,urgent)
         tmp.show()
         tmp.raise_()
+
     def onReadMessage(self,row,_):
         if row < 0 or row >= len(self.mailIndex): return
         h,m = self.mailfolder.get_message(self.mailIndex[row])
@@ -363,7 +371,6 @@ class MainWindow(QMainWindow):
                         tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
                         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
                         tmp.setData(h,m)
-                        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
                         tmp.show()
                         tmp.raise_()
                         break
@@ -375,6 +382,23 @@ class MainWindow(QMainWindow):
             tmp.raise_()
         if self.mailfolder.mark_as_new(self.mailIndex[row],False):
             self.updateMailList()
+    
+    def on_read_message_text(self,row):
+        if row < 0 or row >= len(self.mailIndex): return
+        h,m = self.mailfolder.get_message(self.mailIndex[row])
+        if not h: return
+        tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
+        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        tmp.setData(h,m)
+        tmp.show()
+        tmp.raise_()
+        if self.mailfolder.mark_as_new(self.mailIndex[row],False):
+            self.updateMailList()
+
+    def on_read_message_form(self,row):
+        # the just calls the auto-detector that double-clicking calls
+        self.onReadMessage(self,row,0)
+
     def openSerialPort(self):
         # get all relevant settings - remember that at this point they are all strings
         port = self.settings.getInterface("ComPort")
@@ -438,7 +462,8 @@ class MainWindow(QMainWindow):
         self.tnc_parser = KantronicsKPC3Plus(self.settings,self)
         #self.bbsParser = Nos2Parser(self.settings,self)
         self.serialStream = SerialStream(self.serialport)
-        self.tnc_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
+        global_signals.signal_new_incoming_message.connect(self.onNewIncomingMessage)
+        global_signals.signal_message_sent.connect(self.on_message_sent)
         self.tnc_parser.signalDisconnected.connect(self.on_end_send_receive)
         self.tnc_parser.signal_status_bar_message.connect(self.on_status_bar_message)
         srflags = 0
@@ -468,6 +493,11 @@ class MainWindow(QMainWindow):
             pass
         self.updateMailList()
 
+    def on_message_sent(self,index:int):
+        indexlist = [index]
+        self.mailfolder.move_mail(indexlist,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
+        self.updateMailList()
+
     def onDeleteMessages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
@@ -475,6 +505,7 @@ class MainWindow(QMainWindow):
                 indexlist.append(self.mailIndex[item.row()])
         self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_DELETED)
         self.updateMailList()
+
     def onArchiveMessages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
@@ -482,6 +513,7 @@ class MainWindow(QMainWindow):
                 indexlist.append(self.mailIndex[item.row()])
         self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_ARCHIVE)
         self.updateMailList()
+
     def onMailListRightClick(self,pos):
         item = self.cMailList.itemAt(pos)
         if not item: return
@@ -491,8 +523,8 @@ class MainWindow(QMainWindow):
         m = QMenu(self)
         m.addAction("Open").triggered.connect(lambda: self.onReadMessage(row,0))
         mm = QMenu("Open Enhanced",self)
-        mm.addAction("as Text").setEnabled(False)
-        mm.addAction("in Client").setEnabled(False)
+        mm.addAction("as Text").triggered.connect(lambda: self.on_read_message_text(row))  #.setEnabled(False)
+        mm.addAction("in a Form").triggered.connect(lambda: self.on_read_message_form(row))  #.setEnabled(False)
         m.addMenu(mm)
         m.addAction("Print").setEnabled(False)
         m.addAction("Save As...").setEnabled(False)
@@ -608,7 +640,6 @@ class MainWindow(QMainWindow):
     def on_status_bar_message(self,s):
         self.tempory_status_bar_message = s
         self.updateStatusBar()
-
 
 
 if __name__ == "__main__": 

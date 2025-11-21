@@ -19,13 +19,14 @@ class MailFlags(Enum):
     FOLDER_SENT = 1<<2
     FOLDER_ARCHIVE = 1<<3
     FOLDER_DRAFT = 1<<4
-    FOLDER_DELETED = 1<<5
+    FOLDER_DELETED = 1<<5 # currently, the next time the app ends, these are removed unless there are copies in other folders
     FOLDER_1 = 1<<6
     FOLDER_2 = 1<<7
     FOLDER_3 = 1<<8
     FOLDER_4 = 1<<9
     FOLDER_5 = 1<<10
-    # extra bit here
+    FOLDER_X = 1<<11 # the next time the app ends, these are removed
+    FOLDER_BITS = 0xfff # all above bits
     TYPE_BIT_0 = 1<<12 # these are used to make a 2-bit field, see code
     TYPE_BIT_1 = 1<<13
     # 2 exta bits here, maybe allow more types
@@ -78,12 +79,14 @@ class MailBoxHeader:
     def to_string(self):
         r = f"*/{self.flags:06x}/{quote_plus(self.from_addr)}/{quote_plus(self.to_addr)}/{quote_plus(self.bbs)}/{quote_plus(self.local_id)}/{quote_plus(self.subject)}/{self.date_sent}/{self.date_received}/{self.size}\n"
         return r
+
     @staticmethod
     def to_outpost_date(s):
 		# the display date used by Outpost has a different format
         if not s: return ""
         dt = datetime.datetime.fromisoformat(s)
         return "{:%m/%d/%Y %H:%M}".format(dt)
+
     @staticmethod
     def to_in_mail_date(d=""):
 		# the date used inside mail headers has another formet
@@ -91,6 +94,7 @@ class MailBoxHeader:
         if not d:
             d = datetime.datetime.now()
         return "{:%a, %d %b %Y %H:%M:%S %Z}".format(d)
+
     @staticmethod
     def normalized_date(d="") -> str:
         # try to make sense out of any date format, return a string in ISO-8601 format
@@ -188,6 +192,31 @@ class MailFolder:
     def __init__(self):
         super().__init__()
         self.mail = [] # a list of MailBoxHeader objects
+
+    def needs_cleaning(self) -> bool:
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_X.value # if a message has any of these bit set, keep it
+        for index in range (len(self.mail)):
+            if not self.mail[index].flags & keepers:
+                return True
+        return False
+
+    def clean(self): # erases  items in Folder "X", should run at start or end (or both)
+        # self.load() # not neededif at end
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_X.value # if a message has any of these bit set, keep it
+        # first, copy all the mail that will not be deleted
+        # file = tempfile.TemporaryFile()
+        file = open("PyOutpost.mail.tmp","wb")
+        for index in range (len(self.mail)):
+            print(f"{bool(self.mail[index].flags & keepers)} {self.mail[index].flags&0xfff:03x} {self.mail[index].subject}")
+            if self.mail[index].flags & keepers:
+                mbh,m = self.get_message(index)
+                file.write(mbh.to_string().encode("windows-1252"))
+                file.write(m.encode("windows-1252"))
+        file.close()
+        os.remove("PyOutpost.mail")
+        os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
+        # self.load() # caller needs to do this if at start, if at end, no need
+
     def load(self):
         self.mail.clear()
         try:
@@ -267,21 +296,6 @@ class MailFolder:
         except FileNotFoundError:
             pass
 
-    # regular mail deletion just involves moving to the deleted folder - this will actually hard delete it
-    def delete_mail(self,indexlist):
-        # first, copy all the mail that will not be deleted
-        # file = tempfile.TemporaryFile()
-        file = open("PyOutpost.mail.tmp","wb")
-        for index in range (len(self.mail)):
-            if not index in indexlist:
-                mbh,m = self.get_message(index)
-                file.write(mbh.to_string().encode("windows-1252"))
-                file.write(m.encode("windows-1252"))
-        file.close()
-        os.remove("PyOutpost.mail")
-        os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
-        self.load()
-
     # returns a MailBoxHeader and a string containing the mail (may change this to a bytearray)
     def get_message(self,n):
         if not 0 <= n < len(self.mail): return [],""
@@ -318,10 +332,10 @@ class MailFolder:
         return True
 
     def get_headers(self,folder:MailFlags): 
-        # return self.mail
         r = []
         for m in self.mail:
             if m.flags & folder.value:
+                print(f"{m.flags&0xfff:03x} {m.subject}")
                 r.append(m)
         return r
 
@@ -329,6 +343,7 @@ class MailFolder:
         r = []
         for m in self.mail:
             if m.flags & folder.value:
+                print(f"{m.flags&0xfff:03x} {m.subject}")
                 r.append(m.index)
         return r
 

@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import QMainWindow, QLineEdit, QWidget, QPlainTextEdit, QCh
 from PyQt6.QtGui import QPixmap, QPalette, QColor, QFont
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
+from globalsignals import global_signals
 
 class FormItem(QObject):
     def __init__(self,parent,f,dw=0,dh=0):
@@ -168,7 +169,6 @@ class FormItemDropDown(FormItem):
         return self.widget.setCurrentText(value)
 
 class FormDialog(QMainWindow):
-    signalNewOutgoingMessage = pyqtSignal(str,str,bool)
     def __init__(self,pd,form,formid,parent=None):
         super().__init__(parent)
         self.pd = pd
@@ -387,5 +387,5 @@ class FormDialog(QMainWindow):
             handling = self.getFieldByName("Handling")
             if not handling: handling = "?"
             subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.getFieldByName(self.subjectlinesource) 
-        self.signalNewOutgoingMessage.emit(subject,message,handling[0] == 'I')
+        global_signals.signal_new_outgoing_form_message.emit(subject,message,handling[0] == 'I')
         self.close()
