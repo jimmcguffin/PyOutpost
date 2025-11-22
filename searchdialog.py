@@ -17,10 +17,13 @@ class SearchDialog(QDialog):
         self.c_search.clicked.connect(self.on_search)
         self.fields_to_search = 0
         self.search = ""
-        
+        self.c_subject_line.setChecked(True)
 
     def on_search(self):
         self.search = self.c_search_text.text()
+        if not self.search:
+            return super().reject()
+        self.fields_to_search = 0
         if self.c_subject_line.isChecked():
             self.fields_to_search |= FieldsToSearch.SUBJECT.value
         if self.c_message_text.isChecked():
@@ -33,6 +36,8 @@ class SearchDialog(QDialog):
             self.fields_to_search |= FieldsToSearch.TO.value
         if self.c_bbs.isChecked():
             self.fields_to_search |= FieldsToSearch.BBS.value
+        if not self.fields_to_search: # at least one must be checked
+            return super().reject()
         if self.c_all_folders.isChecked():
             self.fields_to_search |= FieldsToSearch.ALL_FOLDERS.value
         super().accept()

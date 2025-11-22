@@ -7,7 +7,7 @@ from urllib.parse import quote_plus,unquote_plus
 
 from PyQt6.QtCore import Qt,QIODeviceBase
 from PyQt6.QtGui import QAction, QPalette, QColor
-from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
+from PyQt6.QtWidgets import QMainWindow, QInputDialog, QMessageBox, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
 from PyQt6.uic import load_ui
 from PyQt6.QtSerialPort import QSerialPortInfo, QSerialPort
 from persistentdata import PersistentData
@@ -373,14 +373,14 @@ class MainWindow(QMainWindow):
                         isform = True
                         tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
                         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-                        tmp.setData(h,m)
+                        tmp.prepopulate(h,m)
                         tmp.show()
                         tmp.raise_()
                         break
         if not isform:
             tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
             tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            tmp.setData(h,m)
+            tmp.prepopulate(h,m)
             tmp.show()
             tmp.raise_()
         if self.mailfolder.mark_as_new(self.mailIndex[row],False):
@@ -392,7 +392,7 @@ class MainWindow(QMainWindow):
         if not h: return
         tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.setData(h,m)
+        tmp.prepopulate(h,m)
         tmp.show()
         tmp.raise_()
         if self.mailfolder.mark_as_new(self.mailIndex[row],False):
@@ -645,17 +645,19 @@ class MainWindow(QMainWindow):
         self.updateStatusBar()
 
     def on_search(self):
-        self.cFolderSearchResults.setEnabled(False)
         sd = searchdialog.SearchDialog(self.settings,self)
         if sd.exec() != 1:
             return
         folders_to_search = self.currentFolder
         if sd.fields_to_search & FieldsToSearch.ALL_FOLDERS.value:
             folders_to_search = MailFlags.FOLDER_SEARCHABLE
-        if self.mailfolder.search(sd.search,sd.fields_to_search,folders_to_search):
+        if self.mailfolder.search(sd.search,sd.fields_to_search,folders_to_search) == 1:
             self.cFolderSearchResults.setEnabled(True)
             self.cFolderSearchResults.setChecked(True)
             self.onSelectFolder(MailFlags.FOLDER_SEARCH_RESULTS)
+        else:
+            QMessageBox.information(self,"Search","No messages found")
+
 
 
 if __name__ == "__main__": 

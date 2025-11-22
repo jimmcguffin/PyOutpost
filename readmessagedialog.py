@@ -11,7 +11,7 @@ class ReadMessageDialog(QMainWindow):
         super().__init__(parent)
         self.pd = pd
         load_ui.loadUi("readmessagedialog.ui",self)
-    def setData(self,h,m):
+    def prepopulate(self,h,m):
         self.cBbs.setText(h.bbs)
         self.cFrom.setText(h.from_addr)
         self.cTo.setText(h.to_addr)

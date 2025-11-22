@@ -360,10 +360,10 @@ class MailFolder:
         return r
 
     def search(self,searchstr:str,fields_to_search:FieldsToSearch,folders:MailFlags):
-        # first step is to clear out the serach results folder
-        indexlist = self.get_header_indexes(MailFlags.FOLDER_SEARCH_RESULTS)
-        if indexlist:
-            self.move_mail(indexlist,MailFlags.FOLDER_SEARCH_RESULTS,MailFlags.FOLDER_NONE)
+        # first step is to clear out the search results folder
+        original_indexlist = self.get_header_indexes(MailFlags.FOLDER_SEARCH_RESULTS)
+        #if original_indexlist:
+        #    self.move_mail(original_indexlist,MailFlags.FOLDER_SEARCH_RESULTS,MailFlags.FOLDER_NONE)
         # because we are using file name matching, we need to prerfix with a "*"
         if not searchstr:
             return False
@@ -399,6 +399,8 @@ class MailFolder:
                 foundlist.append(index)
         if not foundlist:
             return False
+        if original_indexlist:
+            self.move_mail(original_indexlist,MailFlags.FOLDER_SEARCH_RESULTS,MailFlags.FOLDER_NONE)
         self.copy_mail(foundlist,MailFlags.FOLDER_SEARCH_RESULTS)
         return True
 
