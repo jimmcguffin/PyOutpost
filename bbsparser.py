@@ -2,7 +2,7 @@
 
 import datetime
 from PyQt6.QtCore import QObject, pyqtSignal
-from mailfolder import MailFolder, MailBoxHeader, MailFlags
+from mailbox import MailBox, MailBoxHeader, MailFlags
 from globalsignals import global_signals
 
 # the general sequence is:
@@ -142,13 +142,13 @@ class Jnos2Parser(BbsParser):
         if self.srflags & 1:
             # if there are outgoing messages send them now
             # this may turn out to be a bad idea but for now I read directly from the mail file
-            mailfolder = MailFolder()
-            mailfolder.load()
-            indexes = mailfolder.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
+            mailbox = MailBox()
+            mailbox.load()
+            indexes = mailbox.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
             if indexes:
                 self.signal_status_bar_message.emit("Sending out messages")
                 for index in indexes:
-                    mbh,m = mailfolder.get_message(index)
+                    mbh,m = mailbox.get_message(index)
                     m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
                     if not m2.endswith('\r'): m2 += '\r'
                     self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,index))
@@ -231,9 +231,9 @@ class Jnos2Parser(BbsParser):
                     callsign = self.pd.getActiveCallSign(False).upper()
                     if self.current_area != callsign:
                         if len(words) >= 8:
-                            mailfolder = MailFolder()
-                            mailfolder.load()
-                            maybematch = mailfolder.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
+                            mailbox = MailBox()
+                            mailbox.load()
+                            maybematch = mailbox.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
                             print(f"matcher says {maybematch},{words[7].rstrip()}")
                             if maybematch:
                                 continue

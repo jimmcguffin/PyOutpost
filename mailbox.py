@@ -200,7 +200,7 @@ class MailBoxHeader:
         t = self.get_type()
         return ["","B","NTS","DRAFT"][t]
 
-class MailFolder:
+class MailBox:
     def __init__(self):
         super().__init__()
         self.mail = [] # a list of MailBoxHeader objects

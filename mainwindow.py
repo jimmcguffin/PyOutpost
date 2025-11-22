@@ -21,7 +21,7 @@ import newpacketmessage
 import readmessagedialog
 import formdialog
 import searchdialog
-from mailfolder import MailFolder, MailBoxHeader, MailFlags, FieldsToSearch
+from mailbox import MailBox, MailBoxHeader, MailFlags, FieldsToSearch
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream
@@ -134,9 +134,9 @@ class MainWindow(QMainWindow):
         self.mailSortIndex = 0
         self.mailSortBackwards = False
         self.mailIndex = []
-        self.mailfolder = MailFolder()
+        self.mailbox = MailBox()
         self.currentFolder = MailFlags.FOLDER_IN_TRAY
-        self.mailfolder.load()
+        self.mailbox.load()
         self.updateMailList()
         # need to add the folder list in several places
         f = [
@@ -179,8 +179,8 @@ class MainWindow(QMainWindow):
         global_signals.signal_new_outgoing_form_message.connect(self.onHandleNewOutgoingFormMessage)
 
     def closeEvent(self, event):
-        if self.mailfolder.needs_cleaning():
-            self.mailfolder.clean() # erases items in folder X
+        if self.mailbox.needs_cleaning():
+            self.mailbox.clean() # erases items in folder X
         event.accept()
 
     def onSelectFolder(self,folder:MailFlags):
@@ -195,17 +195,17 @@ class MainWindow(QMainWindow):
         # if moving from deleted to deleted, move to FOLDER_NONE
         if self.currentFolder == MailFlags.FOLDER_DELETED and folder == MailFlags.FOLDER_DELETED:
             folder = MailFlags.FOLDER_NONE
-        self.mailfolder.move_mail(indexlist,self.currentFolder,folder)
+        self.mailbox.move_mail(indexlist,self.currentFolder,folder)
         self.updateMailList()
     def onCopyToFolder(self,folder):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        self.mailfolder.copy_mail(indexlist,folder)
+        self.mailbox.copy_mail(indexlist,folder)
         self.updateMailList()
     def onMarkAsNew(self,index,mark):
-        self.mailfolder.mark_as_new(index,mark)
+        self.mailbox.mark_as_new(index,mark)
         self.updateMailList()
     def onProfileChanged(self,p):
         self.settings.setActiveProfile(p)
@@ -267,9 +267,9 @@ class MainWindow(QMainWindow):
         #if tmpindex == 9: tmpindex = 10
         if 2 <= tmpindex <= 10:
             keyname = ["urgent","type_str","from_addr","to_addr","bbs","local_id","subject","date_sent","size"][tmpindex-2]
-            headers = sorted(self.mailfolder.get_headers(self.currentFolder),key=attrgetter(keyname), reverse=self.mailSortBackwards)
+            headers = sorted(self.mailbox.get_headers(self.currentFolder),key=attrgetter(keyname), reverse=self.mailSortBackwards)
         else:
-            headers = self.mailfolder.get_headers(self.currentFolder)
+            headers = self.mailbox.get_headers(self.currentFolder)
         self.mailIndex.clear()
         self.cMailList.clearContents()
         self.cMailList.setColumnWidth(0,40)
@@ -339,7 +339,7 @@ class MainWindow(QMainWindow):
     def onHandleNewOutgoingMessage(self,mbh,m):
         # log activity
         mbh.flags |= MailFlags.IS_OUTGOING.value
-        self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
+        self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
         # log this
         try:
             with open("activity.log","ab") as file:
@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
 
     def onReadMessage(self,row,_):
         if row < 0 or row >= len(self.mailIndex): return
-        h,m = self.mailfolder.get_message(self.mailIndex[row])
+        h,m = self.mailbox.get_message(self.mailIndex[row])
         if not h: return
         # is this a regular text message or a form?
         # for now, decide based on subject, but would be better to use message body
@@ -383,19 +383,19 @@ class MainWindow(QMainWindow):
             tmp.prepopulate(h,m)
             tmp.show()
             tmp.raise_()
-        if self.mailfolder.mark_as_new(self.mailIndex[row],False):
+        if self.mailbox.mark_as_new(self.mailIndex[row],False):
             self.updateMailList()
     
     def on_read_message_text(self,row):
         if row < 0 or row >= len(self.mailIndex): return
-        h,m = self.mailfolder.get_message(self.mailIndex[row])
+        h,m = self.mailbox.get_message(self.mailIndex[row])
         if not h: return
         tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.prepopulate(h,m)
         tmp.show()
         tmp.raise_()
-        if self.mailfolder.mark_as_new(self.mailIndex[row],False):
+        if self.mailbox.mark_as_new(self.mailIndex[row],False):
             self.updateMailList()
 
     def on_read_message_form(self,row):
@@ -486,7 +486,7 @@ class MainWindow(QMainWindow):
         self.tnc_parser = None
 
     def onNewIncomingMessage(self,mbh:MailBoxHeader,m):
-        self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
+        self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
         # log this
         try:
             with open("activity.log","ab") as file:
@@ -498,7 +498,7 @@ class MainWindow(QMainWindow):
 
     def on_message_sent(self,index:int):
         indexlist = [index]
-        self.mailfolder.move_mail(indexlist,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
+        self.mailbox.move_mail(indexlist,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
         self.updateMailList()
 
     def onDeleteMessages(self):
@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_DELETED)
+        self.mailbox.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_DELETED)
         self.updateMailList()
 
     def onArchiveMessages(self):
@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_ARCHIVE)
+        self.mailbox.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_ARCHIVE)
         self.updateMailList()
 
     def onMailListRightClick(self,pos):
@@ -578,10 +578,10 @@ class MainWindow(QMainWindow):
         # if r == a1:
         #     self.onReadMessage(row,0)
         # elif r == a7:
-        #     if self.mailfolder.markAsNew(mailindex,True):
+        #     if self.mailbox.markAsNew(mailindex,True):
         #         self.updateMailList()
         # elif r == a8:
-        #     if self.mailfolder.markAsNew(mailindex,False):
+        #     if self.mailbox.markAsNew(mailindex,False):
         #         self.updateMailList()
         # pass
 
@@ -651,7 +651,7 @@ class MainWindow(QMainWindow):
         folders_to_search = self.currentFolder
         if sd.fields_to_search & FieldsToSearch.ALL_FOLDERS.value:
             folders_to_search = MailFlags.FOLDER_SEARCHABLE
-        if self.mailfolder.search(sd.search,sd.fields_to_search,folders_to_search) == 1:
+        if self.mailbox.search(sd.search,sd.fields_to_search,folders_to_search) == 1:
             self.cFolderSearchResults.setEnabled(True)
             self.cFolderSearchResults.setChecked(True)
             self.onSelectFolder(MailFlags.FOLDER_SEARCH_RESULTS)
