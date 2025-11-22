@@ -4,7 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from mailfolder import MailFolder, MailBoxHeader, MailFlags
 
 # the general sequence is:
-# sent the startup commands
+# send the startup commands
 # send any outgoing messages
 # get any incoming mail
 # kill any messages read
@@ -25,6 +25,9 @@ class BbsSequenceStep():
         self.handler = h # gets called when responded to, can be None
         # arbitrary data item that can be passed to the handler (after the reply value)
         self.data = data
+class BbsSequenceStepNoResonse(): # I think only "BYE" uses this
+    def __init__(self,s,data=None):
+        self.what_to_send = s
 class BbsSequenceImmediateStep():
     def __init__(self,h,data=None):
         self.handler = h # gets called as soon as the sequencer gets to this item
@@ -46,16 +49,18 @@ class BbsParser(QObject):
     def __init__(self,pd,using_echo,parent=None):
         super().__init__(parent)
         self.pd = pd
-        self.bbs_sequence = [] # a list of BbsSequenceSteps
+        self.bbs_sequence = [] # a list of BbsSequenceSteps (and simmilar)
         self.stepinprogress = False
         self.items_sent = [] # they get moved to the "Sent" folder
         self.messages_read = []
         self.serial_stream = None # later will be set to a SerialStream
         self.using_echo = using_echo
+        self.srflags = 0
 
-    def start_session(self,ss):
+    def start_session(self,ss,srflags:int):
         self.serial_stream = ss
-        self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses
+        self.srflags = srflags
+        self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses, does now wotk if TNC is set for long prompts ("Z >\r\n" would be work)
         self.serial_stream.include_line_end_in_reply = True
         self.serial_stream.signalLineRead.disconnect()
         self.serial_stream.signalLineRead.connect(self.on_response)
@@ -63,16 +68,19 @@ class BbsParser(QObject):
         self.signal_status_bar_message.emit("Initializing the BBS")
 
     def end_session(self):
+        self.bbs_sequence.clear() # forget any unfinished busniness
         print("BBS emitting disconnect")
         self.signalDisconnected.emit()
 
-    def add_step(self,step): # argument is a BbsSequenceStep or a BbsSequenceImmediateStep
+    def add_step(self,step): # argument is a BbsSequenceStep, a BbsSequenceStepNoResonse, or a BbsSequenceImmediateStep
         # things are different if the sequence is empty
         if self.bbs_sequence:
-            self.bbs_sequence.append(step) # it is not empty, just add it
+            self.bbs_sequence.append(step) # it is not empty, just add it to the end
         else:
             if isinstance(step,BbsSequenceImmediateStep):
                 step.handler(step.data)
+            elif isinstance(step,BbsSequenceStepNoResonse):
+                self.serial_stream.write(self.bbs_sequence[0].what_to_send)
             else:
                 self.bbs_sequence.append(step)
                 if self.bbs_sequence[0].what_to_send:
@@ -83,14 +91,17 @@ class BbsParser(QObject):
     # call this when items have been removed and there is a new "front"
     def check_sequence(self):
         # if there are immediate-mode comamnds, do them
-        while self.bbs_sequence and isinstance(self.bbs_sequence[0],BbsSequenceImmediateStep):
-            if self.bbs_sequence[0].handler: # I think this will always be true
-                self.bbs_sequence[0].handler(self.bbs_sequence[0].data)
-            del self.bbs_sequence[0:1]
-        if len(self.bbs_sequence) > 0:
-            assert isinstance(self.bbs_sequence[0],BbsSequenceStep)
-            if self.bbs_sequence[0].what_to_send:
+        while self.bbs_sequence:
+            if isinstance(self.bbs_sequence[0],BbsSequenceStep):
                 self.serial_stream.write(self.bbs_sequence[0].what_to_send)
+                break
+            elif isinstance(self.bbs_sequence[0],BbsSequenceStepNoResonse):
+                self.serial_stream.write(self.bbs_sequence[0].what_to_send)
+                del self.bbs_sequence[0:1]
+            elif isinstance(self.bbs_sequence[0],BbsSequenceImmediateStep):
+                if self.bbs_sequence[0].handler: # I think this will always be true
+                    self.bbs_sequence[0].handler(self.bbs_sequence[0].data)
+                del self.bbs_sequence[0:1]
 
     def on_disconnected(self):
         print("BBS got disconnected")
@@ -101,8 +112,8 @@ class Jnos2Parser(BbsParser):
         super().__init__(pd,using_echo,parent)
         self.mailfolder = MailFolder()
         self.current_area = ""
-    def start_session(self,ss):
-        super().start_session(ss)
+    def start_session(self,ss,srflags):
+        super().start_session(ss,srflags)
         self.add_step(BbsSequenceStep("",self.start_session2)) # there is a prompt/terminator that will arrive without being told
 
     def start_session2(self,r,_=None):
@@ -119,22 +130,24 @@ class Jnos2Parser(BbsParser):
         self.add_step(BbsSequenceImmediateStep(self.send_outgoing))
 
     def send_outgoing(self,_=None):
-        # if there are outgoing messages send them now
-        # this may turn out to be a bad idea but for now I read directly from the mail file
-        self.mailfolder.load()
-        headers = self.mailfolder.get_headers(MailFlags.FOLDER_OUT_TRAY)
-        if headers:
-            self.signal_status_bar_message.emit("Sending out messages")
-            for i in range(len(headers)):
-                mbh,m = self.mailfolder.get_message(i)
-                m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
-                if not m2.endswith('\r'): m2 += '\r'
-                self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,i))
+        if self.srflags & 1:
+            # if there are outgoing messages send them now
+            # this may turn out to be a bad idea but for now I read directly from the mail file
+            self.mailfolder.load()
+            indexes = self.mailfolder.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
+            if indexes:
+                self.signal_status_bar_message.emit("Sending out messages")
+                for index in indexes:
+                    mbh,m = self.mailfolder.get_message(index)
+                    m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
+                    if not m2.endswith('\r'): m2 += '\r'
+                    self.add_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,index))
         self.add_step(BbsSequenceImmediateStep(self.send_lists))
 
     def send_lists(self,_=None):
-        self.signal_status_bar_message.emit("Reading messages")
-        self.add_step(BbsSequenceStep("la\r",self.handle_list))
+        if self.srflags & 2:
+            self.signal_status_bar_message.emit("Reading messages")
+            self.add_step(BbsSequenceStep("la\r",self.handle_list))
         #	self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
         #	self.add_step(BbsSequenceStep("la\r",self.handle_list))
         #	self.add_step(BbsSequenceStep("a XSCEVENT\r",self.handle_area))
@@ -234,7 +247,8 @@ class Jnos2Parser(BbsParser):
                 k += "\r"
                 self.add_step(BbsSequenceStep(k))
             self.messages_read.clear()
-        if self.current_area != "xscperm":
+        if self.current_area != "xscperm" and self.srflags & 4:
+            self.signal_status_bar_message.emit("Checking bulletins")
             self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
             self.add_step(BbsSequenceStep("la\r",self.handle_list))
         else:
@@ -251,7 +265,7 @@ class Jnos2Parser(BbsParser):
         callsign = self.pd.getActiveCallSign(True)
         if " as " in callsign:
             self.add_step(BbsSequenceStep(f"# this is {callsign}\r"))
-        self.add_step(BbsSequenceStep(self.get_command("CommandBye")+"\r")) # this will trigger the *** disconnect message
+        self.add_step(BbsSequenceStepNoResonse(self.get_command("CommandBye")+"\r")) # this will trigger the *** disconnect message
 
     def handle_area(self,r,_=None):
         print(f"got area {r}")
@@ -268,6 +282,7 @@ class Jnos2Parser(BbsParser):
         while len(lines) >= 2 and lines[-1] != "": lines.pop()
         mbh = MailBoxHeader()
         inheader = True
+        isfirst = True
         messagebody = ""
         for line in lines[1:]:
             if line == "" and inheader: # the blank line that separates header from body
@@ -286,12 +301,13 @@ class Jnos2Parser(BbsParser):
                     mbh.subject = r
             else:
                 # if this is the first line of the message body, look for the !URG! tag
-                if not messagebody:
+                if isfirst:
                     if line.startswith("!URG!"):
                         mbh.flags |= MailFlags.IS_URGENT.value
                         line = line[5:] # remove the !URG!, maybe remove others as well "!*!"
-                # messagebody += line + "\r\n"
-                messagebody += line + "\n"
+                    isfirst = False
+            # messagebody += line + "\r\n"
+            messagebody += line + "\n"
         if not messagebody: return
         mbh.flags |= MailFlags.IS_NEW.value | MailFlags.FOLDER_IN_TRAY.value
         mbh.bbs = self.pd.getBBS("ConnectName")

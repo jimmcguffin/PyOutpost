@@ -36,7 +36,7 @@ MsgNo,MessageNumber,str,,,289,80,396,101
 //28.:BasementType,rb,,
 //29.:DamageClassification,rb,,,0,0,0,0,Destroyed,Minor,No Visible Damage,Major,Affected
 //30.:Tag,rb,,,0,0,0,0,Green,Yellow,Red
-//31.:Insuranve,rb,,,0,0,0,0,Yes,No
+//31.:Insurance,rb,,,0,0,0,0,Yes,No
 //32.:EstimatedDamage,str,,
 //33.:Comment,str,,
 //34.:ContactName,str,,

@@ -21,13 +21,16 @@ class TncDevice(QObject):
         self.using_echo = False
         self.bbs_parser = None
         self.special_disconnect_value = "*** Disconnect\r" # tells the session to end
-    def startSession(self,ss):
+        self.serialStream = None
+        self.srflags = 0 # 1=send, 2=recv, 4=recvb
+    def start_session(self,ss:SerialStream,srflags:int):
         self.serialStream = ss
+        self.srflags = srflags
         self.serialStream.signalLineRead.connect(self.onResponse)        
         self.serialStream.signalConnected.connect(self.onConnected)        
         self.serialStream.signalDisconnected.connect(self.onDisconnected)
         self.signal_status_bar_message.emit("Initializing TNC")
-    def endSession(self):
+    def end_session(self):
         self.messageQueue.clear()
         self.signal_status_bar_message.emit("")
         self.signalDisconnected.emit()
@@ -37,7 +40,7 @@ class TncDevice(QObject):
         self.messageQueue.append(b)
         if len(self.messageQueue) == 1:
             if self.messageQueue[0] == self.special_disconnect_value:
-                self.endSession()
+                self.end_session()
             else:
                 self.serialStream.write(self.messageQueue[0])
 
@@ -65,12 +68,12 @@ class KantronicsKPC3Plus(TncDevice):
     def __init__(self,pd,parent=None):
         super().__init__(pd,parent)
 
-    def startSession(self,ss):
-        super().startSession(ss)
+    def start_session(self,ss,srflags:int):
+        super().start_session(ss,srflags)
         self.serialStream.line_end = b"cmd:"
         self.serialStream.include_line_end_in_reply = self.using_echo
-        mycall = f"{self.pd.getInterface("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
-        connectstr = f"{self.pd.getInterface("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
+        mycall = f"{self.get_command("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
+        connectstr = f"{self.get_command("CommandConnect")} {self.pd.getBBS("ConnectName")}\r"
         # these are internally generated
         # self.send(b"\r") // flush out any half-written commands
         self.send("\x03\r")
@@ -134,7 +137,7 @@ class KantronicsKPC3Plus(TncDevice):
             del self.messageQueue[0:1]
             if self.messageQueue:
                 if self.messageQueue[0] == self.special_disconnect_value:
-                    self.endSession()
+                    self.end_session()
                 else:
                     self.serialStream.write(self.messageQueue[0])
         else:
@@ -150,7 +153,7 @@ class KantronicsKPC3Plus(TncDevice):
         self.bbs_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
         self.bbs_parser.signalOutgingMessageSent.connect(lambda: self.onOutgoingMessageSent.emit())
         self.bbs_parser.signal_status_bar_message.connect(lambda s: self.signal_status_bar_message.emit(s))
-        self.bbs_parser.start_session(self.serialStream)
+        self.bbs_parser.start_session(self.serialStream,self.srflags)
 
     def onNewIncomingMessage(self,mbh,m):
         self.signalNewIncomingMessage.emit(mbh,m)
@@ -183,15 +186,23 @@ class KantronicsKPC3Plus(TncDevice):
 			("PromptDisconnected","*** DISCONNECTED"),
             ]   
 
+    def get_command(self,s):
+        c = self.pd.getInterface(s)
+        if c:
+            return c
+        if s in self.get_default_commands():
+            return self.get_default_commands()[s]
+        return "<"+s+">" # this will never work but it will show in the log as a problem
+
     @staticmethod
     def getDefaultCommands():
-         return (
-				("CommandMyCall","my"),
-				("CommandConnect","connect"),
-				("CommandRetry","retry"),
-				("CommandConvers","convers"),
-				("CommandDayTime","daytime"),
-         )
+         return {
+				"CommandMyCall":"my",
+				"CommandConnect":"connect",
+				"CommandRetry":"retry",
+				"CommandConvers":"convers",
+				"CommandDayTime":"daytime",
+         }
     
     @staticmethod
     def getDefaultBeforeInitCommands():
