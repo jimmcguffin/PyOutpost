@@ -111,7 +111,9 @@ class BbsParser(QObject):
 class Jnos2Parser(BbsParser):
     def __init__(self,pd,using_echo,parent=None):
         super().__init__(pd,using_echo,parent)
+        self.home_area = self.pd.getActiveCallSign(False).upper()
         self.current_area = ""
+        self.areas_to_read = []
     def start_session(self,ss,srflags):
         super().start_session(ss,srflags)
         self.add_step(BbsSequenceStep("",self.start_session2)) # there is a prompt/terminator that will arrive without being told
@@ -127,6 +129,13 @@ class Jnos2Parser(BbsParser):
                 s = s.strip()
                 if s:
                     self.add_step(BbsSequenceStep(s+"\r"))
+        # let's decide which areas to read right now
+        if self.srflags & 2:
+            # this happens by itself # self.areas_to_read.append(self.pd.getActiveCallSign(False).upper())
+            if self.srflags & 4:
+                self.areas_to_read.append("XSCPERM")
+                self.areas_to_read.append("XSCEVENT")
+                # not until L> works  areas_to_read.append("ALLXSC")
         self.add_step(BbsSequenceImmediateStep(self.send_outgoing))
 
     def send_outgoing(self,_=None):
@@ -149,12 +158,6 @@ class Jnos2Parser(BbsParser):
         if self.srflags & 2:
             self.signal_status_bar_message.emit("Reading messages")
             self.add_step(BbsSequenceStep("la\r",self.handle_list))
-        #	self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
-        #	self.add_step(BbsSequenceStep("la\r",self.handle_list))
-        #	self.add_step(BbsSequenceStep("a XSCEVENT\r",self.handle_area))
-        #	self.add+step(BbsSequenceStep("la\r",self.handle_list))
-        #	self.add_step(BbsSequenceStep("a ALLXSC\r",self.handle_area))
-        #	self.add_step(BbsSequenceStep("la\r",self.handle_list))
         else:
             # this must be a send-only cycle, so skip list/read/confirm steps
             self.add_step(BbsSequenceImmediateStep(self.send_after_commands))
@@ -253,9 +256,11 @@ class Jnos2Parser(BbsParser):
                 k += "\r"
                 self.add_step(BbsSequenceStep(k))
             self.messages_read.clear()
-        if self.current_area != "XSCPERM" and self.srflags & 4:
+        # if there are more areas to read, start them going
+        if self.areas_to_read:
             self.signal_status_bar_message.emit("Checking bulletins")
-            self.add_step(BbsSequenceStep("a XSCPERM\r",self.handle_area))
+            self.add_step(BbsSequenceStep(f"a {self.areas_to_read[0]}\r",self.handle_area))
+            del self.areas_to_read[0:1]
             self.add_step(BbsSequenceStep("la\r",self.handle_list))
         else:
             self.add_step(BbsSequenceImmediateStep(self.send_confirmations))
@@ -341,7 +346,7 @@ class Jnos2Parser(BbsParser):
         global_signals.signal_new_incoming_message.emit(mbh,messagebody)
         # decide if we want to send a delivery confirmation
         # this code is cut/pasted from newpacketmessage
-        if not mbh.subject.startswith("DELIVERED:"):
+        if self.current_area == self.home_area and not mbh.subject.startswith("DELIVERED:"):
             self.messages_to_be_acknowledged.append(mbh)
 
     def handle_sent(self,r,i):

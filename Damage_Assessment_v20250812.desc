@@ -14,33 +14,35 @@ MsgNo,MessageNumber,str,,,289,80,396,101
 1a.,Date,str,Y,DateValid,90,148,161,169
 1b.,Time,str,Y,TimeValid,243,148,302,169
 5.,Handling,rb,Y,,0,0,0,0,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
-7a.,ToIcsPosition,dd,,,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
-8a.,FromIcsPosition,str,,,520,177,736,199
-7b.,ToLocation,str,,,146,206,404,228
-8b.,FromLocation,str,,,501,206,736,228
+7a.,ToIcsPosition,dd,Y,,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
+8a.,FromIcsPosition,str,Y,,520,177,736,199
+7b.,ToLocation,str,Y,,146,206,404,228
+8b.,FromLocation,str,Y,,501,206,736,228
 7c.,ToName,str,,,130,236,404,257
-8c,FromName,str,,,485,236,736,257
+8c.,FromName,str,,,485,236,736,257
 7d.,ToContactInfo,str,,,168,264,404,287
 8d.,FromContactInfo,str,,,523,264,736,287
-20.,Juristiction,dd,,,186,318,391,336,dd,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
-//21.,IndicentName,str,,
-*22.,Address,str,,,109,343,390,359
-//23.,Unit,str,,
-24.,TypeOfStructure,rb,,,0,0,0,0,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
-//25.:NumberOfStories,str,,
-//26.:OwnRent,rb,,
+20.,Juristiction,dd,Y,,186,318,391,336,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+21.,IncidentName,str,Y,,511,307,735,334
+*22.,Address,str,Y,,109,343,390,359
+23.,Unit,str,,,471,343,735,358
+24.,TypeOfStructure,rb,Y,,187,365,602,403,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
+25.,NumberOfStories,str,Y,NumValid,170,409,735,425
+26.,OwnRent,rb,,,189,431,443,449,Own,196,432,0,0,Rent,385,432,0,0
+// these must come before the items they control, the id serves only as a clue about what items it is controlling
+27.,DamageType,rg,Y,,194,454,619,492,27a.,27b.,27c.,27d.
 27a.,Flooding,cb,,,198,456,0,0
 27b.,Roof,cb,,,198,476,0,0
 27c.,Structural,cb,,,433,456,0,0
-27d.,Other,cb,,,433,476,0,0
-//28.:BasementType,rb,,
-//29.:DamageClassification,rb,,,0,0,0,0,Destroyed,Minor,No Visible Damage,Major,Affected
-//30.:Tag,rb,,,0,0,0,0,Green,Yellow,Red
-//31.:Insurance,rb,,,0,0,0,0,Yes,No
-//32.:EstimatedDamage,str,,
-//33.:Comment,str,,
-//34.:ContactName,str,,
-//35.:ContextPhone,str,,
+27d.,OtherDamage,cb,,,433,476,0,0
+28.,BasementType,rb,Y,,187,495,574,534,Basement,196,495,0,0,Crawlspace,196,515,0,0,Basement and Crawlspace,384,497,0,0,N/A,384,517,0,0
+29.,DamageClassification,rb,Y,,137,555,622,593,Destroyed,149,557,0,0,Major,149,577,0,0,Minor,291,557,0,0,Affected,291,577,0,0,No Visible Damage,479,557,0,0
+//30.,Tag,rb,,,0,0,0,0,Green,Yellow,Red
+//31.,Insurance,rb,,,0,0,0,0,Yes,No
+//32.,EstimatedDamage,str,,
+//33.,Comment,str,,
+//34.,ContactName,str,Y,,
+//35.,ContextPhone,str,Y,,
 OpName,OpName,str,,,95,828,308,846
 OpCall,OpCall,str,,,374,828,477,846
 OpDate,OpDate,str,,,522,828,584,846

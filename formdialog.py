@@ -19,8 +19,9 @@ class FormItem(QObject):
         self.valid = None
         self.validator = ""
         self.subjectlinesource = "Subject"
-        #if f[3] == "Y" and f[5] != "0":
-        if f[5] != "0": # this shows all of boxes that have been defined
+        self.group = -1 # gets set if part of a group
+        if f[3] == "Y" and f[5] != "0":
+        #if f[5] != "0": # this shows all of boxes that have been defined
             self.valid = QFrame(parent)
             # expand the coordinates a litle
             e = 4
@@ -103,7 +104,6 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
         dw = 64 # default size
         dh = 14
         super().__init__(parent,f,dw,dh)
-        default_height = 14
         nb = (len(f)-9)//5
         self.widget = QButtonGroup(parent)
         self.values = []
@@ -168,6 +168,25 @@ class FormItemDropDown(FormItem):
     def setValue(self,value):
         return self.widget.setCurrentText(value)
 
+class FormItemRequiredGroup(FormItem):
+    signalValidityCheck = pyqtSignal(FormItem)
+    def __init__(self,parent,f):
+        super().__init__(parent,f)
+        nc = (len(f)-9)
+        self.children = []
+        for i in range (nc):
+            self.children.append(f[i+9])
+        pass
+    def get_value(self,dialog):
+        for c in self.children:
+            v = dialog.get_value_by_field_id(c)
+            if v:
+                return True
+        return False
+    def setValue(self,value):
+        pass
+
+
 class FormDialog(QMainWindow):
     def __init__(self,pd,form,formid,parent=None):
         super().__init__(parent)
@@ -187,9 +206,10 @@ class FormDialog(QMainWindow):
         self.scrollArea.setWidget(self.cForm)
         self.headers = []
         self.footers = []
-        self.fields = []
+        self.fields = [] # a list of FormItem objects
         self.fieldid = {}  # a dictionary that maps the field id to the index
         self.fieldname = {}  # a dictionary that maps the field name to the index
+        #self.group = {}  # a dictionary that maps the field id to a container group, if there is one (rare)
         section = 0 # 1 = headers, 2 = footers, 3 = fields, 4 = dependencies
         try:
             with open(form+".desc","rt") as file:
@@ -232,35 +252,45 @@ class FormDialog(QMainWindow):
                                 self.fields.append(FormItemCheckBox(self.cForm,f))
                             elif f[2] == "dd":
                                 self.fields.append(FormItemDropDown(self.cForm,f))
+                            elif f[2] == "rg":
+                                self.fields.append(FormItemRequiredGroup(self.cForm,f))
                             if len(self.fields) > index: #something was added, add to dictionaries
-                                self.fieldid[f[0]] = index
-                                self.fieldname[f[1]] = index
+                                if f[0]:
+                                    self.fieldid[f[0]] = index
+                                if f[1]:
+                                    self.fieldname[f[1]] = index
                                 self.fields[index].signalValidityCheck.connect(self.updateSingle)
 
                     elif section == 4:
                         pass
         except FileNotFoundError:
             pass
+        # set up any groups
+        for index, f in enumerate(self.fields):
+            if isinstance(f,FormItemRequiredGroup):
+                for c in f.children:
+                    p = self.get_item_by_field_id(c)
+                    p.group = index
         subject = self.pd.make_standard_subject()
-        self.setFieldByName("MessageNumber",subject)
+        self.set_value_by_field_name("MessageNumber",subject)
         #self.setFieldByName("Handling","PRIORITY") #test
         # special handing for this non-conforming form
         if self.form == "CheckInCheckOut":
-            self.setFieldByName("UserCall",self.pd.getActiveUserCallSign())
-            self.setFieldByName("UserName",self.pd.getUserCallSign("Name"))
-            self.setFieldByName("TacticalCall",self.pd.getActiveTacticalCallSign())
-            self.setFieldByName("TacticalName",self.pd.getTacticalCallSign("Name"))
-            self.setFieldByName("UseTacticalCall",self.pd.getProfileBool("UseTacticalCallSign"))
+            self.set_value_by_field_name("UserCall",self.pd.getActiveUserCallSign())
+            self.set_value_by_field_name("UserName",self.pd.getUserCallSign("Name"))
+            self.set_value_by_field_name("TacticalCall",self.pd.getActiveTacticalCallSign())
+            self.set_value_by_field_name("TacticalName",self.pd.getTacticalCallSign("Name"))
+            self.set_value_by_field_name("UseTacticalCall",self.pd.getProfileBool("UseTacticalCallSign"))
         else:
             d = datetime.datetime.now()
-            self.setFieldByName("Date","{:%m/%d/%Y}".format(d))
-            self.setFieldByName("Time","{:%H:%M}".format(d))
-            self.setFieldByName("OpDate","{:%m/%d/%Y}".format(d)) # these will get overwritten
-            self.setFieldByName("OpTime","{:%H:%M}".format(d))
-            self.setFieldByName("OpCall",self.pd.getActiveUserCallSign())
-            self.setFieldByName("OpName",self.pd.getUserCallSign("Name"))
-            self.setFieldByName("Method","Other")
-            self.setFieldByName("Other","Packet")
+            self.set_value_by_field_name("Date","{:%m/%d/%Y}".format(d))
+            self.set_value_by_field_name("Time","{:%H:%M}".format(d))
+            self.set_value_by_field_name("OpDate","{:%m/%d/%Y}".format(d)) # these will get overwritten
+            self.set_value_by_field_name("OpTime","{:%H:%M}".format(d))
+            self.set_value_by_field_name("OpCall",self.pd.getActiveUserCallSign())
+            self.set_value_by_field_name("OpName",self.pd.getUserCallSign("Name"))
+            self.set_value_by_field_name("Method","Other")
+            self.set_value_by_field_name("Other","Packet")
            
 
 
@@ -306,9 +336,13 @@ class FormDialog(QMainWindow):
     def ZipValid(s):
         return s and len(s) == 5 and s.isdigit()
 
-    def updateSingle(self,f):
+    def updateSingle(self,f:FormItem):
         if (f.valid):
-            v = f.get_value().lstrip().rstrip()
+            if isinstance(f,FormItemRequiredGroup):
+                # these need additional help
+                v = f.get_value(self)
+            else:
+                v = f.get_value().lstrip().rstrip()
             if f.validator and hasattr(self,f.validator):
                 func = getattr(self,f.validator)
                 if callable(func):
@@ -317,13 +351,15 @@ class FormDialog(QMainWindow):
                 f.valid.hide()
             else:
                 f.valid.show()
+        if f.group >= 0:
+            self.updateSingle(self.fields[f.group])
 
     def updateAll(self):
         for f in self.fields:
             self.updateSingle(f)
 
     # this gets called when reading an existing form
-    def setData(self,h,m):
+    def prepopulate(self,h,m):
         # we need to process the message, including multiline items
         lines = m.splitlines()
         value = ""
@@ -332,7 +368,7 @@ class FormDialog(QMainWindow):
                 value += line
                 if value[-1] != ']':
                     continue
-                self.setFieldById(id,value[1:-1])
+                self.set_value_by_field_id(id,value[1:-1])
                 value = ""
                 continue
             id,_,r = line.partition(":")
@@ -340,20 +376,30 @@ class FormDialog(QMainWindow):
             if not value or value[0] != '[':
                 continue
             if value[-1] == ']': 
-                self.setFieldById(id,value[1:-1])
+                self.set_value_by_field_id(id,value[1:-1])
                 value = ""
 
-    def setFieldById(self,fname,value):
+    def get_item_by_field_id(self,fname) -> FormItem:
+        if fname in self.fieldid:
+            return self.fields[self.fieldid[fname]]
+        return ""
+
+    def get_item_by_field_name(self,fname) -> FormItem:
+        if fname in self.fieldid:
+            return self.fields[self.fieldname[fname]]
+        return ""
+
+    def set_value_by_field_id(self,fname,value):
         if fname in self.fieldid:
             self.fields[self.fieldid[fname]].setValue(value)
-    def getFieldById(self,fname):
+    def get_value_by_field_id(self,fname):
         if fname in self.fieldid:
             return self.fields[self.fieldid[fname]].get_value()
         return ""
-    def setFieldByName(self,fname,value):
+    def set_value_by_field_name(self,fname,value):
         if fname in self.fieldname:
             self.fields[self.fieldname[fname]].setValue(value)
-    def getFieldByName(self,fname):
+    def get_value_by_field_name(self,fname):
         if fname in self.fieldname:
             return self.fields[self.fieldname[fname]].get_value()
         return ""
@@ -362,30 +408,31 @@ class FormDialog(QMainWindow):
         # checkincheckout is comepletely different than any other
         if self.form == "CheckInCheckOut":
             handling = "R"
-            line1 = self.getFieldByName("Type") + " "
+            line1 = self.get_value_by_field_name("Type") + " "
             line2 = ""
-            usetactical = True if self.getFieldByName("UseTacticalCall") else False
+            usetactical = True if self.get_value_by_field_name("UseTacticalCall") else False
             if usetactical:
-                line1 += self.getFieldByName("TacticalCall") + ",  " + self.getFieldByName("TacticalName")
-                line2 = self.getFieldByName("UserCall") + " , " + self.getFieldByName("UserName")
+                line1 += self.get_value_by_field_name("TacticalCall") + ",  " + self.get_value_by_field_name("TacticalName")
+                line2 = self.get_value_by_field_name("UserCall") + " , " + self.get_value_by_field_name("UserName")
                 message = line1 + "\n" + line2 + "\n"
             else:
-                line1 += self.getFieldByName("UserCall") + " , " + self.getFieldByName("UserName")
+                line1 += self.get_value_by_field_name("UserCall") + " , " + self.get_value_by_field_name("UserName")
                 message = line1 + "\n"
 
-            subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + line1
+            subject = self.get_value_by_field_name("MessageNumber") + "_" + handling[0] + "_" + line1
         else:
             message = ""
             for h in self.headers:
                 message += h + "\n"
             for f in self.fields:
-                v = f.get_value()
-                if v:
-                    message += f"{f.label}: [{v}]\n"
+                if not isinstance(f,FormItemRequiredGroup):
+                    v = f.get_value()
+                    if v:
+                        message += f"{f.label}: [{v}]\n"
             for f in self.footers:
                 message += f + "\n"
-            handling = self.getFieldByName("Handling")
+            handling = self.get_value_by_field_name("Handling")
             if not handling: handling = "?"
-            subject = self.getFieldByName("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.getFieldByName(self.subjectlinesource) 
+            subject = self.get_value_by_field_name("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.get_value_by_field_name(self.subjectlinesource) 
         global_signals.signal_new_outgoing_form_message.emit(subject,message,handling[0] == 'I')
         self.close()

@@ -2,6 +2,7 @@ import datetime
 import os
 from urllib.parse import quote_plus,unquote_plus
 from enum import Enum
+from fnmatch import fnmatch
 
 # headers (items in same order as display)
 # */flagbits/From/To/BBS/LocalId/Subject/DateSent/DateReceived/Size
@@ -14,6 +15,7 @@ from enum import Enum
 # the high bit (23) is New(Unread)
 
 class MailFlags(Enum):
+    FOLDER_NONE = 0 # the next time the app ends, these are removed
     FOLDER_IN_TRAY = 1<<0
     FOLDER_OUT_TRAY = 1<<1
     FOLDER_SENT = 1<<2
@@ -25,8 +27,9 @@ class MailFlags(Enum):
     FOLDER_3 = 1<<8
     FOLDER_4 = 1<<9
     FOLDER_5 = 1<<10
-    FOLDER_X = 1<<11 # the next time the app ends, these are removed
+    FOLDER_SEARCH_RESULTS = 1<<11
     FOLDER_BITS = 0xfff # all above bits
+    FOLDER_SEARCHABLE = 0x7ff # all above bits except serch results
     TYPE_BIT_0 = 1<<12 # these are used to make a 2-bit field, see code
     TYPE_BIT_1 = 1<<13
     # 2 exta bits here, maybe allow more types
@@ -34,6 +37,15 @@ class MailFlags(Enum):
     # 5 exta bits here
     IS_URGENT = 1<<22
     IS_NEW = 1<<23
+
+class FieldsToSearch(Enum):
+    SUBJECT = 1<<0
+    MESSAGE = 1<<1
+    LOCAL_MSG_ID = 1<<2
+    FROM = 1<<3
+    TO = 1<<4
+    BBS = 1<<5
+    ALL_FOLDERS = 1<<6 # not really a field
 
 class MailBoxHeader:
     def __init__(self,s="",oh=0,om=0):
@@ -194,7 +206,7 @@ class MailFolder:
         self.mail = [] # a list of MailBoxHeader objects
 
     def needs_cleaning(self) -> bool:
-        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_X.value # if a message has any of these bit set, keep it
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
         for index in range (len(self.mail)):
             if not self.mail[index].flags & keepers:
                 return True
@@ -202,7 +214,7 @@ class MailFolder:
 
     def clean(self): # erases  items in Folder "X", should run at start or end (or both)
         # self.load() # not neededif at end
-        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_X.value # if a message has any of these bit set, keep it
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
         # first, copy all the mail that will not be deleted
         # file = tempfile.TemporaryFile()
         file = open("PyOutpost.mail.tmp","wb")
@@ -297,7 +309,7 @@ class MailFolder:
             pass
 
     # returns a MailBoxHeader and a string containing the mail (may change this to a bytearray)
-    def get_message(self,n):
+    def get_message(self,n) -> tuple[MailBoxHeader,str]:
         if not 0 <= n < len(self.mail): return [],""
         offset = self.mail[n].offset_to_message_body
         msize = self.mail[n].size
@@ -346,6 +358,49 @@ class MailFolder:
                 print(f"{m.flags&0xfff:03x} {m.subject}")
                 r.append(m.index)
         return r
+
+    def search(self,searchstr:str,fields_to_search:FieldsToSearch,folders:MailFlags):
+        # first step is to clear out the serach results folder
+        indexlist = self.get_header_indexes(MailFlags.FOLDER_SEARCH_RESULTS)
+        if indexlist:
+            self.move_mail(indexlist,MailFlags.FOLDER_SEARCH_RESULTS,MailFlags.FOLDER_NONE)
+        # because we are using file name matching, we need to prerfix with a "*"
+        if not searchstr:
+            return False
+        if searchstr[0] != "*":
+            searchstr = "*" + searchstr
+        if searchstr[-1] != "*":
+            searchstr = searchstr + "*"
+        indexlist = self.get_header_indexes(folders)
+        foundlist = []
+        for index in indexlist:
+            found = False
+            if fields_to_search & FieldsToSearch.SUBJECT.value:
+                if fnmatch(self.mail[index].subject,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.LOCAL_MSG_ID.value and not found:
+                if fnmatch(self.mail[index].local_id,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.FROM.value and not found:
+                if fnmatch(self.mail[index].from_addr,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.TO.value and not found:
+                if fnmatch(self.mail[index].to_addr,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.BBS.value and not found:
+                if fnmatch(self.mail[index].bbs,searchstr):
+                    found = True
+            # only get the message if we have to
+            if fields_to_search & FieldsToSearch.MESSAGE.value and not found:
+                mbh,m = self.get_message(index)
+                if fnmatch(m,searchstr):
+                    found = True
+            if found:
+                foundlist.append(index)
+        if not foundlist:
+            return False
+        self.copy_mail(foundlist,MailFlags.FOLDER_SEARCH_RESULTS)
+        return True
 
     # this was copied from tncparser, I don't know the recommended way to store loose functions
     @staticmethod

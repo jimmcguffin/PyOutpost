@@ -20,7 +20,8 @@ import generalsettingsdialog
 import newpacketmessage
 import readmessagedialog
 import formdialog
-from mailfolder import MailFolder, MailBoxHeader, MailFlags
+import searchdialog
+from mailfolder import MailFolder, MailBoxHeader, MailFlags, FieldsToSearch
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream
@@ -81,6 +82,7 @@ class MainWindow(QMainWindow):
         self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
         self.cMailList.customContextMenuRequested.connect(self.onMailListRightClick)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
+        self.actionSearch.triggered.connect(self.on_search)
         self.actionSend_Receive.triggered.connect(lambda: self.on_send_receive(True,True,True))
         self.actionSend_Receive_No_Bulletins.triggered.connect(lambda: self.on_send_receive(True,True,False))
         self.actionSend_Only.triggered.connect(lambda: self.on_send_receive(True,False,False))
@@ -91,6 +93,7 @@ class MainWindow(QMainWindow):
         self.cArchive.clicked.connect(self.onArchiveMessages)
         self.cDelete.clicked.connect(self.onDeleteMessages)
         #self.cPrint.clicked.connect(self.onDeleteMessages)
+        self.cSearch.clicked.connect(self.on_search)
         self.cSendReceive.clicked.connect(lambda: self.on_send_receive(True,True,True))
         self.cSendOnly.clicked.connect(lambda: self.on_send_receive(True,False,False))
         self.cReceiveOnly.clicked.connect(lambda: self.on_send_receive(False,True,False))
@@ -106,6 +109,7 @@ class MainWindow(QMainWindow):
         self.cFolder3.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_3))
         self.cFolder4.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_4))
         self.cFolder5.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_5))
+        self.cFolderSearchResults.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_SEARCH_RESULTS))
         self.cStatusLeft = QLabel()
         self.cStatusLeft.setFrameShape(QFrame.Shape.Panel)
         self.cStatusLeft.setFrameShadow(QFrame.Shadow.Sunken)
@@ -188,11 +192,10 @@ class MainWindow(QMainWindow):
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        # if moving from deleted to deleted, move to FOLDER_E
+        # if moving from deleted to deleted, move to FOLDER_NONE
         if self.currentFolder == MailFlags.FOLDER_DELETED and folder == MailFlags.FOLDER_DELETED:
-            self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_X)
-        else:
-            self.mailfolder.move_mail(indexlist,self.currentFolder,folder)
+            folder = MailFlags.FOLDER_NONE
+        self.mailfolder.move_mail(indexlist,self.currentFolder,folder)
         self.updateMailList()
     def onCopyToFolder(self,folder):
         indexlist = []
@@ -640,6 +643,19 @@ class MainWindow(QMainWindow):
     def on_status_bar_message(self,s):
         self.tempory_status_bar_message = s
         self.updateStatusBar()
+
+    def on_search(self):
+        self.cFolderSearchResults.setEnabled(False)
+        sd = searchdialog.SearchDialog(self.settings,self)
+        if sd.exec() != 1:
+            return
+        folders_to_search = self.currentFolder
+        if sd.fields_to_search & FieldsToSearch.ALL_FOLDERS.value:
+            folders_to_search = MailFlags.FOLDER_SEARCHABLE
+        if self.mailfolder.search(sd.search,sd.fields_to_search,folders_to_search):
+            self.cFolderSearchResults.setEnabled(True)
+            self.cFolderSearchResults.setChecked(True)
+            self.onSelectFolder(MailFlags.FOLDER_SEARCH_RESULTS)
 
 
 if __name__ == "__main__": 

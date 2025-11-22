@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>380</width>
+    <height>219</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Search</string>
+  </property>
+  <widget class="QLineEdit" name="c_search_text">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>20</y>
+     <width>275</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="c_search">
+   <property name="geometry">
+    <rect>
+     <x>285</x>
+     <y>20</y>
+     <width>75</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Search</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_subject_line">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>55</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Subject line</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_message_text">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>80</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Message text</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_local_message_id">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>105</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Local message ID</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_from">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>130</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>From</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_to">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>155</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>To</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_bbs">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>180</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>BBS</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="c_all_folders">
+   <property name="geometry">
+    <rect>
+     <x>235</x>
+     <y>60</y>
+     <width>125</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>All folders</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
