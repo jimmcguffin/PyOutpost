@@ -71,5 +71,5 @@ MsgNo,MessageNumber,str,Y,,304,54,448,76
 72d.,QAvail2,str,,NumValid,682,1266,+70,+18
 OpCall,OpCall,str,,,355,1738,458,1756
 OpName,OpName,str,,,102,1738,288,1756
-OpDate,OpDate,str,,,507,1738,595,1756
-OpTime,OpTime,str,,,684,1738,782,1756
+OpDate,OpDate,str,,,507,1738,+70,+26
+OpTime,OpTime,str,,,684,1738,+60,+26
