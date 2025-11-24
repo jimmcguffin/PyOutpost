@@ -4,7 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from persistentdata import PersistentData
 from serialstream import SerialStream
 from bbsparser import Jnos2Parser
-from mailbox import MailBoxHeader
+from my_mailbox import MailBoxHeader
 from globalsignals import global_signals
 
 class TncDevice(QObject):

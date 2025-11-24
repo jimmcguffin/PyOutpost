@@ -4,7 +4,7 @@ from PyQt6.QtCore import QDateTime, pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
-from mailbox import MailBoxHeader, MailFlags
+from my_mailbox import MailBoxHeader, MailFlags
 from globalsignals import global_signals
 
 class NewPacketMessage(QMainWindow):

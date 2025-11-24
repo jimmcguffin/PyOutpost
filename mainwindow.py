@@ -21,7 +21,7 @@ import newpacketmessage
 import readmessagedialog
 import formdialog
 import searchdialog
-from mailbox import MailBox, MailBoxHeader, MailFlags, FieldsToSearch
+from my_mailbox import MailBox, MailBoxHeader, MailFlags, FieldsToSearch
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream

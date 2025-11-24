@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QObject, pyqtSignal
-from mailbox import MailBoxHeader
+from my_mailbox import MailBoxHeader
 
 class GlobalSignals(QObject):
     signal_new_incoming_message = pyqtSignal(MailBoxHeader,str)

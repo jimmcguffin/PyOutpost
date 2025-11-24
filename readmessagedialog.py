@@ -4,7 +4,7 @@ from PyQt6.QtCore import QDateTime, pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
-from mailbox import MailBoxHeader
+from my_mailbox import MailBoxHeader
 
 class ReadMessageDialog(QMainWindow):
     def __init__(self,pd,parent=None):

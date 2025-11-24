@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QDialog, QLineEdit, QWidget, QPlainTextEdit, QCheckB
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
 from globalsignals import global_signals
-from mailbox import FieldsToSearch
+from my_mailbox import FieldsToSearch
 
 class SearchDialog(QDialog):
     def __init__(self,pd,parent=None):
