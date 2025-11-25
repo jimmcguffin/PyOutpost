@@ -297,6 +297,10 @@ class FormDialog(QMainWindow):
         self.cSend.clicked.connect(self.onSend)
         self.updateAll()
 
+    def resizeEvent(self,event):
+        self.scrollArea.resize(event.size().width()-50,event.size().height()-50)
+        return super().resizeEvent(event)
+    
     @staticmethod
     def DateValid(s):
         try:

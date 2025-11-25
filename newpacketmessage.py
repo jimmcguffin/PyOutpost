@@ -23,10 +23,16 @@ class NewPacketMessage(QMainWindow):
         self.cFrom.setText(self.pd.getActiveCallSign()) # gets user or tactical
         subject = self.pd.make_standard_subject()
         self.cSubject.setText(subject)
+
+    def resizeEvent(self,event):
+        self.cMessage.resize(event.size().width()-20,event.size().height()-50)
+        return super().resizeEvent(event)
+
     def setInitialData(self,subject,message,urgent=False):
         self.cSubject.setText(subject)
         self.cMessage.setPlainText(message)
         self.cUrgent.setChecked(urgent)
+
     def onSend(self):
         message = self.cMessage.toPlainText()
         if not message:

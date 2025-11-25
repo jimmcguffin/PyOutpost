@@ -183,6 +183,10 @@ class MainWindow(QMainWindow):
             self.mailbox.clean() # erases items in folder X
         event.accept()
 
+    def resizeEvent(self,event):
+        self.cMailList.resize(event.size().width()-220,event.size().height()-120)
+        return super().resizeEvent(event)
+    
     def onSelectFolder(self,folder:MailFlags):
         self.currentFolder = folder
         self.updateMailList()
