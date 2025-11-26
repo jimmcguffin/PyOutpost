@@ -11,10 +11,10 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>ReadMessageDialog</string>
+   <string>Read Message</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPlainTextEdit" name="cMessageBody">
+   <widget class="QPlainTextEdit" name="c_message_body">
     <property name="geometry">
      <rect>
       <x>5</x>
@@ -37,7 +37,7 @@
      <string>BBS</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cBbs">
+   <widget class="QLabel" name="c_bbs">
     <property name="geometry">
      <rect>
       <x>100</x>
@@ -68,7 +68,7 @@
      <string>From</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cFrom">
+   <widget class="QLabel" name="c_from">
     <property name="geometry">
      <rect>
       <x>100</x>
@@ -99,7 +99,7 @@
      <string>To</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cTo">
+   <widget class="QLabel" name="c_to">
     <property name="geometry">
      <rect>
       <x>100</x>
@@ -130,7 +130,7 @@
      <string>Subject</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cSubject">
+   <widget class="QLabel" name="c_subject">
     <property name="geometry">
      <rect>
       <x>100</x>
@@ -151,9 +151,9 @@
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>315</x>
       <y>45</y>
-      <width>90</width>
+      <width>125</width>
       <height>16</height>
      </rect>
     </property>
@@ -161,12 +161,12 @@
      <string>Received</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cReceived">
+   <widget class="QLabel" name="c_received">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>440</x>
       <y>45</y>
-      <width>200</width>
+      <width>185</width>
       <height>16</height>
      </rect>
     </property>
@@ -179,12 +179,12 @@
      <string>TextLabel</string>
     </property>
    </widget>
-   <widget class="QLabel" name="cSent">
+   <widget class="QLabel" name="c_sent">
     <property name="geometry">
      <rect>
-      <x>420</x>
+      <x>440</x>
       <y>65</y>
-      <width>200</width>
+      <width>185</width>
       <height>16</height>
      </rect>
     </property>
@@ -200,9 +200,9 @@
    <widget class="QLabel" name="label_12">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>315</x>
       <y>65</y>
-      <width>90</width>
+      <width>125</width>
       <height>16</height>
      </rect>
     </property>
@@ -211,6 +211,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>10</x>
@@ -224,6 +227,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_2">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>85</x>
@@ -237,6 +243,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_3">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>160</x>
@@ -250,6 +259,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_4">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>260</x>
@@ -263,6 +275,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_5">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>350</x>
@@ -276,6 +291,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_6">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>425</x>
@@ -289,6 +307,9 @@
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton_7">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="geometry">
      <rect>
       <x>500</x>
@@ -299,6 +320,37 @@
     </property>
     <property name="text">
      <string>Close</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="c_local_id">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>85</y>
+      <width>185</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>TextLabel</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>315</x>
+      <y>85</y>
+      <width>125</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Local message ID</string>
     </property>
    </widget>
   </widget>

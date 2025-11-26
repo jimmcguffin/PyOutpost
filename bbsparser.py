@@ -333,6 +333,7 @@ class Jnos2Parser(BbsParser):
                 mbh.local_id = self.pd.make_standard_local_id()
         mbh.bbs = self.pd.getBBS("ConnectName")
         mbh.date_received = MailBoxHeader.normalized_date()
+        messagebody = messagebody.encode("windows-1252")
         mbh.size = len(messagebody)
         global_signals.signal_new_incoming_message.emit(mbh,messagebody)
         # decide if we want to send a delivery confirmation

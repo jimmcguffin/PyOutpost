@@ -713,7 +713,7 @@
   </action>
   <action name="actionImport">
    <property name="text">
-    <string>Import</string>
+    <string>Import...</string>
    </property>
   </action>
   <action name="actionDelete_All_Messages">

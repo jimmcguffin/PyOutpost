@@ -58,7 +58,7 @@ class NewPacketMessage(QMainWindow):
                 message =  "!URG!" + message
         # want this to work however we get the message, so support all of "\r\n", "\r", "\n"
         #message = message.replace("\r\n","\n").replace("\r","\n").replace("\n","\r\n")
-        message = message.replace("\r\n","\n").replace("\r","\n") # if you want just "\n" in mail file
+        message = message.replace("","\n").replace("\r","\n") # if you want just "\n" in mail file
         if self.cMessageTypeBulletin.isChecked(): mbh.set_type(1)
         elif self.cMessageTypeNts.isChecked(): mbh.set_type(2)
         mbh.from_addr = self.cFrom.text()

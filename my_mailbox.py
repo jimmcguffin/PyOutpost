@@ -1,5 +1,6 @@
 import datetime
 import os
+import math
 from urllib.parse import quote_plus,unquote_plus
 from enum import Enum
 from fnmatch import fnmatch
@@ -85,6 +86,8 @@ class MailBoxHeader:
 
     def __eq__(self, other):
         if isinstance(other, MailBoxHeader):
+            z =  self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
+            print(f"{z}: {self.from_addr}/{other.from_addr} {self.to_addr}/{other.to_addr} {self.subject}/{other.subject} {self.date_sent}/{other.date_sent} {self.size}/{other.size}")
             return self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
         return False
 
@@ -112,6 +115,7 @@ class MailBoxHeader:
         # try to make sense out of any date format, return a string in ISO-8601 format
         # here is what the current BBS sends: Thu, 09 Oct 2025 09:58:36 PDT, which is known as RFC 2822
         # here is another format, used by ctime(): Mon Oct 11 17:10:55 2021
+        # outpost sends date/time as floating number of days since 1900
         # since these is the only examples I have at the moment, it only supports those two
         # todo: use more of the built-in datetime methods
 
@@ -119,7 +123,17 @@ class MailBoxHeader:
         if not d:
             d = datetime.datetime.now()
             return "{:%Y-%m-%dT%H:%M:%S}".format(d)
-
+        if isinstance(d,float):
+            if not d:
+                return ""
+            # fdays,days = math.modf(d)
+            # fhours,hours = math.modf(fdays*24)
+            # fmins,mins = math.modf(fhours*60)
+            # _,secs = math.modf(fmins*60)
+            d0 = datetime.datetime(1900,1,1)
+            d1 = datetime.timedelta(d-2) # why -2? No explanation, I had to to make the times match
+            return "{:%Y-%m-%dT%H:%M:%S}".format(d0+d1)
+        
         yy = 0
         mm = 0
         dd = 0
