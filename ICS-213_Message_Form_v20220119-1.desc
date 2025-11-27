@@ -28,9 +28,8 @@ MsgNo,MessageNumber,str,Y,,446,49,539,73
 1a.,Date,str,Y,DateValid,65,160,147,186
 1b.,Time,str,Y,TimeValid,196,159,259,185
 5.,Handling,rb,Y,,412,104,813,126,IMMEDIATE,415,109,0,0,PRIORITY,564,108,0,0,ROUTINE,699,108,0,0
-6a.,TakeAction,rb,,,0,0,0,0,Yes,577,165,0,0,No,718,165,0,0
-6c.,TakeActionBy,str,,,641,163,702,180
-6b.,Reply,rb,,,0,0,0,0,Yes,577,193,0,0,No,718,193,0,0
+6a.,TakeAction,rb,,,574,161,756,183,Yes,577,165,0,0,No,718,165,0,0
+6b.,Reply,rb,,,574,190,756,212,Yes,577,193,0,0,No,718,193,0,0
 6d.,ReplyBy,str,,,641,191,702,208
 7.,ToIcsPosition,str,Y,,83,233,395,258
 8.,FromIcsPosition,str,Y,,469,233,788,258
@@ -43,7 +42,9 @@ FromTel,FromTel,str,,TelValid,469,381,787,407
 *10.,Subject,str,,,157,415,789,441
 11.,Reference,str,,,357,449,786,476
 12.,Message,mstr,,,52,505,807,677
-OpName,OpName,str,,,564,885,798,905
 OpCall,OpCall,str,,,583,850,804,875
+OpName,OpName,str,,,564,885,798,905
+Method,Method,rb,,,47,882,422,963,Telephone,51,886,0,0,EOC Radio,51,917,0,0,Amateur Radio,51,941,0,0,Dispatch Center,189,886,0,0,FAX,189,917,0,0,Other,189,941,0,0,Courier,295,917,0,0
+Other,Other,str,,,258,936,401,0
 OpDate,OpDate,str,,,489,936,571,962
 OpTime,OpTime,str,,,689,936,750,962

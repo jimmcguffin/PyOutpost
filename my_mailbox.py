@@ -1,7 +1,9 @@
-from urllib.parse import quote_plus,unquote_plus
 import datetime
 import os
+import math
+from urllib.parse import quote_plus,unquote_plus
 from enum import Enum
+from fnmatch import fnmatch
 
 # headers (items in same order as display)
 # */flagbits/From/To/BBS/LocalId/Subject/DateSent/DateReceived/Size
@@ -14,18 +16,21 @@ from enum import Enum
 # the high bit (23) is New(Unread)
 
 class MailFlags(Enum):
+    FOLDER_NONE = 0 # the next time the app ends, these are removed
     FOLDER_IN_TRAY = 1<<0
     FOLDER_OUT_TRAY = 1<<1
     FOLDER_SENT = 1<<2
     FOLDER_ARCHIVE = 1<<3
     FOLDER_DRAFT = 1<<4
-    FOLDER_DELETED = 1<<5
+    FOLDER_DELETED = 1<<5 # currently, the next time the app ends, these are removed unless there are copies in other folders
     FOLDER_1 = 1<<6
     FOLDER_2 = 1<<7
     FOLDER_3 = 1<<8
     FOLDER_4 = 1<<9
     FOLDER_5 = 1<<10
-    # extra bit here
+    FOLDER_SEARCH_RESULTS = 1<<11
+    FOLDER_BITS = 0xfff # all above bits
+    FOLDER_SEARCHABLE = 0x7ff # all above bits except serch results
     TYPE_BIT_0 = 1<<12 # these are used to make a 2-bit field, see code
     TYPE_BIT_1 = 1<<13
     # 2 exta bits here, maybe allow more types
@@ -33,6 +38,15 @@ class MailFlags(Enum):
     # 5 exta bits here
     IS_URGENT = 1<<22
     IS_NEW = 1<<23
+
+class FieldsToSearch(Enum):
+    SUBJECT = 1<<0
+    MESSAGE = 1<<1
+    LOCAL_MSG_ID = 1<<2
+    FROM = 1<<3
+    TO = 1<<4
+    BBS = 1<<5
+    ALL_FOLDERS = 1<<6 # not really a field
 
 class MailBoxHeader:
     def __init__(self,s="",oh=0,om=0):
@@ -72,18 +86,22 @@ class MailBoxHeader:
 
     def __eq__(self, other):
         if isinstance(other, MailBoxHeader):
+            z =  self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
+            print(f"{z}: {self.from_addr}/{other.from_addr} {self.to_addr}/{other.to_addr} {self.subject}/{other.subject} {self.date_sent}/{other.date_sent} {self.size}/{other.size}")
             return self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
         return False
 
     def to_string(self):
         r = f"*/{self.flags:06x}/{quote_plus(self.from_addr)}/{quote_plus(self.to_addr)}/{quote_plus(self.bbs)}/{quote_plus(self.local_id)}/{quote_plus(self.subject)}/{self.date_sent}/{self.date_received}/{self.size}\n"
         return r
+
     @staticmethod
     def to_outpost_date(s):
 		# the display date used by Outpost has a different format
         if not s: return ""
         dt = datetime.datetime.fromisoformat(s)
         return "{:%m/%d/%Y %H:%M}".format(dt)
+
     @staticmethod
     def to_in_mail_date(d=""):
 		# the date used inside mail headers has another formet
@@ -91,11 +109,13 @@ class MailBoxHeader:
         if not d:
             d = datetime.datetime.now()
         return "{:%a, %d %b %Y %H:%M:%S %Z}".format(d)
+
     @staticmethod
     def normalized_date(d="") -> str:
         # try to make sense out of any date format, return a string in ISO-8601 format
         # here is what the current BBS sends: Thu, 09 Oct 2025 09:58:36 PDT, which is known as RFC 2822
         # here is another format, used by ctime(): Mon Oct 11 17:10:55 2021
+        # outpost sends date/time as floating number of days since 1900
         # since these is the only examples I have at the moment, it only supports those two
         # todo: use more of the built-in datetime methods
 
@@ -103,7 +123,17 @@ class MailBoxHeader:
         if not d:
             d = datetime.datetime.now()
             return "{:%Y-%m-%dT%H:%M:%S}".format(d)
-
+        if isinstance(d,float):
+            if not d:
+                return ""
+            # fdays,days = math.modf(d)
+            # fhours,hours = math.modf(fdays*24)
+            # fmins,mins = math.modf(fhours*60)
+            # _,secs = math.modf(fmins*60)
+            d0 = datetime.datetime(1900,1,1)
+            d1 = datetime.timedelta(d-2) # why -2? No explanation, I had to to make the times match
+            return "{:%Y-%m-%dT%H:%M:%S}".format(d0+d1)
+        
         yy = 0
         mm = 0
         dd = 0
@@ -184,17 +214,42 @@ class MailBoxHeader:
         t = self.get_type()
         return ["","B","NTS","DRAFT"][t]
 
-class MailFolder:
+class MailBox:
     def __init__(self):
         super().__init__()
         self.mail = [] # a list of MailBoxHeader objects
+
+    def needs_cleaning(self) -> bool:
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
+        for index in range (len(self.mail)):
+            if not self.mail[index].flags & keepers:
+                return True
+        return False
+
+    def clean(self): # erases  items in Folder "X", should run at start or end (or both)
+        # self.load() # not neededif at end
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
+        # first, copy all the mail that will not be deleted
+        # file = tempfile.TemporaryFile()
+        file = open("PyOutpost.mail.tmp","wb")
+        for index in range (len(self.mail)):
+            print(f"{bool(self.mail[index].flags & keepers)} {self.mail[index].flags&0xfff:03x} {self.mail[index].subject}")
+            if self.mail[index].flags & keepers:
+                mbh,m = self.get_message(index)
+                file.write(mbh.to_string().encode("windows-1252"))
+                file.write(m.encode("windows-1252"))
+        file.close()
+        os.remove("PyOutpost.mail")
+        os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
+        # self.load() # caller needs to do this if at start, if at end, no need
+
     def load(self):
         self.mail.clear()
         try:
             with open("PyOutpost.mail","rb") as file:
                 while True:
                     oh = file.tell()
-                    l = file.readline().decode("latin-1")
+                    l = file.readline().decode("windows-1252")
                     if not l: break
                     if len(l) > 10 and l[0:2] == "*/":
                         om = file.tell()
@@ -218,10 +273,10 @@ class MailFolder:
         mbh.flags |= folder.value
         with open("PyOutpost.mail","ab") as file:
             # the size should be of the encoded data
-            message = message.encode("latin-1")
+            message = message.encode("windows-1252")
             mbh.size = len(message)
             mbh.offset_to_header = file.tell()
-            file.write(mbh.to_string().encode("latin-1"))
+            file.write(mbh.to_string().encode("windows-1252"))
             mbh.offset_to_message_body = file.tell()
             file.write(message) # it has already been encoded above
         mbh.index = len(self.mail)
@@ -236,7 +291,7 @@ class MailFolder:
                 for index in indexlist:
                     if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
                     self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+                    newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
                     assert(len(newflags)) == 9
                     offset = self.mail[index].offset_to_header
                     file.seek(offset)
@@ -255,7 +310,7 @@ class MailFolder:
                     if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
                     self.mail[index].flags &= ~fromfolder.value
                     self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+                    newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
                     assert(len(newflags)) == 9
                     offset = self.mail[index].offset_to_header
                     file.seek(offset)
@@ -267,30 +322,15 @@ class MailFolder:
         except FileNotFoundError:
             pass
 
-    # regular mail deletion just involves moving to the deleted folder - this will actually hard delete it
-    def delete_mail(self,indexlist):
-        # first, copy all the mail that will not be deleted
-        # file = tempfile.TemporaryFile()
-        file = open("PyOutpost.mail.tmp","wb")
-        for index in range (len(self.mail)):
-            if not index in indexlist:
-                mbh,m = self.get_message(index)
-                file.write(mbh.to_string().encode("latin-1"))
-                file.write(m.encode("latin-1"))
-        file.close()
-        os.remove("PyOutpost.mail")
-        os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
-        self.load()
-
     # returns a MailBoxHeader and a string containing the mail (may change this to a bytearray)
-    def get_message(self,n):
+    def get_message(self,n) -> tuple[MailBoxHeader,str]:
         if not 0 <= n < len(self.mail): return [],""
         offset = self.mail[n].offset_to_message_body
         msize = self.mail[n].size
         try:
             with open("PyOutpost.mail","rb") as file:
                 file.seek(offset)
-                return self.mail[n],file.read(msize).decode("latin-1")
+                return self.mail[n],file.read(msize).decode("windows-1252")
         except FileNotFoundError:
             return [],""
 
@@ -302,7 +342,7 @@ class MailFolder:
         else:
             if not self.mail[index].flags & MailFlags.IS_NEW.value: return False
             self.mail[index].flags &= ~MailFlags.IS_NEW.value
-        newflags = f"*/{self.mail[index].flags:06x}/".encode("latin-1")
+        newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
         assert(len(newflags)) == 9
         offset = self.mail[index].offset_to_header
         try:
@@ -318,10 +358,10 @@ class MailFolder:
         return True
 
     def get_headers(self,folder:MailFlags): 
-        # return self.mail
         r = []
         for m in self.mail:
             if m.flags & folder.value:
+                print(f"{m.flags&0xfff:03x} {m.subject}")
                 r.append(m)
         return r
 
@@ -329,8 +369,54 @@ class MailFolder:
         r = []
         for m in self.mail:
             if m.flags & folder.value:
+                print(f"{m.flags&0xfff:03x} {m.subject}")
                 r.append(m.index)
         return r
+
+    def search(self,searchstr:str,fields_to_search:FieldsToSearch,folders:MailFlags):
+        # first step is to clear out the search results folder
+        original_indexlist = self.get_header_indexes(MailFlags.FOLDER_SEARCH_RESULTS)
+        #if original_indexlist:
+        #    self.move_mail(original_indexlist,MailFlags.FOLDER_SEARCH_RESULTS,MailFlags.FOLDER_NONE)
+        # because we are using file name matching, we need to prerfix with a "*"
+        if not searchstr:
+            return False
+        if searchstr[0] != "*":
+            searchstr = "*" + searchstr
+        if searchstr[-1] != "*":
+            searchstr = searchstr + "*"
+        indexlist = self.get_header_indexes(folders)
+        foundlist = []
+        for index in indexlist:
+            found = False
+            if fields_to_search & FieldsToSearch.SUBJECT.value:
+                if fnmatch(self.mail[index].subject,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.LOCAL_MSG_ID.value and not found:
+                if fnmatch(self.mail[index].local_id,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.FROM.value and not found:
+                if fnmatch(self.mail[index].from_addr,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.TO.value and not found:
+                if fnmatch(self.mail[index].to_addr,searchstr):
+                    found = True
+            if fields_to_search & FieldsToSearch.BBS.value and not found:
+                if fnmatch(self.mail[index].bbs,searchstr):
+                    found = True
+            # only get the message if we have to
+            if fields_to_search & FieldsToSearch.MESSAGE.value and not found:
+                mbh,m = self.get_message(index)
+                if fnmatch(m,searchstr):
+                    found = True
+            if found:
+                foundlist.append(index)
+        if not foundlist:
+            return False
+        if original_indexlist:
+            self.move_mail(original_indexlist,MailFlags.FOLDER_SEARCH_RESULTS,MailFlags.FOLDER_NONE)
+        self.copy_mail(foundlist,MailFlags.FOLDER_SEARCH_RESULTS)
+        return True
 
     # this was copied from tncparser, I don't know the recommended way to store loose functions
     @staticmethod

@@ -79,7 +79,7 @@ class StationIdDialog(QDialog):
     def onTacticalCallSignChanged(self,str):
         self.save2()
         self.pd.setActiveTacticalCallSign(str)
-        self.save2()
+        self.load2()
 
     def onNewUserClicked(self):
         text, ok = QInputDialog.getText(self,"New User Call Sign","New call sign")

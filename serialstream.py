@@ -41,7 +41,7 @@ class SerialStream(QObject):
             pass
         assert(s and s[0] != '\r') # no blank lines
         if not self._read_from_file:
-            self.serial_port.write(s.encode("latin-1"))
+            self.serial_port.write(s.encode("windows-1252"))
             if True:
                 if self._log_file:
                     tmp = s
@@ -50,7 +50,7 @@ class SerialStream(QObject):
                     #tmp = "{"+tmp+"}"
                     tmp = tmp.replace("\r","\r\n")
                     tmp = tmp.replace("\x03","^c")
-                    self._log_file.write(b"\x1b[31m"+tmp.encode("latin-1")+b"\x1b[0m")
+                    self._log_file.write(b"\x1b[31m"+tmp.encode("windows-1252")+b"\x1b[0m")
                     self._log_file.flush()
     def on_timer(self): # only used when reading from file
         sdata = self._log_file.read(1)
@@ -91,9 +91,9 @@ class SerialStream(QObject):
             start = max(self.bytes_already_searched-len(self.line_end)+1,0)
             if (p := self._sdata.find(self.line_end,start)) >= 0:
                 if self.include_line_end_in_reply:
-                    self.signalLineRead.emit(self._sdata[0:p+len(self.line_end)].decode("latin-1"))
+                    self.signalLineRead.emit(self._sdata[0:p+len(self.line_end)].decode("windows-1252"))
                 else:
-                    self.signalLineRead.emit(self._sdata[0:p].decode("latin-1"))
+                    self.signalLineRead.emit(self._sdata[0:p].decode("windows-1252"))
                 # extract
                 del self._sdata[0:p+len(self.line_end)]
                 self.bytes_already_searched = 0
@@ -109,9 +109,9 @@ class SerialStream(QObject):
         #     if bytesleft >= elen and self._sdata [i:i+elen] == self.line_end:
         #         end = i+elen
         #         if self.include_line_end_in_reply:
-        #             self.signalLineRead.emit(self._sdata[start:end].decode("latin-1"))
+        #             self.signalLineRead.emit(self._sdata[start:end].decode("windows-1252"))
         #         else:
-        #             self.signalLineRead.emit(self._sdata[start:end-elen].decode("latin-1"))
+        #             self.signalLineRead.emit(self._sdata[start:end-elen].decode("windows-1252"))
         #         start = end
         #         i = start
         #     elif self._async_connected  and bytesleft >= len(self._async_connected) and self._sdata [i:i+len(self._async_connected)] == self._async_connected:

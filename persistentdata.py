@@ -198,21 +198,40 @@ class PersistentData():
     def setInterface(self,s,value):
         self.settings.setValue(f"Interfaces/{self.activeInterface}/{s}",value)
     # some convenience functions
-    def makeStandardSubject(self,increment=True):
+    def make_standard_subject(self,increment=True):
         mn = self.getNextMessageNumber(increment)
         subject = ""
         if self.getProfileBool("MessageSettings/AddMessageNumber"):
-            subject += self.getUserCallSign("MessagePrefix")
-        f = self.getProfile("MessageSettings/Hyphenation_flag")
-        if f == "0":
-            subject += f"{mn:03}"
-        elif f == "1":
-            subject += f"-{mn:03}"
-        elif f == "2":
-            dt = QDateTime.currentDateTime()
-            subject += dt.to_string("yyMMddHHmmss")
-        if self.getProfileBool("MessageSettings/AddCharacter"):
-            subject += self.getProfile("MessageSettings/CharacterToAdd")
-        if self.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
-            subject += ":"
+            if self.getProfileBool("UseTacticalCallSign"):
+                subject += self.getTacticalCallSign("MessagePrefix")
+            else:
+                subject += self.getUserCallSign("MessagePrefix")
+            f = self.getProfile("MessageSettings/Hyphenation_flag")
+            if f == "0":
+                subject += f"{mn:03}"
+            elif f == "1":
+                subject += f"-{mn:03}"
+            elif f == "2":
+                dt = QDateTime.currentDateTime()
+                subject += dt.to_string("yyMMddHHmmss")
+            if self.getProfileBool("MessageSettings/AddCharacter"):
+                subject += self.getProfile("MessageSettings/CharacterToAdd")
+            if self.getProfileBool("MessageSettings/AddMessageNumberSeparator"):
+                subject += ":"
         return subject
+    def make_standard_local_id(self,increment=True):
+        # almost the same as make_standard_subject, ignores two itrams
+        mn = self.getNextMessageNumber(increment)
+        id = ""
+        if self.getProfileBool("UseTacticalCallSign"):
+            id += self.getTacticalCallSign("MessagePrefix")
+        else:
+            id += self.getUserCallSign("MessagePrefix")
+        f = self.getProfile("MessageSettings/Hyphenation_flag")
+        if f == "0" or f == "2":
+            id += f"{mn:03}"
+        elif f == "1":
+            id += f"-{mn:03}"
+        if self.getProfileBool("MessageSettings/AddCharacter"):
+            id += self.getProfile("MessageSettings/CharacterToAdd")
+        return id

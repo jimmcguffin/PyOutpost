@@ -19,7 +19,7 @@
      <rect>
       <x>10</x>
       <y>10</y>
-      <width>94</width>
+      <width>90</width>
       <height>30</height>
      </rect>
     </property>
@@ -32,7 +32,7 @@
      <rect>
       <x>110</x>
       <y>10</y>
-      <width>94</width>
+      <width>90</width>
       <height>30</height>
      </rect>
     </property>
@@ -45,7 +45,7 @@
      <rect>
       <x>220</x>
       <y>10</y>
-      <width>94</width>
+      <width>90</width>
       <height>30</height>
      </rect>
     </property>
@@ -58,7 +58,7 @@
      <rect>
       <x>320</x>
       <y>10</y>
-      <width>94</width>
+      <width>90</width>
       <height>30</height>
      </rect>
     </property>
@@ -71,7 +71,7 @@
      <rect>
       <x>420</x>
       <y>10</y>
-      <width>94</width>
+      <width>90</width>
       <height>30</height>
      </rect>
     </property>
@@ -82,7 +82,7 @@
    <widget class="QPushButton" name="cSendReceive">
     <property name="geometry">
      <rect>
-      <x>540</x>
+      <x>625</x>
       <y>10</y>
       <width>130</width>
       <height>30</height>
@@ -95,7 +95,7 @@
    <widget class="QComboBox" name="cProfile">
     <property name="geometry">
      <rect>
-      <x>760</x>
+      <x>1055</x>
       <y>10</y>
       <width>196</width>
       <height>26</height>
@@ -105,7 +105,7 @@
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>690</x>
+      <x>985</x>
       <y>10</y>
       <width>66</width>
       <height>30</height>
@@ -339,6 +339,28 @@
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QPushButton" name="cFolderSearchResults">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>430</y>
+       <width>120</width>
+       <height>36</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Search Results</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+     <property name="autoExclusive">
+      <bool>true</bool>
+     </property>
+    </widget>
    </widget>
    <widget class="QTableWidget" name="cMailList">
     <property name="geometry">
@@ -346,7 +368,7 @@
       <x>190</x>
       <y>65</y>
       <width>1070</width>
-      <height>481</height>
+      <height>500</height>
      </rect>
     </property>
     <property name="contextMenuPolicy">
@@ -412,6 +434,45 @@
       <string>Size</string>
      </property>
     </column>
+   </widget>
+   <widget class="QPushButton" name="cSendOnly">
+    <property name="geometry">
+     <rect>
+      <x>760</x>
+      <y>10</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>SendOnly</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="cReceiveOnly">
+    <property name="geometry">
+     <rect>
+      <x>865</x>
+      <y>10</y>
+      <width>100</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Receive Only</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="cSearch">
+    <property name="geometry">
+     <rect>
+      <x>520</x>
+      <y>10</y>
+      <width>90</width>
+      <height>30</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Search</string>
+    </property>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -652,7 +713,7 @@
   </action>
   <action name="actionImport">
    <property name="text">
-    <string>Import</string>
+    <string>Import...</string>
    </property>
   </action>
   <action name="actionDelete_All_Messages">

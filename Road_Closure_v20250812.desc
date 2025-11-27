@@ -22,7 +22,7 @@ MsgNo,MessageNumber,str,Y,,289,80,396,101
 8c,FromName,str,,,465,256,735,+25
 7d.,ToContactInfo,str,,,169,290,366,+25
 8d.,FromContactInfo,str,,,487,290,366,+25
-20.,Juristiction,dd,Y,,171,348,735,+18,dd,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+20.,Juristiction,dd,Y,,171,348,735,+18,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
 *21.,RoadIntersection,str,Y,,171,373,735,+18
 22.,Location,mstr,Y,,171,401,735,499
 23.,Details,mstr,Y,,171,508,735,605

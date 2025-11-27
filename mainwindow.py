@@ -3,11 +3,11 @@
 import sys
 from enum import Enum
 from operator import attrgetter
+from urllib.parse import quote_plus,unquote_plus
 
-#from PyQt6 import QtWidgets
 from PyQt6.QtCore import Qt,QIODeviceBase
 from PyQt6.QtGui import QAction, QPalette, QColor
-from PyQt6.QtWidgets import QMainWindow, QInputDialog, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QHeaderView, QMessageBox, QMenu
+from PyQt6.QtWidgets import QMainWindow, QInputDialog, QMessageBox, QApplication, QStyleFactory, QLabel, QFrame, QStatusBar, QTableWidgetItem, QFileDialog, QMessageBox, QMenu
 from PyQt6.uic import load_ui
 from PyQt6.QtSerialPort import QSerialPortInfo, QSerialPort
 from persistentdata import PersistentData
@@ -20,11 +20,12 @@ import generalsettingsdialog
 import newpacketmessage
 import readmessagedialog
 import formdialog
-from mailfolder import MailFolder, MailBoxHeader, MailFlags
+import searchdialog
+from my_mailbox import MailBox, MailBoxHeader, MailFlags, FieldsToSearch
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream
-#from globalsignals import GlobalSignals
+from globalsignals import global_signals
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -54,7 +55,7 @@ class MainWindow(QMainWindow):
         self.actionNew_Message.triggered.connect(self.onNewMessage)
         self.forms = []
         try:
-            with open("forms.csv","rt",encoding="latin-1") as file:
+            with open("forms.csv","rt",encoding="windows-1252") as file:
                 for line in file.readlines():
                     line = line.rstrip()
                     if not line: continue
@@ -81,6 +82,7 @@ class MainWindow(QMainWindow):
         self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
         self.cMailList.customContextMenuRequested.connect(self.onMailListRightClick)
         self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
+        self.actionSearch.triggered.connect(self.on_search)
         self.actionSend_Receive.triggered.connect(lambda: self.on_send_receive(True,True,True))
         self.actionSend_Receive_No_Bulletins.triggered.connect(lambda: self.on_send_receive(True,True,False))
         self.actionSend_Only.triggered.connect(lambda: self.on_send_receive(True,False,False))
@@ -91,8 +93,11 @@ class MainWindow(QMainWindow):
         self.cArchive.clicked.connect(self.onArchiveMessages)
         self.cDelete.clicked.connect(self.onDeleteMessages)
         #self.cPrint.clicked.connect(self.onDeleteMessages)
+        self.cSearch.clicked.connect(self.on_search)
         self.cSendReceive.clicked.connect(lambda: self.on_send_receive(True,True,True))
-
+        self.cSendOnly.clicked.connect(lambda: self.on_send_receive(True,False,False))
+        self.cReceiveOnly.clicked.connect(lambda: self.on_send_receive(False,True,False))
+        self.actionImport.triggered.connect(self.on_import_messages)
         self.cInTray.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_IN_TRAY))
         self.cOutTray.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_OUT_TRAY))
         self.cSentMessages.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_SENT))
@@ -104,6 +109,7 @@ class MainWindow(QMainWindow):
         self.cFolder3.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_3))
         self.cFolder4.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_4))
         self.cFolder5.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_5))
+        self.cFolderSearchResults.clicked.connect(lambda: self.onSelectFolder(MailFlags.FOLDER_SEARCH_RESULTS))
         self.cStatusLeft = QLabel()
         self.cStatusLeft.setFrameShape(QFrame.Shape.Panel)
         self.cStatusLeft.setFrameShadow(QFrame.Shadow.Sunken)
@@ -128,10 +134,10 @@ class MainWindow(QMainWindow):
         self.mailSortIndex = 0
         self.mailSortBackwards = False
         self.mailIndex = []
-        self.mailfolder = MailFolder()
+        self.mailbox = MailBox()
         self.currentFolder = MailFlags.FOLDER_IN_TRAY
-        self.mailfolder.load()
-        self.updateMailList()
+        self.mailbox.load()
+        self.update_mail_list()
         # need to add the folder list in several places
         f = [
             self.settings.getProfile("GeneralSettings/Folder1","Folder 1"),
@@ -169,30 +175,42 @@ class MainWindow(QMainWindow):
         self.menuCopy_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_3))
         self.menuCopy_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_4))
         self.menuCopy_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_5))
+        global_signals.signal_new_outgoing_text_message.connect(self.onHandleNewOutgoingMessage)
+        global_signals.signal_new_outgoing_form_message.connect(self.onHandleNewOutgoingFormMessage)
+
+    def closeEvent(self, event):
+        if self.mailbox.needs_cleaning():
+            self.mailbox.clean() # erases items in folder X
+        event.accept()
+
+    def resizeEvent(self,event):
+        self.cMailList.resize(event.size().width()-220,event.size().height()-120)
+        return super().resizeEvent(event)
+    
     def onSelectFolder(self,folder:MailFlags):
         self.currentFolder = folder
-        self.updateMailList()
+        self.update_mail_list()
+
     def onMoveToFolder(self,folder:MailFlags):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        # if moving from deleted to deleted, just delete
+        # if moving from deleted to deleted, move to FOLDER_NONE
         if self.currentFolder == MailFlags.FOLDER_DELETED and folder == MailFlags.FOLDER_DELETED:
-            self.mailfolder.delete_mail(indexlist)
-        else:
-            self.mailfolder.move_mail(indexlist,self.currentFolder,folder)
-        self.updateMailList()
+            folder = MailFlags.FOLDER_NONE
+        self.mailbox.move_mail(indexlist,self.currentFolder,folder)
+        self.update_mail_list()
     def onCopyToFolder(self,folder):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        self.mailfolder.copy_mail(indexlist,folder)
-        self.updateMailList()
+        self.mailbox.copy_mail(indexlist,folder)
+        self.update_mail_list()
     def onMarkAsNew(self,index,mark):
-        self.mailfolder.mark_as_new(index,mark)
-        self.updateMailList()
+        self.mailbox.mark_as_new(index,mark)
+        self.update_mail_list()
     def onProfileChanged(self,p):
         self.settings.setActiveProfile(p)
         self.updateStatusBar()
@@ -247,15 +265,15 @@ class MainWindow(QMainWindow):
                 self.mailSortIndex = i
                 self.mailSortBackwards = False # not sure if this is desired, maybe keep array of these
         print(f"sort {self.mailSortIndex} {self.mailSortBackwards}")
-        self.updateMailList()
-    def updateMailList(self):
+        self.update_mail_list()
+    def update_mail_list(self):
         tmpindex = self.mailSortIndex+2 # now 2 to 10
         #if tmpindex == 9: tmpindex = 10
         if 2 <= tmpindex <= 10:
             keyname = ["urgent","type_str","from_addr","to_addr","bbs","local_id","subject","date_sent","size"][tmpindex-2]
-            headers = sorted(self.mailfolder.get_headers(self.currentFolder),key=attrgetter(keyname), reverse=self.mailSortBackwards)
+            headers = sorted(self.mailbox.get_headers(self.currentFolder),key=attrgetter(keyname), reverse=self.mailSortBackwards)
         else:
-            headers = self.mailfolder.get_headers(self.currentFolder)
+            headers = self.mailbox.get_headers(self.currentFolder)
         self.mailIndex.clear()
         self.cMailList.clearContents()
         self.cMailList.setColumnWidth(0,40)
@@ -313,7 +331,6 @@ class MainWindow(QMainWindow):
     def onNewMessage(self):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.show()
         tmp.raise_()
     def onNewForm(self):
@@ -321,49 +338,74 @@ class MainWindow(QMainWindow):
         index = widget.property("FormIndex")
         tmp = formdialog.FormDialog(self.settings,self.forms[index][2],self.forms[index][1],self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
         tmp.show()
         tmp.raise_()
     def onHandleNewOutgoingMessage(self,mbh,m):
+        # log activity
         mbh.flags |= MailFlags.IS_OUTGOING.value
-        self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
-        self.updateMailList()
+        self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
+        # log this
+        try:
+            with open("activity.log","ab") as file:
+                s = f"s,{mbh.date_sent},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
+                file.write(s.encode("windows-1252"))
+        except FileNotFoundError:
+            pass
+        self.update_mail_list()
+
     def onHandleNewOutgoingFormMessage(self,subject,m,urgent):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingMessage)
         tmp.setInitialData(subject,m,urgent)
         tmp.show()
         tmp.raise_()
+
     def onReadMessage(self,row,_):
         if row < 0 or row >= len(self.mailIndex): return
-        h,m = self.mailfolder.get_message(self.mailIndex[row])
+        h,m = self.mailbox.get_message(self.mailIndex[row])
         if not h: return
         # is this a regular text message or a form?
         # for now, decide based on subject, but would be better to use message body
-        s = h.subject.split("_")
         isform = False
-        if len(s) >= 3:
-            for f in self.forms:
-                # one form was two entries for the name
-                f1,_,_ = f[1].partition(" or ")
-                if s[2] == f1 or s[2] == f[2]:
-                    isform = True
-                    tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
-                    tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-                    tmp.setData(h,m)
-                    tmp.signalNewOutgoingMessage.connect(self.onHandleNewOutgoingFormMessage)
-                    tmp.show()
-                    tmp.raise_()
-                    break
+        if not h.subject.startswith("DELIVERED"):
+            s = h.subject.split("_")
+            if len(s) >= 3:
+                for f in self.forms:
+                    # one form was two entries for the name
+                    f1,_,_ = f[1].partition(" or ")
+                    if s[2] == f1 or s[2] == f[2]:
+                        isform = True
+                        tmp = formdialog.FormDialog(self.settings,f[2],f[1],self)
+                        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+                        tmp.prepopulate(h,m)
+                        tmp.show()
+                        tmp.raise_()
+                        break
         if not isform:
             tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
             tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            tmp.setData(h,m)
+            tmp.prepopulate(h,m)
             tmp.show()
             tmp.raise_()
-        if self.mailfolder.mark_as_new(self.mailIndex[row],False):
-            self.updateMailList()
+        if self.mailbox.mark_as_new(self.mailIndex[row],False):
+            self.update_mail_list()
+    
+    def on_read_message_text(self,row):
+        if row < 0 or row >= len(self.mailIndex): return
+        h,m = self.mailbox.get_message(self.mailIndex[row])
+        if not h: return
+        tmp = readmessagedialog.ReadMessageDialog(self.settings,self)
+        tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        tmp.prepopulate(h,m)
+        tmp.show()
+        tmp.raise_()
+        if self.mailbox.mark_as_new(self.mailIndex[row],False):
+            self.update_mail_list()
+
+    def on_read_message_form(self,row):
+        # the just calls the auto-detector that double-clicking calls
+        self.onReadMessage(self,row,0)
+
     def openSerialPort(self):
         # get all relevant settings - remember that at this point they are all strings
         port = self.settings.getInterface("ComPort")
@@ -427,7 +469,8 @@ class MainWindow(QMainWindow):
         self.tnc_parser = KantronicsKPC3Plus(self.settings,self)
         #self.bbsParser = Nos2Parser(self.settings,self)
         self.serialStream = SerialStream(self.serialport)
-        self.tnc_parser.signalNewIncomingMessage.connect(self.onNewIncomingMessage)
+        global_signals.signal_new_incoming_message.connect(self.onNewIncomingMessage)
+        global_signals.signal_message_sent.connect(self.on_message_sent)
         self.tnc_parser.signalDisconnected.connect(self.on_end_send_receive)
         self.tnc_parser.signal_status_bar_message.connect(self.on_status_bar_message)
         srflags = 0
@@ -446,24 +489,148 @@ class MainWindow(QMainWindow):
         self.serialStream = None
         self.tnc_parser = None
 
-    def onNewIncomingMessage(self,mbh,m):
-        self.mailfolder.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
-        self.updateMailList()
+    def onNewIncomingMessage(self,mbh:MailBoxHeader,m):
+        self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
+        # log this
+        try:
+            with open("activity.log","ab") as file:
+                s = f"r,{mbh.date_received},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
+                file.write(s.encode("windows-1252"))
+        except FileNotFoundError:
+            pass
+        self.update_mail_list()
+
+    def on_message_sent(self,index:int):
+        indexlist = [index]
+        self.mailbox.move_mail(indexlist,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
+        self.update_mail_list()
 
     def onDeleteMessages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_DELETED)
-        self.updateMailList()
+        self.mailbox.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_DELETED)
+        self.update_mail_list()
+
     def onArchiveMessages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
                 indexlist.append(self.mailIndex[item.row()])
-        self.mailfolder.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_ARCHIVE)
-        self.updateMailList()
+        self.mailbox.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_ARCHIVE)
+        self.update_mail_list()
+
+    def on_import_messages(self):
+        fname,_ = QFileDialog.getOpenFileName(self,"Open File",".","Outpost archive files (*.oaf);;Text files (*.txt);;All files (*.*)")
+        if fname:
+            try:
+                # format of the file is
+                # [NewMessage]
+                # (0 or more Name=Value lines)
+                # [End]]
+                # the values are encoded strangely
+                # "=" gets encoded as ~-_~
+                # line endings gets encoded as ~CR~
+                # the strange part is that "~" does not get escaped or encoded in any way, they just pass through,
+                # so users could cause confusion by typing in ~CR~
+                # some helper funcions:
+                def convert_folder(f:int): # outpost numbers them differently and only has one folder per message
+                    if f == 1: return MailFlags.FOLDER_IN_TRAY.value
+                    if f == 2: return MailFlags.FOLDER_OUT_TRAY.value
+                    if f == 3: return MailFlags.FOLDER_SENT.value
+                    if f == 4: return MailFlags.FOLDER_ARCHIVE.value
+                    if f == 5: return MailFlags.FOLDER_DRAFT.value
+                    if f == 6: return MailFlags.FOLDER_DELETED.value
+                    if f == 11: return MailFlags.FOLDER_1.value
+                    if f == 12: return MailFlags.FOLDER_2.value
+                    if f == 13: return MailFlags.FOLDER_3.value
+                    if f == 14: return MailFlags.FOLDER_4.value
+                    if f == 15: return MailFlags.FOLDER_5.value
+                    return MailFlags.FOLDER_IN_TRAY.value # as a default
+                with open(fname,"rt",encoding="windows-1252") as file:
+                    inmessage = False
+                    mbh = MailBoxHeader()
+                    m = ""
+                    for line in file.readlines():
+                        line = line.strip()
+                        if not line:
+                            continue # ignore blank lines
+                        if line == "[NEW MESSAGE]":
+                            mbh = MailBoxHeader()
+                            m = ""
+                            inmessage = True # could detect if we are already in a message and flag error
+                        elif line == "[END]":
+                            if m and mbh.flags:
+                                self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_NONE) # mbh.flags has already been sent
+                            inmessage = False # could detect if we are not already in a message and flag error
+                        else:
+                            if inmessage:
+                                name,_,value = line.partition("=")
+                                name = name.rstrip()
+                                value = value.lstrip()
+                                value = value.replace("~-_~","=")
+                                value = value.replace("~CR~","\n")
+                                match name:
+                                    case "Fol":
+                                        mbh.flags |= convert_folder(int(value))
+                                        pass
+                                    case "Bbs":
+                                        mbh.bbs = value
+                                        pass
+                                    case "Frm":
+                                        mbh.from_addr = value
+                                        pass
+                                    case "Tox":
+                                        mbh.to_addr = value
+                                        pass
+                                    case "Lmi":
+                                        mbh.local_id = value
+                                        pass
+                                    case "Dat":
+                                        mbh.date_sent = MailBoxHeader.normalized_date(float(value))
+                                        pass
+                                    case "Rdt":
+                                        mbh.date_received = MailBoxHeader.normalized_date(float(value))
+                                        pass
+                                    case "Sta":
+                                        # no idea but sta=6 seems to be DRAFT
+                                        if value == "6":
+                                            mbh.set_type(1) # might conflict with "Typ="
+                                    case "Ori":
+                                        # this is just a guess
+                                        if value == "1":
+                                            mbh.flags |= MailFlags.IS_OUTGOING.value
+                                        pass
+                                    case "Typ":
+                                        # these are also guesses
+                                         # might conflict with "Sta="
+                                        if value == "1":
+                                            mbh.set_type(0)
+                                        elif value == "3":
+                                            mbh.set_type(2)
+                                        pass
+                                    case "Fty": #?
+                                        pass
+                                    case "Ack": #?
+                                        pass
+                                    case "Urg": # -1 is uregent
+                                        if value == "-1":
+                                            mbh.flags |= MailFlags.IS_URGENT.value
+                                        pass
+                                    case "Sub":
+                                        mbh.subject = value
+                                        pass
+                                    case "Msg":
+                                        m = value
+                                        m = m.encode("windows-1252")
+                                        mbh.size = len(value)
+                                    case "Hea": # sometimes this is spread over two lines, not sure why
+                                        pass
+                self.update_mail_list()
+            except FileNotFoundError:
+                pass
+
     def onMailListRightClick(self,pos):
         item = self.cMailList.itemAt(pos)
         if not item: return
@@ -473,8 +640,8 @@ class MainWindow(QMainWindow):
         m = QMenu(self)
         m.addAction("Open").triggered.connect(lambda: self.onReadMessage(row,0))
         mm = QMenu("Open Enhanced",self)
-        mm.addAction("as Text").setEnabled(False)
-        mm.addAction("in Client").setEnabled(False)
+        mm.addAction("as Text").triggered.connect(lambda: self.on_read_message_text(row))  #.setEnabled(False)
+        mm.addAction("in a Form").triggered.connect(lambda: self.on_read_message_form(row))  #.setEnabled(False)
         m.addMenu(mm)
         m.addAction("Print").setEnabled(False)
         m.addAction("Save As...").setEnabled(False)
@@ -525,11 +692,11 @@ class MainWindow(QMainWindow):
         # if r == a1:
         #     self.onReadMessage(row,0)
         # elif r == a7:
-        #     if self.mailfolder.markAsNew(mailindex,True):
-        #         self.updateMailList()
+        #     if self.mailbox.markAsNew(mailindex,True):
+        #         self.update_mail_list()
         # elif r == a8:
-        #     if self.mailfolder.markAsNew(mailindex,False):
-        #         self.updateMailList()
+        #     if self.mailbox.markAsNew(mailindex,False):
+        #         self.update_mail_list()
         # pass
 
     def resetAllToSccStandard(self,firsttime=False,callsign="",name="",prefix=""): # if callsign is blank, will ask
@@ -591,6 +758,20 @@ class MainWindow(QMainWindow):
     def on_status_bar_message(self,s):
         self.tempory_status_bar_message = s
         self.updateStatusBar()
+
+    def on_search(self):
+        sd = searchdialog.SearchDialog(self.settings,self)
+        if sd.exec() != 1:
+            return
+        folders_to_search = self.currentFolder
+        if sd.fields_to_search & FieldsToSearch.ALL_FOLDERS.value:
+            folders_to_search = MailFlags.FOLDER_SEARCHABLE
+        if self.mailbox.search(sd.search,sd.fields_to_search,folders_to_search) == 1:
+            self.cFolderSearchResults.setEnabled(True)
+            self.cFolderSearchResults.setChecked(True)
+            self.onSelectFolder(MailFlags.FOLDER_SEARCH_RESULTS)
+        else:
+            QMessageBox.information(self,"Search","No messages found")
 
 if __name__ == "__main__": 
     app = QApplication(sys.argv)
