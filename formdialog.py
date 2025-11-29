@@ -193,6 +193,7 @@ class FormDialog(QMainWindow):
         self.pd = pd
         self.form = form # the name of the desc and png files
         self.formid = formid # a short item used in the subject line
+        self.to_addr = "" # this get used when redoing a form
         load_ui.loadUi("formdialog.ui",self)
         pm = QPixmap(form+".png")
         # w = pm.width()
@@ -364,6 +365,7 @@ class FormDialog(QMainWindow):
 
     # this gets called when reading an existing form
     def prepopulate(self,h,m):
+        self.to_addr = h.to_addr
         # we need to process the message, including multiline items
         lines = m.splitlines()
         value = ""
@@ -438,5 +440,5 @@ class FormDialog(QMainWindow):
             handling = self.get_value_by_field_name("Handling")
             if not handling: handling = "?"
             subject = self.get_value_by_field_name("MessageNumber") + "_" + handling[0] + "_" + self.formid + "_" + self.get_value_by_field_name(self.subjectlinesource) 
-        global_signals.signal_new_outgoing_form_message.emit(subject,message,handling[0] == 'I')
+        global_signals.signal_new_outgoing_form_message.emit(subject,message,handling[0] == 'I',self.to_addr)
         self.close()

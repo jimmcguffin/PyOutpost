@@ -4,7 +4,7 @@ from PyQt6.QtCore import QDateTime, pyqtSignal
 from PyQt6.QtWidgets import QMainWindow
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
-from my_mailbox import MailBoxHeader, MailFlags
+from sql_mailbox import MailBoxHeader, MailFlags
 from globalsignals import global_signals
 
 class NewPacketMessage(QMainWindow):
@@ -28,10 +28,11 @@ class NewPacketMessage(QMainWindow):
         self.cMessage.resize(event.size().width()-20,event.size().height()-50)
         return super().resizeEvent(event)
 
-    def setInitialData(self,subject,message,urgent=False):
+    def setInitialData(self,subject,message,urgent=False,to_addr=""):
         self.cSubject.setText(subject)
         self.cMessage.setPlainText(message)
         self.cUrgent.setChecked(urgent)
+        self.cTo.setText(to_addr)
 
     def onSend(self):
         message = self.cMessage.toPlainText()
@@ -58,7 +59,7 @@ class NewPacketMessage(QMainWindow):
                 message =  "!URG!" + message
         # want this to work however we get the message, so support all of "\r\n", "\r", "\n"
         #message = message.replace("\r\n","\n").replace("\r","\n").replace("\n","\r\n")
-        message = message.replace("","\n").replace("\r","\n") # if you want just "\n" in mail file
+        message = message.replace("\r\n","\n").replace("\r","\n") # if you want just "\n" in mail file
         if self.cMessageTypeBulletin.isChecked(): mbh.set_type(1)
         elif self.cMessageTypeNts.isChecked(): mbh.set_type(2)
         mbh.from_addr = self.cFrom.text()

@@ -1,7 +1,7 @@
 import datetime
 import os
 import math
-from urllib.parse import quote_plus,unquote_plus
+import sqlite3
 from enum import Enum
 from fnmatch import fnmatch
 
@@ -51,40 +51,17 @@ class FieldsToSearch(Enum):
     ALL_FOLDERS_EX = 1<<7
 
 class MailBoxHeader:
-    def __init__(self,s="",oh=0,om=0):
-        self.index = 0
-        self.flags = 0 # bit encoded, includes New/unread and folder bit mask
-        self.from_addr = ""
-        self.to_addr = ""
-        self.bbs = ""
-        self.local_id = ""
-        self.subject = ""
-        self.date_sent = "" # in ISO-8601 format
-        self.date_received = "" # in ISO-8601 format
-        self.size = 0 # size of the actual mail that follows
-        self.offset_to_header = 0 # offset in file to start of this header
-        self.offset_to_message_body = 0 # offset in file to start of the message body
-        s = s.rstrip()
-        if s and len(s) > 2 and s[0:2] == "*/":
-            tmp = s.split("/")
-            if len(tmp) >= 10:
-                for index in range(2,7):
-                    tmp[index]= unquote_plus(tmp[index])
-                self.flags = int(tmp[1],16)
-                self.from_addr = tmp[2]
-                self.to_addr = tmp[3]
-                self.bbs = tmp[4]
-                self.local_id = tmp[5]
-                self.subject = tmp[6]
-                self.date_sent = tmp[7]
-                self.date_received = tmp[8]
-                self.size = int(tmp[9])
-                self.offset_to_header = oh
-                self.offset_to_message_body = om
-            else:
-                pass
-        else:
-            pass
+    def __init__(self,id=0,flags=0,from_addr="",to_addr="",bbs="",local_id="",subject="",date_sent="",date_received="",size=0,_=None): # last item is to handle SELECT * results
+        self.index = id # shoule be called id, but older version used index
+        self.flags = flags # bit encoded, includes New/unread and folder bit mask
+        self.from_addr = from_addr
+        self.to_addr = to_addr
+        self.bbs = bbs
+        self.local_id = local_id
+        self.subject = subject
+        self.date_sent = date_sent # in ISO-8601 format
+        self.date_received = date_received # in ISO-8601 format
+        self.size = size # size of the actual mail
 
     def __eq__(self, other):
         if isinstance(other, MailBoxHeader):
@@ -92,10 +69,6 @@ class MailBoxHeader:
             print(f"{z}: {self.from_addr}/{other.from_addr} {self.to_addr}/{other.to_addr} {self.subject}/{other.subject} {self.date_sent}/{other.date_sent} {self.size}/{other.size}")
             return self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
         return False
-
-    def to_string(self):
-        r = f"*/{self.flags:06x}/{quote_plus(self.from_addr)}/{quote_plus(self.to_addr)}/{quote_plus(self.bbs)}/{quote_plus(self.local_id)}/{quote_plus(self.subject)}/{self.date_sent}/{self.date_received}/{self.size}\n"
-        return r
 
     @staticmethod
     def to_outpost_date(s):
@@ -219,156 +192,107 @@ class MailBoxHeader:
 class MailBox:
     def __init__(self):
         super().__init__()
-        self.mail = [] # a list of MailBoxHeader objects
+        self.connection = sqlite3.connect("messages.db")
+        
+        self.cursor = self.connection.cursor()
+        self.cursor.execute("""CREATE TABLE IF NOT EXISTS messages(
+            id INTEGER PRIMARY KEY,
+            flags INTEGER NOT NULL,
+            from_addr NVARCHAR(64),
+            to_addr NVARCHAR(64),
+            bbs NVARCHAR(64),
+            local_id NVARCHAR(64),
+            subject NVARCHAR(256),
+            date_sent CHAR(19),
+            date_received CHAR(19),
+            size INTEGER,
+            message BLOB NOT NULL
+            )""")
+    
 
     def needs_cleaning(self) -> bool:
-        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
-        for index in range (len(self.mail)):
-            if not self.mail[index].flags & keepers:
-                return True
-        return False
-
-    def clean(self): # erases  items in Folder "X", should run at start or end (or both)
-        # self.load() # not neededif at end
-        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
-        # first, copy all the mail that will not be deleted
-        # file = tempfile.TemporaryFile()
-        file = open("PyOutpost.mail.tmp","wb")
-        for index in range (len(self.mail)):
-            print(f"{bool(self.mail[index].flags & keepers)} {self.mail[index].flags&0xfff:03x} {self.mail[index].subject}")
-            if self.mail[index].flags & keepers:
-                mbh,m = self.get_message(index)
-                file.write(mbh.to_string().encode("windows-1252"))
-                file.write(m.encode("windows-1252"))
-        file.close()
-        os.remove("PyOutpost.mail")
-        os.rename("PyOutpost.mail.tmp","PyOutpost.mail")
-        # self.load() # caller needs to do this if at start, if at end, no need
-
-    def load(self):
-        self.mail.clear()
-        try:
-            with open("PyOutpost.mail","rb") as file:
-                while True:
-                    oh = file.tell()
-                    l = file.readline().decode("windows-1252")
-                    if not l: break
-                    if len(l) > 10 and l[0:2] == "*/":
-                        om = file.tell()
-                        mbh = MailBoxHeader(l,oh,om)
-                        if mbh:
-                            mbh.index = len(self.mail)
-                            self.mail.append(mbh)
-                            file.seek(om+mbh.size)
-        except FileNotFoundError:
-            pass
-
-    def add_mail(self,mbh,message,folder:MailFlags): # mbh is a MailBoxHeader
-        # before adding, look if we already have this one
-        for m in self.mail:
-            if m == mbh:
-                return
-        mbh.flags |= folder.value
-        with open("PyOutpost.mail","ab") as file:
-            # the size should be of the encoded data
-            message = message.encode("windows-1252")
-            mbh.size = len(message)
-            mbh.offset_to_header = file.tell()
-            file.write(mbh.to_string().encode("windows-1252"))
-            mbh.offset_to_message_body = file.tell()
-            file.write(message) # it has already been encoded above
-        mbh.index = len(self.mail)
-        self.mail.append(mbh)
-
-    # all of the below functions are slightly dangerous in that they carefully read the header line and then update it in-place
-    # this only works because the flags item is a fixed size (4 hex chars)
-
-    def copy_mail(self,indexlist,tofolder:MailFlags):
-        try:
-            with open("PyOutpost.mail","rb+") as file:
-                for index in indexlist:
-                    if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
-                    self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
-                    assert(len(newflags)) == 9
-                    offset = self.mail[index].offset_to_header
-                    file.seek(offset)
-                    # read the next 9 bytes just to see if we are in the right spot
-                    oldflags = file.read(9)
-                    if len(oldflags) == 9 and oldflags.startswith(b"*/") and oldflags != newflags:
-                        file.seek(offset)
-                        file.write(newflags)
-        except FileNotFoundError:
-            pass
-
-    def move_mail(self,indexlist,fromfolder:MailFlags,tofolder:MailFlags): # frommailbox can be multiple or none, tomailbox can be multiple
-        try:
-            with open("PyOutpost.mail","rb+") as file:
-                for index in indexlist:
-                    if not 0 <= index < len(self.mail): continue # ignore any out-of-range values
-                    self.mail[index].flags &= ~fromfolder.value
-                    self.mail[index].flags |= tofolder.value
-                    newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
-                    assert(len(newflags)) == 9
-                    offset = self.mail[index].offset_to_header
-                    file.seek(offset)
-                    # read the next 79 bytes just to see if we are in the right spot
-                    oldflags = file.read(9)
-                    if len(oldflags) == 9 and oldflags.startswith(b"*/") and oldflags != newflags:
-                        file.seek(offset)
-                        file.write(newflags)
-        except FileNotFoundError:
-            pass
-
-    # returns a MailBoxHeader and a string containing the mail (may change this to a bytearray)
-    def get_message(self,n) -> tuple[MailBoxHeader,str]:
-        if not 0 <= n < len(self.mail): return [],""
-        offset = self.mail[n].offset_to_message_body
-        msize = self.mail[n].size
-        try:
-            with open("PyOutpost.mail","rb") as file:
-                file.seek(offset)
-                return self.mail[n],file.read(msize).decode("windows-1252")
-        except FileNotFoundError:
-            return [],""
-
-    def mark_as_new(self,index,mark=True): # mark as read is equivalemt tp mark_as_new(n,False), returns True if changed
-        if not 0 <= index < len(self.mail): return False
-        if mark:
-            if self.mail[index].flags & MailFlags.IS_NEW.value: return False
-            self.mail[index].flags |= MailFlags.IS_NEW.value
-        else:
-            if not self.mail[index].flags & MailFlags.IS_NEW.value: return False
-            self.mail[index].flags &= ~MailFlags.IS_NEW.value
-        newflags = f"*/{self.mail[index].flags:06x}/".encode("windows-1252")
-        assert(len(newflags)) == 9
-        offset = self.mail[index].offset_to_header
-        try:
-            with open("PyOutpost.mail","rb+") as file:
-                file.seek(offset)
-                # read the next 9 bytes just to see if we are in the right spot
-                oldflags = file.read(9)
-                if len(oldflags) == 9 and oldflags.startswith(b"*/") and oldflags != newflags:
-                    file.seek(offset)
-                    file.write(newflags)
-        except FileNotFoundError:
-            pass
         return True
 
-    def get_headers(self,folder:MailFlags): 
+    def clean(self): # erases  items in Folder "X", should run at start or end (or both)
+        keepers = MailFlags.FOLDER_BITS.value - MailFlags.FOLDER_DELETED.value - MailFlags.FOLDER_SEARCH_RESULTS.value # if a message has any of these bit set, keep it
+        self.cursor.execute("DELETE FROM messages WHERE NOT flags & ?",(keepers,))
+        self.connection.commit()
+
+    def load(self):
+        pass
+
+    def add_mail(self,mbh:MailBoxHeader,message:str,folder:MailFlags): # mbh is a MailBoxHeader
+        # before adding, look if we already have this one
+        # the version of this in my_mailbox only checks the header items, not the message body
+        self.cursor.execute("SELECT * FROM messages WHERE subject == ? AND message == ?",(mbh.subject,message,))
+        items = self.cursor.fetchall()
+        for item in items:
+            m = MailBoxHeader(*item)
+            # already screened out most non-matches with SELECT, now check remaining fields
+            if m == mbh:
+                return True
+        mbh.flags |= folder.value
+        mbh.size = len(message)
+        self.cursor.execute("INSERT INTO messages (flags,from_addr,to_addr,bbs,local_id,subject,date_sent,date_received,size,message)"
+            "VALUES (?,?,?,?,?,?,?,?,?,?)",
+            (mbh.flags,mbh.from_addr,mbh.to_addr,mbh.bbs,mbh.local_id,mbh.subject,mbh.date_sent,mbh.date_received,len(message),message))
+        self.connection.commit()
+
+    def copy_mail(self,indexlist,tofolder:MailFlags):
+        for index in indexlist:
+            self.cursor.execute("SELECT flags FROM messages WHERE id == ?",(index,))
+            flags, = self.cursor.fetchone()
+            if flags != None:
+                flags |= tofolder.value
+                self.cursor.execute("UPDATE messages SET flags = ? WHERE id = ?;",(flags,index,))
+                self.connection.commit()
+
+    def move_mail(self,indexlist,fromfolder:MailFlags,tofolder:MailFlags): # fromfolder can be multiple or none, tofolder can be multiple
+        for index in indexlist:
+            self.cursor.execute("SELECT flags FROM messages WHERE id == ?",(index,))
+            flags, = self.cursor.fetchone()
+            if flags != None:
+                flags &= ~fromfolder.value
+                flags |= tofolder.value
+                self.cursor.execute("UPDATE messages SET flags = ? WHERE id = ?;",(flags,index,))
+                self.connection.commit()
+
+    # returns a MailBoxHeader and a string containing the message
+    def get_message(self,n) -> tuple[MailBoxHeader,str]:
+        self.cursor.execute("SELECT * FROM messages WHERE id == ?",(n,))
+        r = self.cursor.fetchone()
+        if r == None:
+            return MailBoxHeader(),""
+        mbh = MailBoxHeader(*r)
+        return mbh,r[-1]
+
+    def mark_as_new(self,index,mark=True): # mark as read is equivalemt tp mark_as_new(n,False), returns True if changed
+        self.cursor.execute("SELECT flags FROM messages WHERE id == ?",(index,))
+        flags, = self.cursor.fetchone()
+        if flags != None:
+            if mark:
+                if flags & MailFlags.IS_NEW.value: return False
+                flags |= MailFlags.IS_NEW.value
+            else:
+                if not flags & MailFlags.IS_NEW.value: return False
+                flags &= ~MailFlags.IS_NEW.value
+            self.cursor.execute("UPDATE messages SET flags = ? WHERE id = ?;",(flags,index,))
+            self.connection.commit()
+
+    def get_headers(self,folder:MailFlags):
         r = []
-        for m in self.mail:
-            if m.flags & folder.value:
-                print(f"{m.flags&0xfff:03x} {m.subject}")
-                r.append(m)
+        self.cursor.execute("SELECT * FROM messages WHERE flags & ?",(folder.value,))
+        rows = self.cursor.fetchall()
+        for row in rows:
+            r.append(MailBoxHeader(*row))
         return r
 
     def get_header_indexes(self,folder:MailFlags): 
         r = []
-        for m in self.mail:
-            if m.flags & folder.value:
-                print(f"{m.flags&0xfff:03x} {m.subject}")
-                r.append(m.index)
+        self.cursor.execute("SELECT id FROM messages WHERE flags & ?",(folder.value,))
+        rows = self.cursor.fetchall()
+        for row in rows:
+            r.append(row[0])
         return r
 
     def search(self,searchstr:str,fields_to_search:FieldsToSearch,folders:MailFlags):
@@ -387,25 +311,26 @@ class MailBox:
         foundlist = []
         for index in indexlist:
             found = False
+            self.cursor.execute("SELECT * FROM messages WHERE id == ?",(index,))
+            r = self.cursor.fetchone()
+            mbh = MailBoxHeader(*r)
             if fields_to_search & FieldsToSearch.SUBJECT.value:
-                if fnmatch(self.mail[index].subject,searchstr):
+                if fnmatch(mbh.subject,searchstr):
                     found = True
             if fields_to_search & FieldsToSearch.LOCAL_MSG_ID.value and not found:
-                if fnmatch(self.mail[index].local_id,searchstr):
+                if fnmatch(mbh.local_id,searchstr):
                     found = True
             if fields_to_search & FieldsToSearch.FROM.value and not found:
-                if fnmatch(self.mail[index].from_addr,searchstr):
+                if fnmatch(mbh.from_addr,searchstr):
                     found = True
             if fields_to_search & FieldsToSearch.TO.value and not found:
-                if fnmatch(self.mail[index].to_addr,searchstr):
+                if fnmatch(mbh.to_addr,searchstr):
                     found = True
             if fields_to_search & FieldsToSearch.BBS.value and not found:
-                if fnmatch(self.mail[index].bbs,searchstr):
+                if fnmatch(mbh.bbs,searchstr):
                     found = True
-            # only get the message if we have to
             if fields_to_search & FieldsToSearch.MESSAGE.value and not found:
-                mbh,m = self.get_message(index)
-                if fnmatch(m,searchstr):
+                if fnmatch(r[-1],searchstr):
                     found = True
             if found:
                 foundlist.append(index)
@@ -424,9 +349,14 @@ class MailBox:
         str2 = str2.upper()
         return str1 == str2
 
+    # this only checks the items that we get from the "LA" commands, which are the first "n" letters of the to, from, and subject fields
+    # it is only used with the items in the bulletin areas, which do not chsnge often and we don't want to read them redundantly
     def is_possibly_a_duplicate(self,to_addr:str,from_addr:str,subject:str) -> bool:
-        for m in self.mail:
-            if self.matches_ignore_case(m.to_addr,to_addr) and self.matches_ignore_case(m.from_addr,from_addr) and self.matches_ignore_case(m.subject,subject):
+        self.cursor.execute("SELECT to_addr, from_addr, subject FROM messages")
+        items = self.cursor.fetchall()
+        for item in items:
+            t,f,s = item
+            if self.matches_ignore_case(t,to_addr) and self.matches_ignore_case(f,from_addr) and self.matches_ignore_case(s,subject):
                 return True
         return False
             

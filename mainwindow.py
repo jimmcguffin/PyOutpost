@@ -21,7 +21,7 @@ import newpacketmessage
 import readmessagedialog
 import formdialog
 import searchdialog
-from my_mailbox import MailBox, MailBoxHeader, MailFlags, FieldsToSearch
+from sql_mailbox import MailBox, MailBoxHeader, MailFlags, FieldsToSearch
 from tncparser import KantronicsKPC3Plus
 from bbsparser import Jnos2Parser
 from serialstream import SerialStream
@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
         if self.settings.getProfileBool("ShowStationIdAtStartup") or not self.settings.getActiveUserCallSign() or firsttime:
             self.OnStationId()
         load_ui.loadUi("mainwindow.ui",self)
-        self.actionNew_Message.triggered.connect(self.onNewMessage)
+        self.actionNew_Message.triggered.connect(self.on_new_message)
         self.forms = []
         try:
             with open("forms.csv","rt",encoding="windows-1252") as file:
@@ -66,8 +66,8 @@ class MainWindow(QMainWindow):
                     self.forms.append(f)
                     action = self.menuForms.addAction(f[0])
                     action.setProperty("FormIndex",index)
-                    action.triggered.connect(self.onNewForm)
-                    #self.menuForms.addAction(f[0]).triggered.connect(lambda: self.onNewForm(index))
+                    action.triggered.connect(self.on_new_form)
+                    #self.menuForms.addAction(f[0]).triggered.connect(lambda: self.on_new_form(index))
         except FileNotFoundError:
             pass
         self.actionBBS.triggered.connect(self.OnBbsSetup)
@@ -76,23 +76,23 @@ class MainWindow(QMainWindow):
         self.actionSend_Receive_Settings.triggered.connect(self.on_send_receive_settings)
         self.actionMessage_Settings.triggered.connect(self.onMessageSettings)
         self.actionGeneral_Settings.triggered.connect(self.onGeneralSettings)
-        self.actionDelete.triggered.connect(self.onDeleteMessages)
+        self.actionDelete.triggered.connect(self.on_delete_messages)
         self.cProfile.currentTextChanged.connect(self.onProfileChanged)
         self.actionNewProfile.triggered.connect(self.onNewProfile)
-        self.cMailList.cellDoubleClicked.connect(self.onReadMessage)
-        self.cMailList.customContextMenuRequested.connect(self.onMailListRightClick)
-        self.cMailList.horizontalHeader().sectionClicked.connect(self.onSortMail)
+        self.cMailList.cellDoubleClicked.connect(self.on_read_message)
+        self.cMailList.customContextMenuRequested.connect(self.on_mail_list_right_click)
+        self.cMailList.horizontalHeader().sectionClicked.connect(self.on_sort_mail)
         self.actionSearch.triggered.connect(self.on_search)
         self.actionSend_Receive.triggered.connect(lambda: self.on_send_receive(True,True,True))
         self.actionSend_Receive_No_Bulletins.triggered.connect(lambda: self.on_send_receive(True,True,False))
         self.actionSend_Only.triggered.connect(lambda: self.on_send_receive(True,False,False))
         self.actionReceive_Only.triggered.connect(lambda: self.on_send_receive(False,True,False)) # not sure about the last False
         self.actionReset_all_to_SCC_standard.triggered.connect(self.resetAllToSccStandard)
-        self.cNew.clicked.connect(self.onNewMessage)
-        #self.cOpen.clicked.connect(self.onNewMessage)
-        self.cArchive.clicked.connect(self.onArchiveMessages)
-        self.cDelete.clicked.connect(self.onDeleteMessages)
-        #self.cPrint.clicked.connect(self.onDeleteMessages)
+        self.cNew.clicked.connect(self.on_new_message)
+        #self.cOpen.clicked.connect(self.on_new_message)
+        self.cArchive.clicked.connect(self.on_archive_messages)
+        self.cDelete.clicked.connect(self.on_delete_messages)
+        #self.cPrint.clicked.connect(self.on_delete_messages)
         self.cSearch.clicked.connect(self.on_search)
         self.cSendReceive.clicked.connect(lambda: self.on_send_receive(True,True,True))
         self.cSendOnly.clicked.connect(lambda: self.on_send_receive(True,False,False))
@@ -129,8 +129,8 @@ class MainWindow(QMainWindow):
         self.cStatusBar.addPermanentWidget(self.cStatusRight2,100)
         #GlobalSignals().status_bar_message.connect(self.on_status_bar_message)
         #self.setStatusBar(self.cStatusBar)
-        self.updateProfileList()
-        self.updateStatusBar()
+        self.update_profile_list()
+        self.update_status_bar()
         self.mailSortIndex = 0
         self.mailSortBackwards = False
         self.mailIndex = []
@@ -152,31 +152,31 @@ class MainWindow(QMainWindow):
         self.cFolder4.setText(f[3])
         self.cFolder5.setText(f[4])
         # the first two (in/out) are already there
-        self.menuMove_to_Folder.actions()[0].triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_IN_TRAY))
-        self.menuMove_to_Folder.actions()[1].triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_OUT_TRAY))
-        self.menuMove_to_Folder.addAction("Sent Messages").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_SENT))
-        self.menuMove_to_Folder.addAction("Archive").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_ARCHIVE))
-        self.menuMove_to_Folder.addAction("Draft Messages").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_DRAFT))
-        self.menuMove_to_Folder.addAction("Deleted").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_DELETED))
-        self.menuMove_to_Folder.addAction(f[0]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_1))
-        self.menuMove_to_Folder.addAction(f[1]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_2))
-        self.menuMove_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_3))
-        self.menuMove_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_4))
-        self.menuMove_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_5))
+        self.menuMove_to_Folder.actions()[0].triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_IN_TRAY))
+        self.menuMove_to_Folder.actions()[1].triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_OUT_TRAY))
+        self.menuMove_to_Folder.addAction("Sent Messages").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_SENT))
+        self.menuMove_to_Folder.addAction("Archive").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_ARCHIVE))
+        self.menuMove_to_Folder.addAction("Draft Messages").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_DRAFT))
+        self.menuMove_to_Folder.addAction("Deleted").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_DELETED))
+        self.menuMove_to_Folder.addAction(f[0]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_1))
+        self.menuMove_to_Folder.addAction(f[1]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_2))
+        self.menuMove_to_Folder.addAction(f[2]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_3))
+        self.menuMove_to_Folder.addAction(f[3]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_4))
+        self.menuMove_to_Folder.addAction(f[4]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_5))
 
-        self.menuCopy_to_Folder.actions()[0].triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_IN_TRAY))
-        self.menuCopy_to_Folder.actions()[1].triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_OUT_TRAY))
-        self.menuCopy_to_Folder.addAction("Sent Messages").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_SENT))
-        self.menuCopy_to_Folder.addAction("Archive").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_ARCHIVE))
-        self.menuCopy_to_Folder.addAction("Draft Messages").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_DRAFT))
-        self.menuCopy_to_Folder.addAction("Deleted").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_DELETED))
-        self.menuCopy_to_Folder.addAction(f[0]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_1))
-        self.menuCopy_to_Folder.addAction(f[1]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_2))
-        self.menuCopy_to_Folder.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_3))
-        self.menuCopy_to_Folder.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_4))
-        self.menuCopy_to_Folder.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_5))
-        global_signals.signal_new_outgoing_text_message.connect(self.onHandleNewOutgoingMessage)
-        global_signals.signal_new_outgoing_form_message.connect(self.onHandleNewOutgoingFormMessage)
+        self.menuCopy_to_Folder.actions()[0].triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_IN_TRAY))
+        self.menuCopy_to_Folder.actions()[1].triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_OUT_TRAY))
+        self.menuCopy_to_Folder.addAction("Sent Messages").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_SENT))
+        self.menuCopy_to_Folder.addAction("Archive").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_ARCHIVE))
+        self.menuCopy_to_Folder.addAction("Draft Messages").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_DRAFT))
+        self.menuCopy_to_Folder.addAction("Deleted").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_DELETED))
+        self.menuCopy_to_Folder.addAction(f[0]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_1))
+        self.menuCopy_to_Folder.addAction(f[1]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_2))
+        self.menuCopy_to_Folder.addAction(f[2]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_3))
+        self.menuCopy_to_Folder.addAction(f[3]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_4))
+        self.menuCopy_to_Folder.addAction(f[4]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_5))
+        global_signals.signal_new_outgoing_text_message.connect(self.on_handle_new_outgoing_message)
+        global_signals.signal_new_outgoing_form_message.connect(self.on_handle_new_outgoing_form_message)
 
     def closeEvent(self, event):
         if self.mailbox.needs_cleaning():
@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
         self.currentFolder = folder
         self.update_mail_list()
 
-    def onMoveToFolder(self,folder:MailFlags):
+    def on_move_to_folder(self,folder:MailFlags):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
@@ -201,7 +201,7 @@ class MainWindow(QMainWindow):
             folder = MailFlags.FOLDER_NONE
         self.mailbox.move_mail(indexlist,self.currentFolder,folder)
         self.update_mail_list()
-    def onCopyToFolder(self,folder):
+    def on_copy_to_folder(self,folder):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
@@ -213,16 +213,16 @@ class MainWindow(QMainWindow):
         self.update_mail_list()
     def onProfileChanged(self,p):
         self.settings.setActiveProfile(p)
-        self.updateStatusBar()
+        self.update_status_bar()
     def onNewProfile(self):
         text, ok = QInputDialog.getText(self,"New Profile","New profile name")
         if ok and text:
             self.settings.copyProfile(text)
-            self.updateProfileList()
+            self.update_profile_list()
     def OnBbsSetup(self):
         bd = bbsdialog.BbsDialog(self.settings,self)
         bd.exec()
-        self.updateStatusBar()
+        self.update_status_bar()
     def OnInterfaceSetup(self):
         sps = QSerialPortInfo.availablePorts()
         l = []
@@ -231,12 +231,12 @@ class MainWindow(QMainWindow):
         iddlg = interfacedialog.InterfaceDialog(self.settings,self)
         iddlg.setComPortList(l)
         iddlg.exec()
-        self.updateStatusBar()
+        self.update_status_bar()
     def OnStationId(self):
         sid = stationiddialog.StationIdDialog(self.settings,self)
         sid.exec()
-        self.updateStatusBar()
-    def updateStatusBar(self):
+        self.update_status_bar()
+    def update_status_bar(self):
         if not hasattr(self,'cStatusCenter'): return
         if self.tempory_status_bar_message:
             self.cStatusCenter.setText(self.tempory_status_bar_message)
@@ -246,9 +246,10 @@ class MainWindow(QMainWindow):
             l3 = self.settings.getActiveInterface()
             l4 = ""
             cp = self.settings.getInterface("ComPort")
-            if (cp): l4 = cp.partition("/")[0].rstrip()
+            if cp: 
+                l4 = cp.partition("/")[0].rstrip()
             self.cStatusCenter.setText(f"{l1} -- {l2} -- {l3} ({l4})")
-    def updateProfileList(self):
+    def update_profile_list(self):
         ap = self.settings.getActiveProfile()
         self.cProfile.blockSignals(True)
         self.cProfile.clear()
@@ -257,7 +258,7 @@ class MainWindow(QMainWindow):
         self.cProfile.setCurrentText(ap)
         self.cProfile.blockSignals(False)
         self.settings.setActiveProfile(ap)
-    def onSortMail(self,i):
+    def on_sort_mail(self,i):
         if self.mailSortIndex == i:
             self.mailSortBackwards = not self.mailSortBackwards
         else:
@@ -328,19 +329,19 @@ class MainWindow(QMainWindow):
         self.cFolder4.setText(self.settings.getProfile("GeneralSettings/Folder4","Folder 4"))
         self.cFolder5.setText(self.settings.getProfile("GeneralSettings/Folder5","Folder 5"))
         # todo: need to fix up the menu items as well
-    def onNewMessage(self):
+    def on_new_message(self):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.show()
         tmp.raise_()
-    def onNewForm(self):
+    def on_new_form(self):
         widget = self.sender()
         index = widget.property("FormIndex")
         tmp = formdialog.FormDialog(self.settings,self.forms[index][2],self.forms[index][1],self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         tmp.show()
         tmp.raise_()
-    def onHandleNewOutgoingMessage(self,mbh,m):
+    def on_handle_new_outgoing_message(self,mbh,m):
         # log activity
         mbh.flags |= MailFlags.IS_OUTGOING.value
         self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_OUT_TRAY)
@@ -353,14 +354,14 @@ class MainWindow(QMainWindow):
             pass
         self.update_mail_list()
 
-    def onHandleNewOutgoingFormMessage(self,subject,m,urgent):
+    def on_handle_new_outgoing_form_message(self,subject,m,urgent,previous_to_addr):
         tmp = newpacketmessage.NewPacketMessage(self.settings,self)
         tmp.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        tmp.setInitialData(subject,m,urgent)
+        tmp.setInitialData(subject,m,urgent,previous_to_addr)
         tmp.show()
         tmp.raise_()
 
-    def onReadMessage(self,row,_):
+    def on_read_message(self,row,_):
         if row < 0 or row >= len(self.mailIndex): return
         h,m = self.mailbox.get_message(self.mailIndex[row])
         if not h: return
@@ -371,7 +372,7 @@ class MainWindow(QMainWindow):
             s = h.subject.split("_")
             if len(s) >= 3:
                 for f in self.forms:
-                    # one form was two entries for the name
+                    # one of the forms was two entries for the name
                     f1,_,_ = f[1].partition(" or ")
                     if s[2] == f1 or s[2] == f[2]:
                         isform = True
@@ -404,9 +405,9 @@ class MainWindow(QMainWindow):
 
     def on_read_message_form(self,row):
         # the just calls the auto-detector that double-clicking calls
-        self.onReadMessage(self,row,0)
+        self.on_read_message(self,row,0)
 
-    def openSerialPort(self):
+    def open_serial_port(self):
         # get all relevant settings - remember that at this point they are all strings
         port = self.settings.getInterface("ComPort")
         if not port:
@@ -462,14 +463,14 @@ class MainWindow(QMainWindow):
             return
         # port = port.partition('/')[0].rstrip()
 
-        f = self.openSerialPort()
+        f = self.open_serial_port()
         if not f:
             QMessageBox.critical(self,"Error",f"Error {self.serialport.errorString()} opening serial port")
             return
         self.tnc_parser = KantronicsKPC3Plus(self.settings,self)
         #self.bbsParser = Nos2Parser(self.settings,self)
         self.serialStream = SerialStream(self.serialport)
-        global_signals.signal_new_incoming_message.connect(self.onNewIncomingMessage)
+        global_signals.signal_new_incoming_message.connect(self.on_new_incoming_message)
         global_signals.signal_message_sent.connect(self.on_message_sent)
         self.tnc_parser.signalDisconnected.connect(self.on_end_send_receive)
         self.tnc_parser.signal_status_bar_message.connect(self.on_status_bar_message)
@@ -480,7 +481,7 @@ class MainWindow(QMainWindow):
             srflags |= 2
         if recv_bulletins:
             srflags |= 4
-        self.tnc_parser.start_session(self.serialStream,srflags)
+        self.tnc_parser.start_session(self.serialStream,self.mailbox,srflags)
 
     def on_end_send_receive(self):
         #self.serialport.close()
@@ -489,7 +490,7 @@ class MainWindow(QMainWindow):
         self.serialStream = None
         self.tnc_parser = None
 
-    def onNewIncomingMessage(self,mbh:MailBoxHeader,m):
+    def on_new_incoming_message(self,mbh:MailBoxHeader,m):
         self.mailbox.add_mail(mbh,m,MailFlags.FOLDER_IN_TRAY)
         # log this
         try:
@@ -505,7 +506,7 @@ class MainWindow(QMainWindow):
         self.mailbox.move_mail(indexlist,MailFlags.FOLDER_OUT_TRAY,MailFlags.FOLDER_SENT)
         self.update_mail_list()
 
-    def onDeleteMessages(self):
+    def on_delete_messages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
@@ -513,7 +514,7 @@ class MainWindow(QMainWindow):
         self.mailbox.move_mail(indexlist,self.currentFolder,MailFlags.FOLDER_DELETED)
         self.update_mail_list()
 
-    def onArchiveMessages(self):
+    def on_archive_messages(self):
         indexlist = []
         for item in self.cMailList.selectedItems():
             if item.column() == 0:
@@ -608,7 +609,7 @@ class MainWindow(QMainWindow):
                                         if value == "1":
                                             mbh.set_type(0)
                                         elif value == "3":
-                                            mbh.set_type(2)
+                                            mbh.set_type(1)
                                         pass
                                     case "Fty": #?
                                         pass
@@ -631,14 +632,14 @@ class MainWindow(QMainWindow):
             except FileNotFoundError:
                 pass
 
-    def onMailListRightClick(self,pos):
+    def on_mail_list_right_click(self,pos):
         item = self.cMailList.itemAt(pos)
         if not item: return
         row = item.row()
         if row < 0: return
         mailindex = self.mailIndex[row]
         m = QMenu(self)
-        m.addAction("Open").triggered.connect(lambda: self.onReadMessage(row,0))
+        m.addAction("Open").triggered.connect(lambda: self.on_read_message(row,0))
         mm = QMenu("Open Enhanced",self)
         mm.addAction("as Text").triggered.connect(lambda: self.on_read_message_text(row))  #.setEnabled(False)
         mm.addAction("in a Form").triggered.connect(lambda: self.on_read_message_form(row))  #.setEnabled(False)
@@ -659,38 +660,38 @@ class MainWindow(QMainWindow):
             self.settings.getProfile("GeneralSettings/Folder5","Folder 5"),
         ]
         mm = QMenu("Move To",self)
-        mm.addAction("In Tray").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_IN_TRAY))
-        mm.addAction("Out Tray").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_OUT_TRAY))
-        mm.addAction("Sent Messages").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_SENT))
-        mm.addAction("Archive").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_ARCHIVE))
-        mm.addAction("Draft Messages").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_DRAFT))
-        mm.addAction("Deleted").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_DELETED))
-        mm.addAction(f[0]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_1))
-        mm.addAction(f[1]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_2))
-        mm.addAction(f[2]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_3))
-        mm.addAction(f[3]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_4))
-        mm.addAction(f[4]).triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_5))
+        mm.addAction("In Tray").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_IN_TRAY))
+        mm.addAction("Out Tray").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_OUT_TRAY))
+        mm.addAction("Sent Messages").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_SENT))
+        mm.addAction("Archive").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_ARCHIVE))
+        mm.addAction("Draft Messages").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_DRAFT))
+        mm.addAction("Deleted").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_DELETED))
+        mm.addAction(f[0]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_1))
+        mm.addAction(f[1]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_2))
+        mm.addAction(f[2]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_3))
+        mm.addAction(f[3]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_4))
+        mm.addAction(f[4]).triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_5))
         m.addMenu(mm)
 
         mm = QMenu("Copy To",self)
-        mm.addAction("In Tray").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_IN_TRAY))
-        mm.addAction("Out Tray").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_OUT_TRAY))
-        mm.addAction("Sent Messages").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_SENT))
-        mm.addAction("Archive").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_ARCHIVE))
-        mm.addAction("Draft Messages").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_DRAFT))
-        mm.addAction("Deleted").triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_DELETED))
-        mm.addAction(f[0]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_1))
-        mm.addAction(f[1]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_2))
-        mm.addAction(f[2]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_3))
-        mm.addAction(f[3]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_4))
-        mm.addAction(f[4]).triggered.connect(lambda: self.onCopyToFolder(MailFlags.FOLDER_5))
+        mm.addAction("In Tray").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_IN_TRAY))
+        mm.addAction("Out Tray").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_OUT_TRAY))
+        mm.addAction("Sent Messages").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_SENT))
+        mm.addAction("Archive").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_ARCHIVE))
+        mm.addAction("Draft Messages").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_DRAFT))
+        mm.addAction("Deleted").triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_DELETED))
+        mm.addAction(f[0]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_1))
+        mm.addAction(f[1]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_2))
+        mm.addAction(f[2]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_3))
+        mm.addAction(f[3]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_4))
+        mm.addAction(f[4]).triggered.connect(lambda: self.on_copy_to_folder(MailFlags.FOLDER_5))
         m.addMenu(mm)
         m.addSeparator()
-        m.addAction("Delete").triggered.connect(lambda: self.onMoveToFolder(MailFlags.FOLDER_DELETED))
+        m.addAction("Delete").triggered.connect(lambda: self.on_move_to_folder(MailFlags.FOLDER_DELETED))
 
         r = m.exec(self.cMailList.mapToGlobal(pos))
         # if r == a1:
-        #     self.onReadMessage(row,0)
+        #     self.on_read_message(row,0)
         # elif r == a7:
         #     if self.mailbox.markAsNew(mailindex,True):
         #         self.update_mail_list()
@@ -752,11 +753,11 @@ class MainWindow(QMainWindow):
         self.settings.setProfile("MessageSettings/AddMessageNumberToInbound",True)
 
         if not firsttime:
-            self.updateStatusBar()
+            self.update_status_bar()
             self.OnStationId() # if firsttime, will happen a little later
     def on_status_bar_message(self,s):
         self.tempory_status_bar_message = s
-        self.updateStatusBar()
+        self.update_status_bar()
 
     def on_search(self):
         sd = searchdialog.SearchDialog(self.settings,self)
@@ -765,6 +766,8 @@ class MainWindow(QMainWindow):
         folders_to_search = self.currentFolder
         if sd.fields_to_search & FieldsToSearch.ALL_FOLDERS.value:
             folders_to_search = MailFlags.FOLDER_SEARCHABLE
+        elif sd.fields_to_search & FieldsToSearch.ALL_FOLDERS_EX.value:
+            folders_to_search = MailFlags.FOLDER_SEARCHABLE_EX
         if self.mailbox.search(sd.search,sd.fields_to_search,folders_to_search) == 1:
             self.cFolderSearchResults.setEnabled(True)
             self.cFolderSearchResults.setChecked(True)

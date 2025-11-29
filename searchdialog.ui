@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>380</width>
+    <width>405</width>
     <height>219</height>
    </rect>
   </property>
@@ -18,7 +18,7 @@
     <rect>
      <x>10</x>
      <y>20</y>
-     <width>275</width>
+     <width>310</width>
      <height>24</height>
     </rect>
    </property>
@@ -26,7 +26,7 @@
   <widget class="QPushButton" name="c_search">
    <property name="geometry">
     <rect>
-     <x>285</x>
+     <x>320</x>
      <y>20</y>
      <width>75</width>
      <height>24</height>
@@ -114,17 +114,46 @@
     <string>BBS</string>
    </property>
   </widget>
-  <widget class="QCheckBox" name="c_all_folders">
+  <widget class="QRadioButton" name="c_all_folders">
    <property name="geometry">
     <rect>
-     <x>235</x>
-     <y>60</y>
-     <width>125</width>
+     <x>200</x>
+     <y>55</y>
+     <width>200</width>
      <height>20</height>
     </rect>
    </property>
    <property name="text">
     <string>All folders</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="c_all_folders_ex">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>80</y>
+     <width>200</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>All folders except &quot;Deleted&quot;</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="c_current_folder">
+   <property name="geometry">
+    <rect>
+     <x>200</x>
+     <y>105</y>
+     <width>200</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Only the current folder</string>
    </property>
   </widget>
  </widget>

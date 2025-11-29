@@ -36,9 +36,9 @@ MsgNo,MessageNumber,str,Y,,446,49,539,73
 9a.,ToLocation,str,Y,,83,282,395,308
 9b.,FromLocation,str,Y,,469,282,787,308
 ToName,ToName,str,,,83,332,395,356
-FromName,FromName,str,,,469,332,787,356
+FmName,FromName,str,,,469,332,787,356
 ToTel,ToTel,str,,TelValid,83,381,395,407
-FromTel,FromTel,str,,TelValid,469,381,787,407
+FmTel,FromTel,str,,TelValid,469,381,787,407
 *10.,Subject,str,,,157,415,789,441
 11.,Reference,str,,,357,449,786,476
 12.,Message,mstr,,,52,505,807,677
