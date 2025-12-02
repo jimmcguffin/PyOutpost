@@ -30,7 +30,7 @@ MsgNo,MessageNumber,str,Y,,446,49,539,73
 5.,Handling,rb,Y,,412,104,813,126,IMMEDIATE,415,109,0,0,PRIORITY,564,108,0,0,ROUTINE,699,108,0,0
 6a.,TakeAction,rb,,,574,161,756,183,Yes,577,165,0,0,No,718,165,0,0
 6b.,Reply,rb,,,574,190,756,212,Yes,577,193,0,0,No,718,193,0,0
-6d.,ReplyBy,str,,,641,191,702,208
+6d.,ReplyBy,str,6b.,,641,191,702,208
 7.,ToIcsPosition,str,Y,,83,233,395,258
 8.,FromIcsPosition,str,Y,,469,233,788,258
 9a.,ToLocation,str,Y,,83,282,395,308

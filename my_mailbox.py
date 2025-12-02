@@ -263,7 +263,7 @@ class MailBox:
         except FileNotFoundError:
             pass
 
-    def add_mail(self,mbh,message,folder:MailFlags): # mbh is a MailBoxHeader
+    def add_mail(self,mbh:MailBoxHeader,message:str,folder:MailFlags):
         # before adding, look if we already have this one
         for m in self.mail:
             if m == mbh:
@@ -271,12 +271,12 @@ class MailBox:
         mbh.flags |= folder.value
         with open("PyOutpost.mail","ab") as file:
             # the size should be of the encoded data
-            message = message.encode("windows-1252")
-            mbh.size = len(message)
+            messagebody = message.encode("windows-1252","replace")
+            mbh.size = len(messagebody)
             mbh.offset_to_header = file.tell()
-            file.write(mbh.to_string().encode("windows-1252"))
+            file.write(mbh.to_string().encode("windows-1252","replace"))
             mbh.offset_to_message_body = file.tell()
-            file.write(message) # it has already been encoded above
+            file.write(messagebody) # it has already been encoded above
         mbh.index = len(self.mail)
         self.mail.append(mbh)
 

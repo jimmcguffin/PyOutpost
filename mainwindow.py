@@ -349,7 +349,7 @@ class MainWindow(QMainWindow):
         try:
             with open("activity.log","ab") as file:
                 s = f"s,{mbh.date_sent},{mbh.from_addr},{mbh.to_addr},{mbh.local_id},{quote_plus(mbh.subject)}\n"
-                file.write(s.encode("windows-1252"))
+                file.write(s.encode("windows-1252","replace"))
         except FileNotFoundError:
             pass
         self.update_mail_list()

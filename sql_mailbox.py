@@ -65,8 +65,8 @@ class MailBoxHeader:
 
     def __eq__(self, other):
         if isinstance(other, MailBoxHeader):
-            z =  self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
-            print(f"{z}: {self.from_addr}/{other.from_addr} {self.to_addr}/{other.to_addr} {self.subject}/{other.subject} {self.date_sent}/{other.date_sent} {self.size}/{other.size}")
+            #z =  self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size and self.size == other.size
+            #print(f"{z}: {self.from_addr}/{other.from_addr} {self.to_addr}/{other.to_addr} {self.subject}/{other.subject} {self.date_sent}/{other.date_sent} {self.size}/{other.size}")
             return self.from_addr == other.from_addr and self.to_addr == other.to_addr and self.subject == other.subject and self.date_sent == other.date_sent and self.size == other.size
         return False
 
@@ -223,12 +223,12 @@ class MailBox:
 
     def add_mail(self,mbh:MailBoxHeader,message:str,folder:MailFlags): # mbh is a MailBoxHeader
         # before adding, look if we already have this one
-        # the version of this in my_mailbox only checks the header items, not the message body
-        self.cursor.execute("SELECT * FROM messages WHERE subject == ? AND message == ?",(mbh.subject,message,))
+        # the version of this in my_mailbox only checks the header items, not the message body, for now this one too
+        self.cursor.execute("SELECT * FROM messages WHERE subject == ?",(mbh.subject,))
         items = self.cursor.fetchall()
         for item in items:
             m = MailBoxHeader(*item)
-            # already screened out most non-matches with SELECT, now check remaining fields
+            # already screened out the subject with SELECT, now check remaining fields
             if m == mbh:
                 return True
         mbh.flags |= folder.value
