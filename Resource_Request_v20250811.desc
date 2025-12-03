@@ -6,34 +6,59 @@
 [Footers]
 !/ADDON!
 
+[Pages]
+Resource_Request_v20250811-1.png[0:923]
+Resource_Request_v20250811-2.png[64:651]
+
 [Fields]
 // see the ICS213 file for a description of these lines
-MsgNo,MessageNumber,str,,,284,64,441,83
-1a.,Date,str,Y,DateValid,91,138,156,154
-1b.,Time,str,&,TimeValid,240,138,307,154
-5.,Handling,rb,Y,,378,137,736,155,IMMEDIATE,389,138,0,0,PRIORITY,520,138,0,0,ROUTINE,629,138,0,0
-7a.,ToIcsPosition,dd,Y,,170,163,368,179,Resource Status & Tracking Unit,Supply Branh,Logistics
-8a.,FromIcsPosition,str,Y,,496,163,735,179
-7b.,ToLocation,str,Y,,151,188,368,203
-8b.,FromLocation,str,Y,,477,188,735,203
-7c.,ToName,str,,,135,212,368,228
-8c,FromName,str,,,462,212,735,228
-7d.,ToContactInfo,str,,,173,237,368,252
-8d.,FromContactInfo,str,,,499,237,735,252
-*20.,Title,str,Y,,89,287,735,302
-21.,Juristiction,dd,Y,,130,310,735,326,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
-23n.,Item1N,str,Y,,195,359,529,375
-23q.,Item1Q,str,Y,NumValid,668,359,735,374
-23d.,Item1D,mstr,,,196,383,735,421
-23i.,Item1I,rb,Y,,350,427,462,445,YES,356,428,0,0,NO,417,428,0,0
-30.,Priority,rb,Y,,135,1141,529,1177,Urgent,150,1143,0,0,High,150,1162,0,0,Medium,385,1143,0,0,Low,385,1162,0,0
-40.,ReqName,str,Y,,183,1226,393,1240
-40s.,WithSignature,cb,,,469,1226,0,0
-41.,ReqPhone,str,Y,,185,1249,393,1263
-42.,ReqEMail,str,Y,,529,1249,735,1263
-43.,ReqPosition,str,Y,,196,1272,735,1287
+MsgNo,MessageNumber,str,,,P1,284,64,441,83
+1a.,Date,str,Y,DateValid,P1,91,138,156,154
+1b.,Time,str,&,TimeValid,P1,240,138,307,154
+5.,Handling,rb,Y,,P1,378,137,736,155,IMMEDIATE,389,138,0,0,PRIORITY,520,138,0,0,ROUTINE,629,138,0,0
+7a.,ToIcsPosition,dd,Y,,P1,170,163,368,179,Resource Status & Tracking Unit,Supply Branh,Logistics
+8a.,FromIcsPosition,str,Y,,P1,496,163,735,179
+7b.,ToLocation,str,Y,,P1,151,188,368,203
+8b.,FromLocation,str,Y,,P1,477,188,735,203
+7c.,ToName,str,,,P1,135,212,368,228
+8c,FromName,str,,,P1,462,212,735,228
+7d.,ToContactInfo,str,,,P1,173,237,368,252
+8d.,FromContactInfo,str,,,P1,499,237,735,252
+*20.,Title,str,Y,,P1,89,287,735,302
+21.,Jurisdiction,dd,Y,,P1,130,310,735,326,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+23n.,Item1N,str,Y,,P1,195,359,529,375
+23q.,Item1Q,str,Y,NumValid,P1,668,359,735,374
+23d.,Item1D,mstr,,,P1,196,383,735,421
+23i.,Item1I,rb,Y,,P1,350,427,462,445,YES,356,428,0,0,NO,417,428,0,0
+24n.,Item2,str,,,P1,195,454,529,470
+24q.,Item2,str,24n.,NumValid,P1,668,454,735,469
+24d.,Item2,mstr,,,P1,196,478,735,516
+24i.,Item2,rb,24n,,,P1,350,522,462,540,YES,356,523,0,0,NO,417,523,0,0
+25n.,Item3,str,,,P1,195,549,529,565
+25q.,Item3,str,25n.,NumValid,P1,668,549,735,564
+25d.,Item3,mstr,,,P1,196,573,735,611
+25i.,Item3,rb,25n.,,P1,350,617,462,635,YES,356,618,0,0,NO,417,618,0,0
+26n.,Item4,str,,,P1,195,644,529,660
+26q.,Item4,str,26n.,NumValid,P1,668,644,735,659
+26d.,Item4,mstr,,,P1,196,668,735,706
+26i.,Item4,rb,26n.,,P1,350,712,462,730,YES,356,713,0,0,NO,417,713,0,0
+27n.,Item5,str,,,P1,195,739,529,755
+27q.,Item5,str,27n.,NumValid,P1,668,739,735,754
+27d.,Item5,mstr,,,P1,196,763,735,801
+27i.,Item5,rb,27n.,,P1,350,807,462,825,YES,356,808,0,0,NO,417,808,0,0
+28n.,Item6,str,,,P1,195,834,529,850
+28q.,Item6,str,28n.,NumValid,P1,668,834,735,849
+28d.,Item6,mstr,,,P1,196,858,735,896
+28i.,Item6,rb,28n.,,P1,350,902,462,920,YES,356,903,0,0,NO,417,903,0,0
+//page 2
+30.,Priority,rb,Y,,P2,135,105,529,146,Urgent,150,107,0,0,High,150,127,0,0,Medium,385,107,0,0,Low,385,127,0,0
+40.,ReqName,str,Y,,P2,183,190,393,+15
+40s.,WithSignature,cb,,,P2,469,190,0,0
+41.,ReqPhone,str,Y,TelValid,P2,185,213,393,+15
+42.,ReqEMail,str,Y,,P2,529,213,735,+15
+43.,ReqPosition,str,Y,,P2,196,237,735,+25
 
-//OpName,OpName,str,,,95,828,308,846
-//OpCall,OpCall,str,,,374,828,477,846
-//OpDate,OpDate,str,,,522,828,584,846
-//OpTime,OpTime,str,,,666,828,743,846
+//OpName,OpName,str,,,P2,95,828,308,846
+//OpCall,OpCall,str,,,P2,374,828,477,846
+//OpDate,OpDate,str,,,P2,522,828,584,846
+//OpTime,OpTime,str,,,P2,666,828,743,846

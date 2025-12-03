@@ -10,26 +10,85 @@ from PyQt6.uic import load_ui
 from globalsignals import global_signals
 from persistentdata import PersistentData
 
+class PageController:
+    def __init__(self,pages):
+        self.pages = pages
+
+    def get_coordinates(self,page:int,f:list,dw=0,dh=0):
+        x0 = int(f[0])
+        y0 = self.page_to_screen(page,int(f[1]))
+        if f[2][0] == "+":
+            x1 = x0 + int(f[2])
+        else:
+            x1 = int(f[2])
+            if not x1:
+                x1 = x0 + dw
+        if f[3][0] == "+":
+            y1 = y0 + int(f[3])
+        elif f[3][0] == "0":
+            y1 = y0 + dh
+        else:
+            y1 = self.page_to_screen(page,int(f[3]))
+        return (x0,y0,x1,y1)
+
+    def screen_to_page(self,y): # returns 0 for first page, 1 for second page, etc
+        p = 0
+        sumofpages = 0
+        for page in self.pages:
+            sumofpages += page[2]
+        if y < 0 or y >= sumofpages:
+            return (-1,0)
+        for page in self.pages:
+            if y < page[2]:
+                return (p,y+page[1])
+            p += 1
+            y -= page[2]
+        assert(False)
+        return (p,y+page[1])
+
+    def page_to_screen(self,pageindex,line) -> int: # returns -1 if not on any page
+        line_offset = 0
+        if 0 <= pageindex < len(self.pages):
+            for p,page in enumerate(self.pages):
+                if p == pageindex:
+                    if line < page[1]:
+                        return -1
+                    line -= page[1]
+                    if line >= page[2]:
+                        return -1
+                    return line + line_offset
+                line_offset += page[2]
+        else:
+            return -1
+
+
+
+
 class FormItem(QObject):
-    def __init__(self,parent,f,dw=0,dh=0):
+    def __init__(self,parent,pc:PageController,f,dw=0,dh=0):
         super().__init__(parent)
         self.parent = parent
+        self.page_controller = pc
         self.widget = QWidget(parent)
         self.label = f[0]
         self.fieldname = f[1]
         self.valid = None
         self.validator = ""
         self.dependson = ""
+        self.page = 0
+        # at least temporarily there is a "P" in front of the page number - ignore it if so
+        f[5] = f[5].lstrip("P")
+        self.page = int(f[5])-1 # 0-based 
         if len(f[3]) and f[3] != "Y":
             self.dependson = f[3]
         self.subjectlinesource = "Subject"
         self.group = -1 # gets set if part of a group
-        if len(f[3]) and f[5] != "0":
+        if len(f[3]) and f[6] != "0":
         #if f[5] != "0": # this shows all of boxes that have been defined
             self.valid = QFrame(parent)
             # expand the coordinates a litle
             e = 4
-            x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
+            x0,y0,x1,y1 = self.page_controller.get_coordinates(self.page,f[6:10],dw,dh)
             x0 -= e
             y0 -= e
             x1 += e
@@ -42,32 +101,14 @@ class FormItem(QObject):
 
     def get_value(self): pass
 
-    @staticmethod
-    def get_coordinates(f:list,dw=0,dh=0):
-        x0 = int(f[0])
-        y0 = int(f[1])
-        if f[2][0] == "+":
-            x1 = x0 + int(f[2])
-        else:
-            x1 = int(f[2])
-            if not x1:
-                x1 = x0 + dw
-        if f[3][0] == "+":
-            y1 = y0 + int(f[3])
-        else:
-            y1 = int(f[3])
-            if not y1:
-                y1 = y0 + dh
-        return (x0,y0,x1,y1)
-
 class FormItemString(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
-    def __init__(self,parent,f):
+    def __init__(self,parent,pc:PageController,f):
         dw = 0 # default sizees
         dh = 26
-        super().__init__(parent,f,dw,dh)
+        super().__init__(parent,pc,f,dw,dh)
         self.widget = QLineEdit("",parent) # or f[1]
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
+        x0,y0,x1,y1 = self.page_controller.get_coordinates(self.page,f[6:10],dw,dh)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         font = QFont()
         #font =  self.cMailList.item(i,0).font()
@@ -84,10 +125,10 @@ class FormItemString(FormItem):
 
 class FormItemMultiString(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
-    def __init__(self,parent,f):
-        super().__init__(parent,f)
+    def __init__(self,parent,pc:PageController,f):
+        super().__init__(parent,pc,f)
         self.widget = QPlainTextEdit(parent)
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9])
+        x0,y0,x1,y1 = self.page_controller.get_coordinates(self.page,f[6:10])
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         self.widget.setPlainText("") # or f[1]
         font = QFont()
@@ -104,17 +145,17 @@ class FormItemMultiString(FormItem):
 
 class FormItemRadioButtons(FormItem): # always multiple buttons
     signalValidityCheck = pyqtSignal(FormItem)
-    def __init__(self,parent,f):
+    def __init__(self,parent,pc:PageController,f):
         dw = 64 # default size
         dh = 14
-        super().__init__(parent,f,dw,dh)
-        nb = (len(f)-9)//5
+        super().__init__(parent,pc,f,dw,dh)
+        nb = (len(f)-10)//5
         self.widget = QButtonGroup(parent)
         self.values = []
         for i in range (nb):
-            j = i*5+9
+            j = i*5+10
             tmpwidget = QRadioButton("                ",parent)
-            x0,y0,x1,y1 = FormItem.get_coordinates(f[j+1:j+5],dw,dh)
+            x0,y0,x1,y1 = self.page_controller.get_coordinates(self.page,f[j+1:j+5],dw,dh)
             tmpwidget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
             self.widget.addButton(tmpwidget,i)
             palette = tmpwidget.palette()
@@ -133,12 +174,12 @@ class FormItemRadioButtons(FormItem): # always multiple buttons
 
 class FormItemCheckBox(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
-    def __init__(self,parent,f):
+    def __init__(self,parent,pc:PageController,f):
         dw = 64 # default size
         dh = 14
-        super().__init__(parent,f,dw,dh)
+        super().__init__(parent,pc,f,dw,dh)
         self.widget = QCheckBox("                ",parent) # or f[1]
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
+        x0,y0,x1,y1 = self.page_controller.get_coordinates(self.page,f[6:10],dw,dh)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
         palette = self.widget.palette()
         palette.setColor(QPalette.ColorRole.Text,QColor("blue"))
@@ -151,16 +192,16 @@ class FormItemCheckBox(FormItem):
 
 class FormItemDropDown(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
-    def __init__(self,parent,f):
+    def __init__(self,parent,pc:PageController,f):
         dw = 0 # default size
         dh = 26
-        super().__init__(parent,f)
+        super().__init__(parent,pc,f)
         self.widget = QComboBox(parent) # or f[1]
-        x0,y0,x1,y1 = FormItem.get_coordinates(f[5:9],dw,dh)
+        x0,y0,x1,y1 = self.page_controller.get_coordinates(self.page,f[6:10],dw,dh)
         self.widget.setGeometry(x0,y0,x1-x0+1,y1-y0+1)
-        n = len(f)-9
+        n = len(f)-10
         for i in range(n):
-            self.widget.addItem(f[i+9])
+            self.widget.addItem(f[i+10])
         self.widget.setCurrentIndex(-1)
         self.widget.setEditable(True)
         palette = self.widget.palette()
@@ -174,12 +215,12 @@ class FormItemDropDown(FormItem):
 
 class FormItemRequiredGroup(FormItem):
     signalValidityCheck = pyqtSignal(FormItem)
-    def __init__(self,parent,f):
-        super().__init__(parent,f)
-        nc = (len(f)-9)
+    def __init__(self,parent,pc:PageController,f):
+        super().__init__(parent,pc,f)
+        nc = (len(f)-10)
         self.children = []
         for i in range (nc):
-            self.children.append(f[i+9])
+            self.children.append(f[i+10])
         pass
     def get_value(self,dialog):
         for c in self.children:
@@ -200,6 +241,7 @@ class FormDialog(QMainWindow):
         self.to_addr = "" # this get used when redoing a form
         load_ui.loadUi("formdialog.ui",self)
         self.pages = []
+        self.page_controller = None
         self.headers = []
         self.footers = []
         self.fields = [] # a list of FormItem objects
@@ -208,26 +250,33 @@ class FormDialog(QMainWindow):
         #self.group = {}  # a dictionary that maps the field id to a container group, if there is one (rare)
         section = 0 # 1 = headers, 2 = footers, 3 = fields, 4 = dependencies
         try:
-            with open(form+".desc","rt") as file:
+            with open(form,"rt") as file:
                 while l := file.readline():
                     l = l.rstrip()
                     if len(l) < 2: continue
                     if l[0:2] == '//': continue
                     if l == "[Headers]":
+                        oldsection = section
                         section = 1
                         continue
                     elif l == "[Footers]":
+                        oldsection = section
                         section = 2
                         continue
                     elif l == "[Pages]":
+                        oldsection = section
                         section = 3
                         continue
                     elif l == "[Fields]":
+                        oldsection = section
                         section = 4
                         continue
                     elif l == "[Dependencies]": # this never happened
+                        oldsection = section
                         section = 5
                         continue
+                    if oldsection == 3 and section != 3: # we have finished the pages section
+                        self.page_controller = PageController(self.pages)
                     if section == 1:
                         self.headers.append(l)
                     elif section == 2:
@@ -246,25 +295,25 @@ class FormDialog(QMainWindow):
                             self.pages.append((l,0,1100)) # all lines
                     elif section == 4:
                         f = l.split(",")
-                        # typical line: 12.,Message,mstr,Y,valid,52,105,807,677
-                        # fields:       0   1       2    3 4     5  6   7   8
-                        if len(f) >= 9:
+                        # typical line: 12.,Message,mstr,Y,valid,page,52,105,807,677
+                        # fields:       0   1       2    3 4     5    6  7   8  9
+                        if len(f) >= 10:
                             index = len(self.fields)
                             if f[0] and f[0][0] == '*':
                                 self.subjectlinesource = f[1]
                                 f[0] = f[0][1:]
                             if f[2] == "str":
-                                self.fields.append(FormItemString(self.cForm,f))
+                                self.fields.append(FormItemString(self.cForm,self.page_controller,f))
                             elif f[2] == "mstr":
-                                self.fields.append(FormItemMultiString(self.cForm,f))
+                                self.fields.append(FormItemMultiString(self.cForm,self.page_controller,f))
                             elif f[2] == "rb":
-                                self.fields.append(FormItemRadioButtons(self.cForm,f))
+                                self.fields.append(FormItemRadioButtons(self.cForm,self.page_controller,f))
                             elif f[2] == "cb":
-                                self.fields.append(FormItemCheckBox(self.cForm,f))
+                                self.fields.append(FormItemCheckBox(self.cForm,self.page_controller,f))
                             elif f[2] == "dd":
-                                self.fields.append(FormItemDropDown(self.cForm,f))
+                                self.fields.append(FormItemDropDown(self.cForm,self.page_controller,f))
                             elif f[2] == "rg":
-                                self.fields.append(FormItemRequiredGroup(self.cForm,f))
+                                self.fields.append(FormItemRequiredGroup(self.cForm,self.page_controller,f))
                             if len(self.fields) > index: #something was added, add to dictionaries
                                 if f[0]:
                                     self.fieldid[f[0]] = index
@@ -336,37 +385,6 @@ class FormDialog(QMainWindow):
         w = pm.width()
         self.cForm.setPixmap(pm)
         self.scrollArea.setWidget(self.cForm)
-
-    def screen_to_page(y): # returns 0 for first page, 1 for second page, etc
-        p = 0
-        sumofpages = 0
-        for page in pages:
-            sumofpages += page[2]
-        if y < 0 or y >= sumofpages:
-            return (-1,0)
-        for page in pages:
-            if y < page[2]:
-                return (p,y+page[1])
-            p += 1
-            y -= page[2]
-        assert(False)
-        return (p,y+page[1])
-
-    def page_to_screen(pageindex,line) -> int: # returns -1 if not on any page
-        line_offset = 0
-        if 0 <= pageindex < len(pages):
-            for p,page in enumerate(pages):
-                if p == pageindex:
-                    if line < page[1]:
-                        return -1
-                    line -= page[1]
-                    if line >= page[2]:
-                        return -1
-                    return line + line_offset
-                line_offset += page[2]
-                #line -= page[2]
-        else:
-            return -1
 
     @staticmethod
     def DateValid(s):

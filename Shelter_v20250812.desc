@@ -1,1 +1,57 @@
-// I had to use // for comments since some fields start with "#"[Headers]!SCCoPIFO!#T: form-shelter.html#V: 3.20-1.0[Footers]!/ADDON![Fields]MsgNo,MessageNumber,str,,,315,86,457,1071a.,Date,str,Y,DateValid,94,158,+70,+261b.,Time,str,Y,TimeValid,254,158,+60,+265.,Handling,rb,Y,,396,157,782,184,IMMEDIATE,405,163,0,0,PRIORITY,547,163,0,0,ROUTINE,668,163,0,07a.,ToIcsPosition,dd,Y,,183,188,425,+25,Care & Shelter Unit,Mass Care & Emerg. Asst. Branch,Operations8a.,FromIcsPosition,str,Y,,550,188,787,+207b.,ToLocation,str,Y,,162,215,425,+208b.,FromLocation,str,Y,,530,215,787,+207c.,ToName,str,,,146,240,425,+208c,FromName,str,,,514,240,787,+207d.,ToContactInfo,str,,,186,267,425,+208d.,FromContactInfo,str,,,554,267,787,+2020.,Juristiction,dd,Y,,143,320,787,+20,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated*21.,ShelterName,str,Y,,157,346,787,+2022.,ShelterLocation,str,Y,,124,371,787,+20// these must come before the items they control, the id serves only as a clue about what items it is controlling23.,ShelterType,rg,Y,,159,395,680,437,23a.,23b.,23c.,23d.,23e.23a.,,cb,,,165,397,0,023c.,,cb,,,315,397,0,023e.,,cb,,,565,397,0,023b.,,cb,,,165,419,0,023d.,,cb,,,315,419,0,024.,ShelterStatus,rb,Y,,158,438,674,475,Setup,164,441,0,0,Open,164,460,0,0,Full,464,441,0,0,Closed,464,460,0,025a.,Warm,cb,,,165,480,0,025c,Food,cb,,,415,480,0,025b.,Cool,cb,,,165,502,0,025d.,Charge,cb,,,415,502,0,026.,Notes,mstr,,,108,525,787,61127.,ADA,rb,,,0,0,0,0,Yes,214,622,0,0,No,313,622,0,028.,Pets,rb,,,0,0,0,0,Yes,583,622,0,0,No,683,622,0,029.,Max,str,Y,NumValid,193,646,+100,+1630.,Reg,str,Y,NumValid,420,646,+100,+1631.,Cots,str,Y,NumValid,645,646,+100,+1632.,AFN,mstr,,,195,671,787,73840.,Managed,rb,Y,,214,782,690,817,ARC,236,784,0,0,Government,436,784,0,0,Community,586,784,0,041.,CName,str,Y,,214,823,420,84042.,CTel,str,Y,TelValid,641,823,787,84043.,CEmail,str,,,214,849,787,866OpName,OpName,str,,,108,935,+160,+18OpCall,OpCall,str,,,415,935,+70,+18OpDate,OpDate,str,,DateValid,555,935,+70,+18OpTime,OpTime,str,,TimeValid,707,935,+60,+18
+// I had to use // for comments since some fields start with "#"
+
+[Headers]
+!SCCoPIFO!
+#T: form-shelter.html
+#V: 3.20-1.0
+
+[Footers]
+!/ADDON!
+
+[Pages]
+Shelter_v20250812.png
+
+[Fields]
+MsgNo,MessageNumber,str,,,P1,315,86,457,107
+1a.,Date,str,Y,DateValid,P1,94,158,+70,+26
+1b.,Time,str,Y,TimeValid,P1,254,158,+60,+26
+5.,Handling,rb,Y,,P1,396,157,782,184,IMMEDIATE,405,163,0,0,PRIORITY,547,163,0,0,ROUTINE,668,163,0,0
+7a.,ToIcsPosition,dd,Y,,P1,183,188,425,+25,Care & Shelter Unit,Mass Care & Emerg. Asst. Branch,Operations
+8a.,FromIcsPosition,str,Y,,P1,550,188,787,+20
+7b.,ToLocation,str,Y,,P1,162,215,425,+20
+8b.,FromLocation,str,Y,,P1,530,215,787,+20
+7c.,ToName,str,,,P1,146,240,425,+20
+8c,FromName,str,,,P1,514,240,787,+20
+7d.,ToContactInfo,str,,,P1,186,267,425,+20
+8d.,FromContactInfo,str,,,P1,554,267,787,+20
+20.,Jurisdiction,dd,Y,,P1,143,320,787,+20,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+*21.,ShelterName,str,Y,,P1,157,346,787,+20
+22.,ShelterLocation,str,Y,,P1,124,371,787,+20
+// these must come before the items they control, the id serves only as a clue about what items it is controlling
+23.,ShelterType,rg,Y,,P1,159,395,680,437,23a.,23b.,23c.,23d.,23e.
+23a.,,cb,,,P1,165,397,0,0
+23c.,,cb,,,P1,315,397,0,0
+23e.,,cb,,,P1,565,397,0,0
+23b.,,cb,,,P1,165,419,0,0
+23d.,,cb,,,P1,315,419,0,0
+24.,ShelterStatus,rb,Y,,P1,158,438,674,475,Setup,164,441,0,0,Open,164,460,0,0,Full,464,441,0,0,Closed,464,460,0,0
+25a.,Warm,cb,,,P1,165,480,0,0
+25c,Food,cb,,,P1,415,480,0,0
+25b.,Cool,cb,,,P1,165,502,0,0
+25d.,Charge,cb,,,P1,415,502,0,0
+26.,Notes,mstr,,,P1,108,525,787,611
+27.,ADA,rb,,,P1,0,0,0,0,Yes,214,622,0,0,No,313,622,0,0
+28.,Pets,rb,,,P1,0,0,0,0,Yes,583,622,0,0,No,683,622,0,0
+29.,Max,str,Y,NumValid,P1,193,646,+100,+16
+30.,Reg,str,Y,NumValid,P1,420,646,+100,+16
+31.,Cots,str,Y,NumValid,P1,645,646,+100,+16
+32.,AFN,mstr,,,P1,195,671,787,738
+40.,Managed,rb,Y,,P1,214,782,690,817,ARC,236,784,0,0,Government,436,784,0,0,Community,586,784,0,0
+41.,CName,str,Y,,P1,214,823,420,840
+42.,CTel,str,Y,TelValid,P1,641,823,787,840
+43.,CEmail,str,,,P1,214,849,787,866
+
+OpName,OpName,str,,,P1,108,935,+160,+18
+OpCall,OpCall,str,,,P1,415,935,+70,+18
+OpDate,OpDate,str,,DateValid,P1,555,935,+70,+18
+OpTime,OpTime,str,,TimeValid,P1,707,935,+60,+18

@@ -2,12 +2,15 @@
 
 [Footers]
 
+[Pages]
+CheckInCheckOut.png
+
 [Fields]
-1,MessageNumber,str,Y,,169,25,319,44
-2,Type,rb,,,168,53,365,75,Check-In,174,57,0,0,Check-Out,273,57,0,0
-3,UserCall,str,Y,,169,82,260,101
-4,UserName,str,Y,,336,82,787,101
-5,UseTacticalCall,cb,,,20,114,0,0
-6,TacticalCall,str,,,169,111,260,129
-7,TacticalName,str,,,336,111,787,129
+1,MessageNumber,str,Y,,P1,169,25,319,44
+2,Type,rb,Y,,P1,168,53,365,75,Check-In,174,57,0,0,Check-Out,273,57,0,0
+3,UserCall,str,Y,,P1,169,82,260,101
+4,UserName,str,Y,,P1,336,82,787,101
+5,UseTacticalCall,cb,,,P1,20,114,0,0
+6,TacticalCall,str,,,P1,169,111,260,129
+7,TacticalName,str,,,P1,336,111,787,129
 
