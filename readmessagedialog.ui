@@ -23,6 +23,9 @@
       <height>365</height>
      </rect>
     </property>
+    <property name="sizeAdjustPolicy">
+     <enum>QAbstractScrollArea::SizeAdjustPolicy::AdjustIgnored</enum>
+    </property>
    </widget>
    <widget class="QLabel" name="label">
     <property name="geometry">

@@ -37,7 +37,7 @@ class MessageSettingsDialog(QDialog):
         self.cCharacterToAdd.setText(self.pd.getProfile("MessageSettings/CharacterToAdd"))
         self.cAddMessageNumberSeparator.setChecked(self.pd.getProfileBool("MessageSettings/AddMessageNumberSeparator"))
         self.cAddMessageNumberToInbound.setChecked(self.pd.getProfileBool("MessageSettings/AddMessageNumberToInbound"))
-        self.cNextMessageId.setValue(self.pd.getNextMessageNumber(False))
+        self.cNextMessageId.setValue(self.pd.get_next_message_number(False))
         # page 3
         # page 4
         # page 5
@@ -70,7 +70,7 @@ class MessageSettingsDialog(QDialog):
         self.pd.setProfile("MessageSettings/CharacterToAdd",self.cCharacterToAdd.text())
         self.pd.setProfile("MessageSettings/AddMessageNumberSeparator",self.cAddMessageNumberSeparator.isChecked())
         self.pd.setProfile("MessageSettings/AddMessageNumberToInbound",self.cAddMessageNumberToInbound.isChecked())
-        self.pd.setNextMessageNumber(self.cNextMessageId.value())
+        self.pd.set_next_message_number(self.cNextMessageId.value())
         # page 3
         # page 4
         # page 5

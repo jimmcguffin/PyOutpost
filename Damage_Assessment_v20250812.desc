@@ -8,42 +8,45 @@
 [Footers]
 !/ADDON!
 
+[Pages]
+DmgAsmt,Damage_Assessment_v20250812.png
+
 [Fields]
 // see the ICS213 file for a description of these lines
-MsgNo,MessageNumber,str,,,289,80,396,101
-1a.,Date,str,Y,DateValid,90,148,161,169
-1b.,Time,str,Y,TimeValid,243,148,302,169
-5.,Handling,rb,Y,,0,0,0,0,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
-7a.,ToIcsPosition,dd,Y,,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
-8a.,FromIcsPosition,str,Y,,520,177,736,199
-7b.,ToLocation,str,Y,,146,206,404,228
-8b.,FromLocation,str,Y,,501,206,736,228
-7c.,ToName,str,,,130,236,404,257
-8c.,FromName,str,,,485,236,736,257
-7d.,ToContactInfo,str,,,168,264,404,287
-8d.,FromContactInfo,str,,,523,264,736,287
-20.,Juristiction,dd,Y,,186,318,391,336,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
-21.,IncidentName,str,Y,,511,319,735,334
-*22.,Address,str,Y,,109,343,390,359
-23.,Unit,str,,,471,343,735,358
-24.,TypeOfStructure,rb,Y,,187,365,602,403,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
-25.,NumberOfStories,str,Y,NumValid,170,409,735,425
-26.,OwnRent,rb,,,189,431,443,449,Own,196,432,0,0,Rent,385,432,0,0
+MsgNo,MessageNumber,str,,,P1,289,80,396,101
+1a.,Date,str,Y,DateValid,P1,90,148,161,169
+1b.,Time,str,Y,TimeValid,P1,243,148,302,169
+5.,Handling,rb,Y,,P1,377,147,734,170,IMMEDIATE,384,150,0,0,PRIORITY,517,150,0,0,ROUTINE,630,150,0,0
+7a.,ToIcsPosition,dd,Y,,P1,165,177,404,199,Damage/Safety Assessment Group,Construction & Eng. Branch,Operations
+8a.,FromIcsPosition,str,Y,,P1,520,177,736,199
+7b.,ToLocation,str,Y,,P1,146,206,404,228
+8b.,FromLocation,str,Y,,P1,501,206,736,228
+7c.,ToName,str,,,P1,130,236,404,257
+8c.,FromName,str,,,P1,485,236,736,257
+7d.,ToContactInfo,str,,,P1,168,264,404,287
+8d.,FromContactInfo,str,,,P1,523,264,736,287
+20.,Jurisdiction,dd,Y,,P1,186,318,391,336,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+21.,IncidentName,str,Y,,P1,511,319,735,334
+*22.,Address,str,Y,,P1,109,343,390,359
+23.,Unit,str,,,P1,471,343,735,358
+24.,TypeOfStructure,rb,Y,,P1,187,365,602,403,Single Family,196,366,0,0,Mobile Home,337,366,0,0,Non-Profit Orgs,478,366,0,0,Multi-Family,196,386,0,0,Business,337,386,0,0,Outbuilding,478,386,0,0
+25.,NumberOfStories,str,Y,NumValid,P1,170,409,735,425
+26.,OwnRent,rb,,,P1,189,431,443,449,Own,196,432,0,0,Rent,385,432,0,0
 // these must come before the items they control, the id serves only as a clue about what items it is controlling
-27.,DamageType,rg,Y,,194,454,619,492,27a.,27b.,27c.,27d.
-27a.,Flooding,cb,,,198,456,0,0
-27b.,Roof,cb,,,198,476,0,0
-27c.,Structural,cb,,,433,456,0,0
-27d.,OtherDamage,cb,,,433,476,0,0
-28.,BasementType,rb,Y,,187,495,574,534,Basement,196,495,0,0,Crawlspace,196,515,0,0,Basement and Crawlspace,384,497,0,0,N/A,384,517,0,0
-29.,DamageClassification,rb,Y,,137,555,622,593,Destroyed,149,557,0,0,Major,149,577,0,0,Minor,291,557,0,0,Affected,291,577,0,0,No Visible Damage,479,557,0,0
-30.,Tag,rb,,,137,597,524,618,Green,149,599,0,0,Yellow,292,599,0,0,Red,431,599,0,0
-31.,Insurance,rb,,,147,620,290,640,Yes,151,622,0,0,No,241,622,0,0
-32.,EstimatedDamage,str,,NumValid,540,623,735,639
-33.,Comment,mstr,,,127,647,735,727
-34.,ContactName,str,Y,,147,736,395,763
-35.,ContactPhone,str,Y,TelValid,502,736,735,763
-OpName,OpName,str,,,95,828,308,846
-OpCall,OpCall,str,,,374,828,477,846
-OpDate,OpDate,str,,DateValid,522,828,+70,+18
-OpTime,OpTime,str,,TimeValid,655,828,+60,+18
+27.,DamageType,rg,Y,,P1,194,454,619,492,27a.,27b.,27c.,27d.
+27a.,Flooding,cb,,,P1,198,456,0,0
+27b.,Roof,cb,,,P1,198,476,0,0
+27c.,Structural,cb,,,P1,433,456,0,0
+27d.,OtherDamage,cb,,,P1,433,476,0,0
+28.,BasementType,rb,Y,,P1,187,495,574,534,Basement,196,495,0,0,Crawlspace,196,515,0,0,Basement and Crawlspace,384,497,0,0,N/A,384,517,0,0
+29.,DamageClassification,rb,Y,,P1,137,555,622,593,Destroyed,149,557,0,0,Major,149,577,0,0,Minor,291,557,0,0,Affected,291,577,0,0,No Visible Damage,479,557,0,0
+30.,Tag,rb,,,P1,137,597,524,618,Green,149,599,0,0,Yellow,292,599,0,0,Red,431,599,0,0
+31.,Insurance,rb,,,P1,147,620,290,640,Yes,151,622,0,0,No,241,622,0,0
+32.,EstimatedDamage,str,,NumValid,P1,540,623,735,639
+33.,Comment,mstr,,,P1,127,647,735,727
+34.,ContactName,str,Y,,P1,147,736,395,763
+35.,ContactPhone,str,Y,TelValid,P1,502,736,735,763
+OpName,OpName,str,,,P1,95,828,308,846
+OpCall,OpCall,str,,,P1,374,828,477,846
+OpDate,OpDate,str,,DateValid,P1,522,828,+70,+18
+OpTime,OpTime,str,,TimeValid,P1,655,828,+60,+18

@@ -4,7 +4,7 @@ from PyQt6.QtCore import QObject, pyqtSignal, QTimer
 from persistentdata import PersistentData
 from serialstream import SerialStream
 from bbsparser import Jnos2Parser
-from my_mailbox import MailBoxHeader
+from sql_mailbox import MailBoxHeader
 from globalsignals import global_signals
 
 class TncDevice(QObject):
@@ -22,8 +22,9 @@ class TncDevice(QObject):
         self.special_disconnect_value = "*** Disconnect\r" # tells the session to end
         self.serialStream = None
         self.srflags = 0 # 1=send, 2=recv, 4=recvb
-    def start_session(self,ss:SerialStream,srflags:int):
+    def start_session(self,ss:SerialStream,mailbox,srflags:int):
         self.serialStream = ss
+        self.mailbox = mailbox
         self.srflags = srflags
         self.serialStream.signalLineRead.connect(self.onResponse)        
         self.serialStream.signalConnected.connect(self.onConnected)        
@@ -67,8 +68,8 @@ class KantronicsKPC3Plus(TncDevice):
     def __init__(self,pd,parent=None):
         super().__init__(pd,parent)
 
-    def start_session(self,ss,srflags:int):
-        super().start_session(ss,srflags)
+    def start_session(self,ss,mailbox,srflags:int):
+        super().start_session(ss,mailbox,srflags)
         self.serialStream.line_end = b"cmd:"
         self.serialStream.include_line_end_in_reply = self.using_echo
         mycall = f"{self.get_command("CommandMyCall")} {self.pd.getActiveCallSign()}\r"
@@ -150,7 +151,7 @@ class KantronicsKPC3Plus(TncDevice):
         self.bbs_parser = Jnos2Parser(self.pd,self.using_echo,self)
         self.bbs_parser.signalDisconnected.connect(self.onDisconnected)
         self.bbs_parser.signal_status_bar_message.connect(lambda s: self.signal_status_bar_message.emit(s))
-        self.bbs_parser.start_session(self.serialStream,self.srflags)
+        self.bbs_parser.start_session(self.serialStream,self.mailbox,self.srflags)
 
     def onDisconnected(self):
         # if we never actually connected, there will not be a bbs_parser

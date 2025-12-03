@@ -2,7 +2,7 @@
 
 import datetime
 from PyQt6.QtCore import QObject, pyqtSignal
-from my_mailbox import MailBox, MailBoxHeader, MailFlags
+from sql_mailbox import MailBox, MailBoxHeader, MailFlags
 from globalsignals import global_signals
 
 # the general sequence is:
@@ -30,7 +30,7 @@ class BbsSequenceStepNoResonse(): # I think only "BYE" uses this
     def __init__(self,s):
         self.what_to_send = s
 
-# when this gets to the front, waits until all responses have been recieved, then it calls the handler
+# when this gets to the front, waits until all responses have been received, then it calls the handler
 class BbsSequenceSync():
     def __init__(self,h=None,data=None):
         self.handler = h # gets called as soon as the sequencer gets to this item
@@ -57,8 +57,9 @@ class BbsParser(QObject):
         self.using_echo = using_echo
         self.srflags = 0
 
-    def start_session(self,ss,srflags:int):
+    def start_session(self,ss,mailbox,srflags:int):
         self.serial_stream = ss
+        self. mailbox = mailbox
         self.srflags = srflags
         self.serial_stream.line_end = b") >\r\n" # this matches what the original outpost uses, does now wotk if TNC is set for long prompts ("Z >\r\n" would be work)
         self.serial_stream.include_line_end_in_reply = True
@@ -116,8 +117,8 @@ class Jnos2Parser(BbsParser):
         self.home_area = self.pd.getActiveCallSign(False).upper()
         self.current_area = ""
         self.areas_to_read = []
-    def start_session(self,ss,srflags):
-        super().start_session(ss,srflags)
+    def start_session(self,ss,mailbox,srflags):
+        super().start_session(ss,mailbox,srflags)
         self.add_step(BbsSequenceStep("",self.start_session2)) # there is a prompt/terminator that will arrive without being told
 
     def start_session2(self,r,_=None):
@@ -147,14 +148,11 @@ class Jnos2Parser(BbsParser):
 
     def send_outgoing(self,_=None):
         # if there are outgoing messages send them now
-        # this may turn out to be a bad idea but for now I read directly from the mail file
-        mailbox = MailBox()
-        mailbox.load()
-        indexes = mailbox.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
+        indexes = self.mailbox.get_header_indexes(MailFlags.FOLDER_OUT_TRAY)
         if indexes:
             self.signal_status_bar_message.emit("Sending out messages")
             for index in indexes:
-                mbh,m = mailbox.get_message(index)
+                mbh,m = self.mailbox.get_message(index)
                 m2 = m.replace("\r\n","\r").replace("\n","\r") # make sure there are no linefeeds
                 if not m2.endswith('\r'): m2 += '\r'
                 self.push_step(BbsSequenceStep(f"{self.get_command("CommandSend")} {mbh.to_addr}\r{mbh.subject}\r{m2}/EX\r",self.handle_sent,index))
@@ -225,9 +223,7 @@ class Jnos2Parser(BbsParser):
                     callsign = self.pd.getActiveCallSign(False).upper()
                     if self.current_area != callsign:
                         if len(words) >= 8:
-                            mailbox = MailBox()
-                            mailbox.load()
-                            maybematch = mailbox.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
+                            maybematch = self.mailbox.is_possibly_a_duplicate(words[2],words[3],words[7].rstrip())
                             print(f"matcher says {maybematch},{words[7].rstrip()}")
                             if maybematch:
                                 continue
@@ -333,8 +329,9 @@ class Jnos2Parser(BbsParser):
                 mbh.local_id = self.pd.make_standard_local_id()
         mbh.bbs = self.pd.getBBS("ConnectName")
         mbh.date_received = MailBoxHeader.normalized_date()
-        messagebody = messagebody.encode("windows-1252")
-        mbh.size = len(messagebody)
+        # enable this line if using "my_mailbox"   messagebody = messagebody.encode("windows-1252")
+        # messagebody is still unicode in this case
+        mbh.size = 0 # let this get set later after any necessary encoding len(messagebody)
         global_signals.signal_new_incoming_message.emit(mbh,messagebody)
         # decide if we want to send a delivery confirmation
         # this code is cut/pasted from newpacketmessage

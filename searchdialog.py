@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import QDialog, QLineEdit, QWidget, QPlainTextEdit, QCheckB
 from PyQt6.uic import load_ui
 from persistentdata import PersistentData
 from globalsignals import global_signals
-from my_mailbox import FieldsToSearch
+from sql_mailbox import FieldsToSearch
 
 class SearchDialog(QDialog):
     def __init__(self,pd,parent=None):
@@ -40,4 +40,6 @@ class SearchDialog(QDialog):
             return super().reject()
         if self.c_all_folders.isChecked():
             self.fields_to_search |= FieldsToSearch.ALL_FOLDERS.value
+        elif self.c_all_folders_ex.isChecked():
+            self.fields_to_search |= FieldsToSearch.ALL_FOLDERS_EX.value
         super().accept()

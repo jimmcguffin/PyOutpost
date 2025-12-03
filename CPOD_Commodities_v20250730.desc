@@ -1,1 +1,67 @@
-// I had to use // for comments since some fields start with "#"[Headers]!SCCoPIFO!#T: form-cpod-commodities.html#V: 3.20-1.0[Footers]!/ADDON![Fields]MsgNo,MessageNumber,str,,,315,86,469,1071a.,Date,str,Y,DateValid,94,158,+70,+261b.,Time,str,Y,TimeValid,233,158,+60,+265.,Handling,rb,Y,,408,157,782,184,IMMEDIATE,414,163,0,0,PRIORITY,552,163,0,0,ROUTINE,668,163,0,07a.,ToIcsPosition,dd,Y,,176,192,414,+25,CPOD Unit,Mass Care & Emerg. Asst. Branc,Operations8a.,FromIcsPosition,str,Y,,532,192,781,+207b.,ToLocation,str,Y,,157,217,414,+208b.,FromLocation,str,Y,,512,217,781,+207c.,ToName,str,,,139,242,414,+208c,FromName,str,,,496,242,781,+207d.,ToContactInfo,str,,,179,267,414,+208d.,FromContactInfo,str,,,536,267,781,+2020.,Juristiction,dd,,,186,323,781,+20,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated21d.,PreparedDate,str,Y,DateValid,166,349,+70,+1821t.,PreparedTime,str,Y,TimeValid,536,349,+60,+18*30.,SiteName,str,Y,,129,399,781,41631,StatusUpdate,rb,Y,,197,423,727,460,Activated,208,424,0,0,Pending Activation,208,446,0,0,Pending Demobilization,408,424,0,0,Demobilization,408,446,0,0,Not Activated,608,424,0,070a.,CType1,str,Y,,268,507,771,+1870b.,StartQ1,str,Y,NumValid,252,532,+70,+1870c.,DistQ1,str,Y,NumValid,468,532,+70,+1870d.,QAvail1,str,Y,NumValid,682,532,+70,+1871a.,CType2,str,,,268,558,771,+1871b.,StartQ2,str,,NumValid,252,583,+70,+1871c.,DistQ2,str,,NumValid,468,583,+70,+1871d.,QAvail2,str,,NumValid,682,583,+70,+1872a.,CType3,str,,,268,610,771,+1872b.,StartQ3,str,,NumValid,252,635,+70,+1872c.,DistQ3,str,,NumValid,468,635,+70,+1872d.,QAvail3,str,,NumValid,682,635,+70,+1873a.,CType4,str,,,268,661,771,+1873b.,StartQ4,str,,NumValid,252,686,+70,+1873c.,DistQ4,str,,NumValid,468,686,+70,+1873d.,QAvail4,str,,NumValid,682,686,+70,+1874a.,CType5,str,,,268,713,771,+1874b.,StartQ5,str,,NumValid,252,738,+70,+1874c.,DistQ5,str,,NumValid,468,738,+70,+1874d.,QAvail5,str,,NumValid,682,738,+70,+1875a.,CType6,str,,,268,764,771,+1875b.,StartQ6,str,,NumValid,252,789,+70,+1875c.,DistQ6,str,,NumValid,468,789,+70,+1875d.,QAvail6,str,,NumValid,682,789,+70,+1876a.,CType7,str,,,268,816,771,+1876b.,StartQ7,str,,NumValid,252,841,+70,+1876c.,DistQ7,str,,NumValid,468,841,+70,+1876d.,QAvail7,str,,NumValid,682,841,+70,+1877a.,CType8,str,,,268,867,771,+1877b.,StartQ8,str,,NumValid,252,892,+70,+1877c.,DistQ8,str,,NumValid,468,892,+70,+1877d.,QAvail8,str,,NumValid,682,892,+70,+18OpName,OpName,str,,,102,977,+160,+18OpCall,OpCall,str,,,336,977,+70,+18OpDate,OpDate,str,,DateValid,464,977,+70,+18OpTime,OpTime,str,,TimeValid,684,977,+60,+18
+// I had to use // for comments since some fields start with "#"
+
+[Headers]
+!SCCoPIFO!
+#T: form-cpod-commodities.html
+#V: 3.20-1.0
+
+[Footers]
+!/ADDON!
+
+[Pages]
+CPOD_Commodities_v20250730.png
+
+[Fields]
+MsgNo,MessageNumber,str,,,P1,315,86,469,107
+1a.,Date,str,Y,DateValid,P1,94,158,+70,+26
+1b.,Time,str,Y,TimeValid,P1,233,158,+60,+26
+5.,Handling,rb,Y,,P1,408,157,782,184,IMMEDIATE,414,163,0,0,PRIORITY,552,163,0,0,ROUTINE,668,163,0,0
+7a.,ToIcsPosition,dd,Y,,P1,176,192,414,+25,CPOD Unit,Mass Care & Emerg. Asst. Branch,Operations
+8a.,FromIcsPosition,str,Y,,P1,532,192,781,+20
+7b.,ToLocation,str,Y,,P1,157,217,414,+20
+8b.,FromLocation,str,Y,,P1,512,217,781,+20
+7c.,ToName,str,,,P1,139,242,414,+20
+8c,FromName,str,,,P1,496,242,781,+20
+7d.,ToContactInfo,str,,,P1,179,267,414,+20
+8d.,FromContactInfo,str,,,P1,536,267,781,+20
+20.,Jurisdiction,dd,,,P1,186,323,781,+20,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+21d.,PreparedDate,str,Y,DateValid,P1,166,349,+70,+18
+21t.,PreparedTime,str,Y,TimeValid,P1,536,349,+60,+18
+*30.,SiteName,str,Y,,P1,129,399,781,416
+31,StatusUpdate,rb,Y,,P1,197,423,727,460,Activated,208,424,0,0,Pending Activation,208,446,0,0,Pending Demobilization,408,424,0,0,Demobilization,408,446,0,0,Not Activated,608,424,0,0
+70a.,CType1,str,Y,,P1,268,507,771,+18
+70b.,StartQ1,str,Y,NumValid,P1,252,532,+70,+18
+70c.,DistQ1,str,Y,NumValid,P1,468,532,+70,+18
+70d.,QAvail1,str,Y,NumValid,P1,682,532,+70,+18
+71a.,CType2,str,,,P1,268,558,771,+18
+71b.,StartQ2,str,71a.,NumValid,P1,252,583,+70,+18
+71c.,DistQ2,str,71a.,NumValid,P1,468,583,+70,+18
+71d.,QAvail2,str,71a.,NumValid,P1,682,583,+70,+18
+72a.,CType3,str,,,P1,268,610,771,+18
+72b.,StartQ3,str,72a.,NumValid,P1,252,635,+70,+18
+72c.,DistQ3,str,72a.,NumValid,P1,468,635,+70,+18
+72d.,QAvail3,str,72a.,NumValid,P1,682,635,+70,+18
+73a.,CType4,str,,,P1,268,661,771,+18
+73b.,StartQ4,str,73a.,NumValid,P1,252,686,+70,+18
+73c.,DistQ4,str,73a.,NumValid,P1,468,686,+70,+18
+73d.,QAvail4,str,73a.,NumValid,P1,682,686,+70,+18
+74a.,CType5,str,,,P1,268,713,771,+18
+74b.,StartQ5,str,74a.,NumValid,P1,252,738,+70,+18
+74c.,DistQ5,str,74a.,NumValid,P1,468,738,+70,+18
+74d.,QAvail5,str,74a.,NumValid,P1,682,738,+70,+18
+75a.,CType6,str,,,P1,268,764,771,+18
+75b.,StartQ6,str,75a.,NumValid,P1,252,789,+70,+18
+75c.,DistQ6,str,75a.,NumValid,P1,468,789,+70,+18
+75d.,QAvail6,str,75a.,NumValid,P1,682,789,+70,+18
+76a.,CType7,str,,,P1,268,816,771,+18
+76b.,StartQ7,str,76a.,NumValid,P1,252,841,+70,+18
+76c.,DistQ7,str,76a.,NumValid,P1,468,841,+70,+18
+76d.,QAvail7,str,76a.,NumValid,P1,682,841,+70,+18
+77a.,CType8,str,,,P1,268,867,771,+18
+77b.,StartQ8,str,77a.,NumValid,P1,252,892,+70,+18
+77c.,DistQ8,str,77a.,NumValid,P1,468,892,+70,+18
+77d.,QAvail8,str,77a.,NumValid,P1,682,892,+70,+18
+OpName,OpName,str,,,P1,102,977,+160,+18
+OpCall,OpCall,str,,,P1,336,977,+70,+18
+OpDate,OpDate,str,,DateValid,P1,464,977,+70,+18
+OpTime,OpTime,str,,TimeValid,P1,684,977,+60,+18

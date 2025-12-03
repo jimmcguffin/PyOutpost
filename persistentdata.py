@@ -85,15 +85,15 @@ class PersistentData():
         return bool(v)
     def setProfile(self,s,value):
         self.settings.setValue(f"Profiles/{self.activeProfile}/{s}",value)
-    def getNextMessageNumber(self,increment=True):
-        r = self.settings.value("NextMessageNumber",0)
+    def get_next_message_number(self,increment=True):
+        r = int(self.settings.value("NextMessageNumber",0)) # the int is there because some other platform returned a string
         if increment:
             n = r + 1
             if n < r:
                 n = 0 # n has overflowed
             self.settings.setValue("NextMessageNumber",n)
         return r
-    def setNextMessageNumber(self,n):
+    def set_next_message_number(self,n):
         self.settings.setValue("NextMessageNumber",n)
 
     # call signs
@@ -199,7 +199,7 @@ class PersistentData():
         self.settings.setValue(f"Interfaces/{self.activeInterface}/{s}",value)
     # some convenience functions
     def make_standard_subject(self,increment=True):
-        mn = self.getNextMessageNumber(increment)
+        mn = self.get_next_message_number(increment)
         subject = ""
         if self.getProfileBool("MessageSettings/AddMessageNumber"):
             if self.getProfileBool("UseTacticalCallSign"):
@@ -221,7 +221,7 @@ class PersistentData():
         return subject
     def make_standard_local_id(self,increment=True):
         # almost the same as make_standard_subject, ignores two itrams
-        mn = self.getNextMessageNumber(increment)
+        mn = self.get_next_message_number(increment)
         id = ""
         if self.getProfileBool("UseTacticalCallSign"):
             id += self.getTacticalCallSign("MessagePrefix")

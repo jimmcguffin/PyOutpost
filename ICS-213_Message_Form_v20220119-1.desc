@@ -8,6 +8,9 @@
 [Footers]
 !/ADDON!
 
+[Pages]
+ICS-213_Message_Form_v20220119-1.png
+
 [Fields]
 // there must be one and only one line that starts with a "*"
 // that entry will be become a part of the standard subject line
@@ -24,27 +27,27 @@
 // First is the string that will be sent as the value for this button choice
 // Then 4 numbers for the location on screen, same details as for the main location
 
-MsgNo,MessageNumber,str,Y,,446,49,539,73
-1a.,Date,str,Y,DateValid,65,160,147,186
-1b.,Time,str,Y,TimeValid,196,159,259,185
-5.,Handling,rb,Y,,412,104,813,126,IMMEDIATE,415,109,0,0,PRIORITY,564,108,0,0,ROUTINE,699,108,0,0
-6a.,TakeAction,rb,,,574,161,756,183,Yes,577,165,0,0,No,718,165,0,0
-6b.,Reply,rb,,,574,190,756,212,Yes,577,193,0,0,No,718,193,0,0
-6d.,ReplyBy,str,,,641,191,702,208
-7.,ToIcsPosition,str,Y,,83,233,395,258
-8.,FromIcsPosition,str,Y,,469,233,788,258
-9a.,ToLocation,str,Y,,83,282,395,308
-9b.,FromLocation,str,Y,,469,282,787,308
-ToName,ToName,str,,,83,332,395,356
-FromName,FromName,str,,,469,332,787,356
-ToTel,ToTel,str,,TelValid,83,381,395,407
-FromTel,FromTel,str,,TelValid,469,381,787,407
-*10.,Subject,str,,,157,415,789,441
-11.,Reference,str,,,357,449,786,476
-12.,Message,mstr,,,52,505,807,677
-OpCall,OpCall,str,,,583,850,804,875
-OpName,OpName,str,,,564,885,798,905
-Method,Method,rb,,,47,882,422,963,Telephone,51,886,0,0,EOC Radio,51,917,0,0,Amateur Radio,51,941,0,0,Dispatch Center,189,886,0,0,FAX,189,917,0,0,Other,189,941,0,0,Courier,295,917,0,0
-Other,Other,str,,,258,936,401,0
-OpDate,OpDate,str,,,489,936,571,962
-OpTime,OpTime,str,,,689,936,750,962
+MsgNo,MessageNumber,str,Y,,P1,446,49,539,73
+1a.,Date,str,Y,DateValid,P1,65,160,147,186
+1b.,Time,str,Y,TimeValid,P1,196,159,259,185
+5.,Handling,rb,Y,,P1,412,104,813,126,IMMEDIATE,415,109,0,0,PRIORITY,564,108,0,0,ROUTINE,699,108,0,0
+6a.,TakeAction,rb,,,P1,574,161,756,183,Yes,577,165,0,0,No,718,165,0,0
+6b.,Reply,rb,,,P1,574,190,756,212,Yes,577,193,0,0,No,718,193,0,0
+6d.,ReplyBy,str,6b.,,P1,641,191,702,208
+7.,ToIcsPosition,str,Y,,P1,83,233,395,258
+8.,FromIcsPosition,str,Y,,P1,469,233,788,258
+9a.,ToLocation,str,Y,,P1,83,282,395,308
+9b.,FromLocation,str,Y,,P1,469,282,787,308
+ToName,ToName,str,,,P1,83,332,395,356
+FmName,FromName,str,,,P1,469,332,787,356
+ToTel,ToTel,str,,TelValid,P1,83,381,395,407
+FmTel,FromTel,str,,TelValid,P1,469,381,787,407
+*10.,Subject,str,Y,,P1,157,415,789,441
+11.,Reference,str,,,P1,357,449,786,476
+12.,Message,mstr,Y,,P1,52,505,807,677
+OpCall,OpCall,str,,,P1,583,850,804,875
+OpName,OpName,str,,,P1,564,885,798,905
+Method,Method,rb,,,P1,47,882,422,963,Telephone,51,886,0,0,EOC Radio,51,917,0,0,Amateur Radio,51,941,0,0,Dispatch Center,189,886,0,0,FAX,189,917,0,0,Other,189,941,0,0,Courier,295,917,0,0
+Other,Other,str,,,P1,258,936,401,0
+OpDate,OpDate,str,,,P1,489,936,571,962
+OpTime,OpTime,str,,,P1,689,936,750,962

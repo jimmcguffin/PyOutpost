@@ -1,1 +1,105 @@
-// I had to use // for comments since some fields start with "#"[Headers]!SCCoPIFO!#T: form-cpod-site-info.html#V: 3.20-1.0[Footers]!/ADDON![Fields]MsgNo,MessageNumber,str,Y,,304,54,448,761a.,Date,str,Y,DateValid,100,127,+70,+261b.,Time,str,Y,TimeValid,284,127,+60,+265.,Handling,rb,Y,,415,126,781,154,IMMEDIATE,420,133,0,0,PRIORITY,555,133,0,0,ROUTINE,667,133,0,07a.,ToIcsPosition,dd,Y,,170,163,420,+25,CPOD Unit,Mass Care & Emerg. Asst. Branc,Operations8a.,FromIcsPosition,str,Y,,538,163,781,+207b.,ToLocation,str,Y,,150,194,420,+208b.,FromLocation,str,Y,,518,194,781,+207c.,ToName,str,,,133,226,420,+208c,FromName,str,,,502,226,781,+207d.,ToContactInfo,str,,,173,257,420,+208d.,FromContactInfo,str,,,542,257,781,+2020.,Juristiction,dd,,,142,312,781,+18,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated21d.,PreparedDate,str,Y,DateValid,163,339,+70,+1621t.,PreparedTime,str,Y,TimeValid,532,339,+60,+16*22.,SiteName,str,Y,,135,364,781,38023.,CpodType,rb,,,152,387,778,427,Type I,165,389,0,0,Type II,165,411,0,0,Type III,315,389,0,0,LSA,315,411,0,0,Non-CPOD Distribution Point,565,389,0,024.,CpodStatus,rb,,,152,432,778,471,Activated,165,434,0,0,Pending Activation,165,455,0,0,Pending Demobilization,365,434,0,0,Demobilization,365,455,0,0,Not Activated,565,434,0,025a.,Address,str,,,121,479,363,+1625c.,City,dd,,,407,479,620,+16,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara,Saratoga,Sunnyvale25z.,ZipCode,str,,ZipValid,692,479,781,+1626.,PoliceJurisdiction,str,,,316,504,781,+1727.,FireJurisdiction,str,,,382,530,781,+1728.,AdditionalInfo,mstr,,,216,555,781,58930.,PartnerContact,str,,,224,622,420,+1731.,SiteContact,str,,,569,622,781,+1740.,SizeInFeet,str,,,235,672,420,+1741.,SizeInAcres,str,,,561,672,781,+1742a.,RoadType1,cb,,,215,698,294,+1642b.,RoadType2,cb,,,315,698,454,+1642c.,RoadType3,cb,,,515,698,576,+1642d.,RoadType4,cb,,,666,698,725,+1643.,Accessible,rb,,,259,721,371,739,Yes,265,723,0,0,No,329,723,0,044.,Gated,rb,,,259,746,371,764,Yes,265,748,0,0,No,329,748,0,045.,GateCont,str,,,621,747,781,+1846.,Driveway,str,,,216,772,781,+1847.,SpikeStrips,rb,,,361,795,471,814,Yes,365,797,0,0,No,429,797,0,050a.,SiteSafetyDetails,cb,,,115,864,434,+1650b.,,cb,,,115,886,434,+1650c.,,cb,,,115,908,434,+1650d.,,cb,,,115,929,434,+1650e.,,cb,,,465,864,770,+1650f.,,cb,,,465,886,770,+1650g.,,cb,,,465,908,770,+1651.,Fence,mstr,,,233,951,781,98152a.,SiteAccessibility,cb,,,215,989,662,+1652b.,,cb,,,215,1011,542,+1652c.,,cb,,,215,1033,730,+1660d.,DateOpened,str,Y,DateValid,167,1082,+70,+1760t.,TimeOpened,str,Y,TimeValid,472,1082,+70,+1761d.,DateClosed,str,Y,DateValid,167,1107,+60,+1761t.,TimeClosed,str,Y,TimeValid,472,1107,+60,+1770a.,CType1,str,Y,,262,1166,781,+2070b.,StartQ1,str,Y,NumValid,262,1202,+70,+1770c.,DistQ1,str,Y,NumValid,468,1202,+70,+1770d.,QAvail1,str,Y,NumValid,682,1202,+70,+1771a.,CType2,str,,,262,1230,781,+2071b.,StartQ2,str,,NumValid,262,1266,+70,+1771c.,DistQ2,str,,NumValid,468,1266,+70,+1771d.,QAvail2,str,,NumValid,682,1266,+70,+1772a.,CType3,str,,,262,1295,781,+2072b.,StartQ3,str,,NumValid,262,1331,+70,+1772c.,DistQ3,str,,NumValid,468,1331,+70,+1772d.,QAvail3,str,,NumValid,682,1331,+70,+1773a.,CType4,str,,,262,1359,781,+2073b.,StartQ4,str,,NumValid,262,1395,+70,+1773c.,DistQ4,str,,NumValid,468,1395,+70,+1773d.,QAvail4,str,,NumValid,682,1395,+70,+1774a.,CType5,str,,,262,1424,781,+2074b.,StartQ5,str,,NumValid,262,1460,+70,+1774c.,DistQ5,str,,NumValid,468,1460,+70,+1774d.,QAvail5,str,,NumValid,682,1460,+70,+1775a.,CType6,str,,,262,1488,781,+2075b.,StartQ6,str,,NumValid,262,1524,+70,+1775c.,DistQ6,str,,NumValid,468,1524,+70,+1775d.,QAvail6,str,,NumValid,682,1524,+70,+1776a.,CType7,str,,,262,1553,781,+2076b.,StartQ7,str,,NumValid,262,1589,+70,+1776c.,DistQ7,str,,NumValid,468,1589,+70,+1776d.,QAvail7,str,,NumValid,682,1589,+70,+1777a.,CType8,str,,,262,1617,781,+2077b.,StartQ8,str,,NumValid,262,1653,+70,+1777c.,DistQ8,str,,NumValid,468,1653,+70,+1777d.,QAvail8,str,,NumValid,682,1653,+70,+17OpCall,OpCall,str,,,355,1738,458,1756OpName,OpName,str,,,102,1738,288,1756OpDate,OpDate,str,,,507,1738,+70,+26OpTime,OpTime,str,,,684,1738,+60,+26
+// I had to use // for comments since some fields start with "#"
+
+[Headers]
+!SCCoPIFO!
+#T: form-cpod-site-info.html
+#V: 3.20-1.0
+
+[Footers]
+!/ADDON!
+
+[Pages]
+CPOD_Site_Information_v20250812-1.png[0:1051]
+CPOD_Site_Information_v20250812-2.png[50:796]
+
+[Fields]
+// Page 1
+MsgNo,MessageNumber,str,Y,,P1,304,54,448,76
+1a.,Date,str,Y,DateValid,P1,100,127,+70,+26
+1b.,Time,str,Y,TimeValid,P1,284,127,+60,+26
+5.,Handling,rb,Y,,P1,415,126,781,154,IMMEDIATE,420,133,0,0,PRIORITY,555,133,0,0,ROUTINE,667,133,0,0
+7a.,ToIcsPosition,dd,Y,,P1,170,163,420,+25,CPOD Unit,Mass Care & Emerg. Asst. Branc,Operations
+8a.,FromIcsPosition,str,Y,,P1,538,163,781,+20
+7b.,ToLocation,str,Y,,P1,150,194,420,+20
+8b.,FromLocation,str,Y,,P1,518,194,781,+20
+7c.,ToName,str,,,P1,133,226,420,+20
+8c,FromName,str,,,P1,502,226,781,+20
+7d.,ToContactInfo,str,,,P1,173,257,420,+20
+8d.,FromContactInfo,str,,,P1,542,257,781,+20
+20.,Jurisdiction,dd,Y,,P1,142,312,781,+18,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara (City),Saratoga,Sunnyvale,Santa Clara County,County unincorporated
+21d.,PreparedDate,str,Y,DateValid,P1,163,339,+70,+16
+21t.,PreparedTime,str,Y,TimeValid,P1,532,339,+60,+16
+*22.,SiteName,str,Y,,P1,135,364,781,380
+23.,CpodType,rb,Y,,P1,152,387,778,427,Type I,165,389,0,0,Type II,165,411,0,0,Type III,315,389,0,0,LSA,315,411,0,0,Non-CPOD Distribution Point,565,389,0,0
+24.,CpodStatus,rb,Y,,P1,152,432,778,471,Activated,165,434,0,0,Pending Activation,165,455,0,0,Pending Demobilization,365,434,0,0,Demobilization,365,455,0,0,Not Activated,565,434,0,0
+25a.,Address,str,Y,,P1,121,479,363,+16
+25c.,City,dd,Y,,P1,407,479,620,+16,Campbell,Cupertino,Gilroy,Los Altos,Los Altos Hills,Los Gatos,Milpitas,Monte Sereno,Morgan Hill,Mountain View,Palo Alto,San Jose,Santa Clara,Saratoga,Sunnyvale
+25z.,ZipCode,str,,ZipValid,P1,692,479,781,+16
+26.,PoliceJurisdiction,str,,,P1,316,504,781,+17
+27.,FireJurisdiction,str,,,P1,382,530,781,+17
+28.,AdditionalInfo,mstr,,,P1,216,555,781,589
+30.,PartnerContact,str,,,P1,224,622,420,+17
+31.,SiteContact,str,,,P1,569,622,781,+17
+40.,SizeInFeet,str,,,P1,235,672,420,+17
+41.,SizeInAcres,str,,,P1,561,672,781,+17
+42a.,RoadType1,cb,,,P1,215,698,294,+16
+42b.,RoadType2,cb,,,P1,315,698,454,+16
+42c.,RoadType3,cb,,,P1,515,698,576,+16
+42d.,RoadType4,cb,,,P1,666,698,725,+16
+43.,Accessible,rb,,,P1,259,721,371,739,Yes,265,723,0,0,No,329,723,0,0
+44.,Gated,rb,,,P1,259,746,371,764,Yes,265,748,0,0,No,329,748,0,0
+45.,GateCont,str,,,P1,621,747,781,+18
+46.,Driveway,str,,,P1,216,772,781,+18
+47.,SpikeStrips,rb,,,P1,361,795,471,814,Yes,365,797,0,0,No,429,797,0,0
+50a.,SiteSafetyDetails,cb,,,P1,115,864,434,+16
+50b.,,cb,,,P1,115,886,434,+16
+50c.,,cb,,,P1,115,908,434,+16
+50d.,,cb,,,P1,115,929,434,+16
+50e.,,cb,,,P1,465,864,770,+16
+50f.,,cb,,,P1,465,886,770,+16
+50g.,,cb,,,P1,465,908,770,+16
+51.,Fence,mstr,,,P1,233,951,781,981
+52a.,SiteAccessibility,cb,,,P1,215,989,662,+16
+52b.,,cb,,,P1,215,1011,542,+16
+52c.,,cb,,,P1,215,1033,730,+16
+// Page 2
+60d.,DateOpened,str,,DateValid,P2,167,80,+70,+17
+60t.,TimeOpened,str,,TimeValid,P2,472,80,+70,+17
+61d.,DateClosed,str,,DateValid,P2,167,105,+60,+17
+61t.,TimeClosed,str,,TimeValid,P2,472,105,+60,+17
+70a.,CType1,str,Y,,P2,262,164,781,+20
+70b.,StartQ1,str,Y,NumValid,P2,262,200,+70,+17
+70c.,DistQ1,str,Y,NumValid,P2,468,200,+70,+17
+70d.,QAvail1,str,Y,NumValid,P2,682,200,+70,+17
+71a.,CType2,str,,,P2,262,228,781,+20
+71b.,StartQ2,str,71a.,NumValid,P2,262,264,+70,+17
+71c.,DistQ2,str,71a.,NumValid,P2,468,264,+70,+17
+71d.,QAvail2,str,71a.,NumValid,P2,682,264,+70,+17
+72a.,CType3,str,,,P2,262,293,781,+20
+72b.,StartQ3,str,72a.,NumValid,P2,262,329,+70,+17
+72c.,DistQ3,str,72a.,NumValid,P2,468,329,+70,+17
+72d.,QAvail3,str,72a.,NumValid,P2,682,329,+70,+17
+73a.,CType4,str,,,P2,262,357,781,+20
+73b.,StartQ4,str,73a.,NumValid,P2,262,393,+70,+17
+73c.,DistQ4,str,73a.,NumValid,P2,468,393,+70,+17
+73d.,QAvail4,str,73a.,NumValid,P2,682,393,+70,+17
+74a.,CType5,str,,,P2,262,422,781,+20
+74b.,StartQ5,str,74a.,NumValid,P2,262,458,+70,+17
+74c.,DistQ5,str,74a.,NumValid,P2,468,458,+70,+17
+74d.,QAvail5,str,74a.,NumValid,P2,682,458,+70,+17
+75a.,CType6,str,,,P2,262,486,781,+20
+75b.,StartQ6,str,75a.,NumValid,P2,262,522,+70,+17
+75c.,DistQ6,str,75a.,NumValid,P2,468,522,+70,+17
+75d.,QAvail6,str,75a.,NumValid,P2,682,522,+70,+17
+76a.,CType7,str,,,P2,262,551,781,+20
+76b.,StartQ7,str,76a.,NumValid,P2,262,587,+70,+17
+76c.,DistQ7,str,76a.,NumValid,P2,468,587,+70,+17
+76d.,QAvail7,str,76a.,NumValid,P2,682,587,+70,+17
+77a.,CType8,str,,,P2,262,615,781,+20
+77b.,StartQ8,str,77a.,NumValid,P2,262,651,+70,+17
+77c.,DistQ8,str,77a.,NumValid,P2,468,651,+70,+17
+77d.,QAvail8,str,77a.,NumValid,P2,682,651,+70,+17
+OpCall,OpCall,str,,,P2,355,736,458,754
+OpName,OpName,str,,,P2,102,736,288,754
+OpDate,OpDate,str,,,P2,507,736,+70,+26
+OpTime,OpTime,str,,,P2,684,736,+60,+26
